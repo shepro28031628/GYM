@@ -18,16 +18,16 @@
 
 ## 📋 Tabla de Contenidos
 
-- [Descripción](#-descripción)
-- [Capturas de Pantalla](#-capturas-de-pantalla)
-- [Características](#-características)
-- [Estructura del Proyecto](#-estructura-del-proyecto)
-- [Instalación y Uso](#-instalación-y-uso)
-- [Páginas de la Aplicación](#-páginas-de-la-aplicación)
-- [Modelos de Datos](#-modelos-de-datos)
-- [Design System](#-design-system)
-- [Funcionalidades Detalladas](#-funcionalidades-detalladas)
-- [Tecnologías Utilizadas](#-tecnologías-utilizadas)
+- Descripción
+- Capturas de Pantalla
+- Características
+- Estructura del Proyecto
+- Instalación y Uso
+- Páginas de la Aplicación
+- Modelos de Datos
+- Design System
+- Funcionalidades Detalladas
+- Tecnologías Utilizadas
 
 ---
 
@@ -104,17 +104,19 @@
 GYM/
 │
 ├── 📄 index.html           # Dashboard principal con KPIs y gráficos
-├── 📄 usuarios.html        # Roster de clientes con métricas
-├── 📄 rutinas.html         # Creador de rutinas mensuales
-├── 📄 entrenamiento.html   # Sesión en vivo con timer y checklist
-├── 📄 progreso.html        # Seguimiento corporal con gráficas
-├── 📄 recetas.html         # Nutrición y guías alimenticias
+├── 📄 usuarios.html        # Roster de clientes con métricas y perfil
+├── 📄 rutinas.html         # Creador de rutinas mensuales con ilustraciones
+├── 📄 entrenamiento.html   # Sesión en vivo con timer, checklist e imágenes
+├── 📄 progreso.html        # Ficha de balance de marcos y evolución mensual
+├── 📄 recetas.html         # Nutrición y recetas
+├── 📄 macros.html          # Calculadora de macronutrientes interactiva
 │
-├── 🎨 styles.css           # Sistema de diseño completo (Design System)
-├── ⚙️  shared.js            # Lógica compartida, modelos de datos, utilidades
+├── 🎨 styles.css           # Sistema de diseño completo y hojas de impresión
+├── ⚙️  shared.js            # Lógica compartida, base de datos LocalStorage y utilidades
 │
-├── 🖼️  1.jpeg              # Logo principal (oscuro con gradiente)
-└── 🖼️  2.jpeg              # Logo alternativo (rojo/blanco)
+├── 📁 img/                 # Carpeta de ilustraciones de ejercicios (1.jpeg a 6.jpeg)
+├── 🖼️  1.jpeg              # Logo principal de Romeo PT
+└── 🖼️  2.jpeg              # Logo alternativo
 ```
 
 ---
@@ -221,16 +223,36 @@ Modo de sesión en vivo para el entrenamiento.
 ---
 
 ### 📊 Progreso (`progreso.html`)
-Seguimiento de evolución física.
-
-- Gráfica SVG de peso a lo largo del tiempo
-- Tabla comparativa: medidas iniciales vs actuales
-- Historial con variación respecto a la medición anterior
+Ficha interactiva "Balance de Marcos y Avance por Mes" que consolida la evolución del cliente:
+- **Tabla Matricial de 12 Meses:** Monitorea y compara 9 medidas físicas clave (Peso, Pecho, Cintura, Cadera, Brazo D/I, Muslo D/I, Pantorrilla, % Grasa Corporal y Notas) mes a mes.
+- **Gráficas SVG Interactivas:**
+  - *Cambio en el Peso (kg)*: Línea de evolución temporal con cálculo de variaciones.
+  - *Comparativo de Medidas (cm)*: Comparativa multilínea de Cintura, Pecho, Cadera y Muslos en un solo gráfico.
+- **Siluetas Físicas Evolutivas:** Modelado anatómico interactivo (Masculino/Femenino) que mapea los puntos clave de medida en dos estados: *Inicial (Antes)* y *Actual (Después)*.
+- **Antes y Después Visual:** Módulo para cargar o tomar fotos en vivo con webcam (Frente, Perfil, Espalda) con autocompresión en Canvas para optimizar el espacio de LocalStorage.
+- **Formato de Impresión Directo:** Botón de impresión integrado con diseño CSS específico (`@media print`) que genera reportes ejecutivos limpios en PDF para entregar al cliente.
 
 ---
 
 ### 🥗 Nutrición (`recetas.html`)
 Guía nutricional con 12 recetas categorizadas.
+
+**Categorías:** Alta Proteína · Pre-Entreno · Recuperación · Snacks
+
+**Cada receta incluye:**
+- Macronutrientes (Proteína / Carbos / Grasas / Calorías)
+- Lista completa de ingredientes
+- Guía de timing nutricional (pre/post entreno, nocturno)
+
+---
+
+### ⚖️ Macros (`macros.html`)
+Calculadora de macronutrientes interactiva personalizada para cada cliente:
+- **TMB (Mifflin-St Jeor):** Cálculo metabólico preciso según género, edad, estatura y peso.
+- **Calorías de Mantenimiento:** Ajustadas dinámicamente por nivel de actividad (desde sedentario hasta entrenamiento intenso).
+- **Ajuste por Objetivo:** Recálculo calórico automático (+300 a +500 kcal para volumen, -300 a -500 kcal para definición).
+- **Reparto por Sliders:** Distribución personalizada de proteínas (g/kg), grasas (% calórico) y carbohidratos, visualizada con un gráfico de barras horizontal animado en tiempo real.
+- **Integración con Perfil:** Guarda los resultados en la base de datos local y renderiza la tarjeta nutricional correspondiente en la sección "Perfil del Cliente" de `usuarios.html`.
 
 **Categorías:** Alta Proteína · Pre-Entreno · Recuperación · Snacks
 
@@ -261,9 +283,23 @@ Todos los datos se guardan en `localStorage` bajo la clave `romeo_db`.
   "brazoIzq": 36, "brazoDer": 36,
   "musloIzq": 58, "musloDer": 58,
   "pantorrilla": 38,
+  "grasaPct": 22.0,
   "objetivo": "Ganar músculo",
   "nivel": "Intermedio",
   "obs": "Lesión previa en hombro derecho",
+  "fotoIniFrente": "data:image/jpeg;base64,...",
+  "fotoIniPerfil": "data:image/jpeg;base64,...",
+  "fotoIniEspalda": "data:image/jpeg;base64,...",
+  "fotoFinFrente": "data:image/jpeg;base64,...",
+  "fotoFinPerfil": null,
+  "fotoFinEspalda": null,
+  "macros": {
+    "calorias": 3159,
+    "proteinasG": 176,
+    "grasasG": 88,
+    "carbohidratosG": 416,
+    "ajusteCal": 400
+  },
   "creado": "2025-01-15T10:00:00Z"
 }
 ```
@@ -288,6 +324,7 @@ Todos los datos se guardan en `localStorage` bajo la clave `romeo_db`.
       "series": "4 × 10",
       "peso": "80",
       "descanso": "90",
+      "imagen": "1.jpeg",
       "notas": "Agarre ancho"
     }
   ],
@@ -319,11 +356,13 @@ Todos los datos se guardan en `localStorage` bajo la clave `romeo_db`.
   "id": "string",
   "usuarioId": "string",
   "fecha": "2025-01-20",
+  "mes": 1,
   "peso": 77.0,
   "pecho": 97, "cintura": 82, "cadera": 95,
   "brazoIzq": 37, "brazoDer": 37,
   "musloIzq": 59, "musloDer": 59,
   "pantorrilla": 38,
+  "grasaPct": 20.5,
   "notas": "Cliente reporta más energía"
 }
 ```
@@ -428,9 +467,9 @@ La aplicación es completamente responsive con breakpoints en:
 
 | Métrica | Valor |
 |---|---|
-| Páginas HTML | 6 |
-| Líneas de CSS | ~1,500 |
-| Líneas de JavaScript | ~900 (shared.js + scripts inline) |
+| Páginas HTML | 7 |
+| Líneas de CSS | ~2,200 |
+| Líneas de JavaScript | ~1,500 (shared.js + scripts inline) |
 | Recetas incluidas | 12 |
 | Ejercicios en biblioteca | 45+ |
 | Citas motivacionales | 8 |
@@ -440,12 +479,12 @@ La aplicación es completamente responsive con breakpoints en:
 
 ## 🔮 Posibles Mejoras Futuras
 
-- [ ] **Exportar a PDF** — Imprimir rutinas y reportes de progreso
-- [ ] **Fotos de progreso** — Capturar imágenes de clientes por fecha
+- [x] **Exportar a PDF** — Imprimir rutinas y reportes de progreso (Ficha de Avance integrada)
+- [x] **Fotos de progreso** — Capturar imágenes de clientes por fecha (Webcam integrada)
 - [ ] **Notificaciones push** — Recordatorios de sesión (requiere Service Worker)
 - [ ] **Modo offline** — PWA con Service Worker para instalación en móvil
 - [ ] **Sincronización en la nube** — Firebase o Supabase para backup
-- [ ] **Calculadora de macros** — Personalizada por peso y objetivo
+- [x] **Calculadora de macros** — Personalizada por peso y objetivo
 - [ ] **Plantillas de rutinas** — Banco de rutinas prediseñadas
 - [ ] **Estadísticas avanzadas** — Récords personales, PR tracking
 - [ ] **Multi-usuario** — Acceso diferenciado para cliente y entrenador
