@@ -53,10 +53,29 @@
       <button class="modal-close" onclick="closeModal('modal-medicion')">✕</button>
     </div>
     <form id="form-medicion" onsubmit="guardarMedicion(event)">
-      <div class="form-section-title">Fecha y Peso</div>
+      <div class="form-section-title">Fecha, Mes, Peso y Grasa</div>
       <div class="form-grid">
         <div class="form-group"><label>Fecha *</label><input type="date" id="p-fecha" required /></div>
+        <div class="form-group">
+          <label>Mes de la Medición</label>
+          <select id="p-mes">
+            <option value="">Ninguno (Solo histórico)</option>
+            <option value="1">Mes 1</option>
+            <option value="2">Mes 2</option>
+            <option value="3">Mes 3</option>
+            <option value="4">Mes 4</option>
+            <option value="5">Mes 5</option>
+            <option value="6">Mes 6</option>
+            <option value="7">Mes 7</option>
+            <option value="8">Mes 8</option>
+            <option value="9">Mes 9</option>
+            <option value="10">Mes 10</option>
+            <option value="11">Mes 11</option>
+            <option value="12">Mes 12</option>
+          </select>
+        </div>
         <div class="form-group"><label>Peso Actual (kg) *</label><input type="number" id="p-peso" step="0.1" placeholder="70.5" required /></div>
+        <div class="form-group"><label>% Grasa Corporal</label><input type="number" id="p-grasa-pct" step="0.1" placeholder="18" min="2" max="60" /></div>
       </div>
       <div class="form-section-title">Medidas Corporales (cm)</div>
       <div class="form-grid">
@@ -105,11 +124,66 @@
     if (!uid) { container.innerHTML = `<div class="empty-state"><span class="empty-icon">📊</span><h3>Selecciona un cliente</h3><p>Elige un cliente para ver su historial</p></div>`; return; }
     const u = DB.usuarios.find(x=>x.id===uid);
     const progresos = DB.progresos.filter(p=>p.usuarioId===uid).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+    
     const pesoActual = progresos[0]?.peso || u?.peso || 0;
     const diff = u?.peso ? (pesoActual - u.peso).toFixed(1) : 0;
     const b = bmi(pesoActual, u?.estatura);
 
-    let html = `<div class="progreso-header-info">
+    // Group progress by month column
+    const mesMap = {};
+    const monthlyLogs = DB.progresos.filter(p => p.usuarioId === uid && p.mes).sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+    monthlyLogs.forEach(p => {
+      mesMap[p.mes] = p;
+    });
+
+    const matrixRows = [
+      { label: 'Peso (kg)', field: 'peso', unit: ' kg', decreaseIsGood: true },
+      { label: 'Pecho (cm)', field: 'pecho', unit: ' cm', decreaseIsGood: false },
+      { label: 'Cintura (cm)', field: 'cintura', unit: ' cm', decreaseIsGood: true },
+      { label: 'Cadera (cm)', field: 'cadera', unit: ' cm', decreaseIsGood: true },
+      { label: 'Brazo Izq. (cm)', field: 'brazoIzq', unit: ' cm', decreaseIsGood: false },
+      { label: 'Brazo Der. (cm)', field: 'brazoDer', unit: ' cm', decreaseIsGood: false },
+      { label: 'Muslo Izq. (cm)', field: 'musloIzq', unit: ' cm', decreaseIsGood: false },
+      { label: 'Muslo Der. (cm)', field: 'musloDer', unit: ' cm', decreaseIsGood: false },
+      { label: 'Pantorrilla (cm)', field: 'pantorrilla', unit: ' cm', decreaseIsGood: false },
+      { label: '% Grasa Corporal', field: 'grasaPct', unit: '%', decreaseIsGood: true }
+    ];
+
+    const isBulking = u.objetivo === 'Ganar músculo';
+    if (isBulking) {
+      matrixRows.forEach(row => {
+        if (['peso', 'pecho', 'brazoIzq', 'brazoDer', 'musloIzq', 'musloDer', 'pantorrilla'].includes(row.field)) {
+          row.decreaseIsGood = false;
+        }
+      });
+    }
+
+    // Print Header
+    let printHeaderHtml = `
+      <div class="print-only-header">
+        <div class="print-header-grid">
+          <div>
+            <div class="print-title">ROMEO PERSONAL TRAINER</div>
+            <div style="font-size:12px;color:#999">High Performance Fitness · Ficha de Evolución</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:700">Ficha Mensual</div>
+            <div style="font-size:11px;color:#999">Fecha Impresión: ${new Date().toLocaleDateString('es-ES')}</div>
+          </div>
+        </div>
+        <div class="print-client-info">
+          <div><strong>Cliente:</strong> ${u.nombre}</div>
+          <div><strong>Objetivo:</strong> ${u.objetivo}</div>
+          <div><strong>Nivel:</strong> ${u.nivel}</div>
+          <div><strong>Edad:</strong> ${u.edad} años</div>
+          <div><strong>Estatura:</strong> ${u.estatura} cm</div>
+          <div><strong>Entrenador:</strong> Romeo PT</div>
+        </div>
+      </div>
+    `;
+
+    // KPI Metrics row
+    let html = printHeaderHtml + `<div class="progreso-header-info">
       <div class="pi-item"><div class="pi-val" style="background:var(--grad-main);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${u?.nombre?.split(' ').slice(0,2).join(' ')||'—'}</div><div class="pi-lbl">Cliente</div></div>
       <div class="pi-item"><div class="pi-val" style="color:var(--blue)">${u?.peso||'—'} kg</div><div class="pi-lbl">Peso Inicial</div></div>
       <div class="pi-item"><div class="pi-val" style="color:var(--pink)">${pesoActual} kg</div><div class="pi-lbl">Peso Actual</div></div>
@@ -117,74 +191,287 @@
       <div class="pi-item"><div class="pi-val">${b}</div><div class="pi-lbl">IMC Actual</div></div>
     </div>`;
 
-    if (!progresos.length) {
-      html += `<div class="empty-state"><span class="empty-icon">📈</span><h3>Sin mediciones</h3><p>Registra la primera medición de este cliente.</p><button class="btn-primary" onclick="abrirModalMedicion()">Primera Medición</button></div>`;
-      container.innerHTML = html; return;
+    // 12-Month Table
+    let tableHeaders = `<tr><th class="col-medida">Medida</th><th>Inicial</th>`;
+    for (let m = 1; m <= 12; m++) {
+      tableHeaders += `<th>Mes ${m}</th>`;
+    }
+    tableHeaders += `<th style="text-align:right; border-left: 2px solid var(--border)">Avance</th></tr>`;
+
+    let tableRows = '';
+    matrixRows.forEach(row => {
+      const initVal = u[row.field] !== undefined ? u[row.field] : null;
+      let rowHtml = `<tr><td class="col-medida"><strong>${row.label}</strong></td><td class="col-mes">${initVal !== null ? initVal : '—'}</td>`;
+      
+      let lastVal = initVal;
+      for (let m = 1; m <= 12; m++) {
+        const val = mesMap[m] ? mesMap[m][row.field] : null;
+        rowHtml += `<td class="col-mes">${val !== null ? val : '—'}</td>`;
+        if (val !== null) lastVal = val;
+      }
+
+      // Calculate Avance
+      let avanceStr = '—';
+      let avanceStyle = 'color: var(--text-secondary);';
+      if (initVal !== null && lastVal !== null && initVal > 0) {
+        const d = lastVal - initVal;
+        const pct = (d / initVal) * 100;
+        
+        let good = row.decreaseIsGood ? d < 0 : d > 0;
+        let c = 'var(--text-secondary)';
+        if (d !== 0) {
+          c = good ? 'var(--green)' : 'var(--orange)';
+        }
+        
+        avanceStr = `${d > 0 ? '+' : ''}${d.toFixed(1)}${row.unit} (${pct > 0 ? '+' : ''}${pct.toFixed(1)}%)`;
+        avanceStyle = `color:${c}; font-weight:800;`;
+      }
+
+      rowHtml += `<td class="col-avance" style="${avanceStyle}; border-left: 2px solid var(--border)">${avanceStr}</td></tr>`;
+      tableRows += rowHtml;
+    });
+
+    // Add Observaciones row
+    let obsRow = `<tr class="row-obs"><td class="col-medida"><strong>Observaciones</strong></td><td style="font-size:10px; max-width:120px; word-wrap:break-word;">${u.obs || '—'}</td>`;
+    for (let m = 1; m <= 12; m++) {
+      const note = mesMap[m] ? (mesMap[m].notes || mesMap[m].notas) : null;
+      obsRow += `<td style="font-size:10px; text-align:center; max-width:80px; word-wrap:break-word;">${note || '—'}</td>`;
+    }
+    obsRow += `<td style="border-left: 2px solid var(--border)"></td></tr>`;
+    tableRows += obsRow;
+
+    html += `
+      <div class="matrix-section-title">📊 Balance de Marcos y Avance por Mes</div>
+      <div class="matrix-table-container">
+        <table class="matrix-table">
+          <thead>${tableHeaders}</thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+    `;
+
+    // Weight evolution points
+    let weightPoints = [];
+    if (u.peso) weightPoints.push({ x: 0, y: u.peso, label: 'Ini' });
+    for (let m = 1; m <= 12; m++) {
+      if (mesMap[m] && mesMap[m].peso) {
+        weightPoints.push({ x: m, y: mesMap[m].peso, label: `M${m}` });
+      }
     }
 
-    // Weight Chart SVG
-    const data = progresos.slice().reverse();
-    const weights = data.map(p=>p.peso);
-    const minW = Math.min(...weights)-2, maxW = Math.max(...weights)+2;
-    const W = 600, H = 200, pad = { t:20, r:20, b:36, l:48 };
-    const sx = i => pad.l + (i/(data.length-1||1))*(W-pad.l-pad.r);
-    const sy = v => H-pad.b-((v-minW)/(maxW-minW))*(H-pad.t-pad.b);
-    let chartHtml = '';
-    if (data.length >= 2) {
-      const pts = data.map((p,i)=>`${sx(i)},${sy(p.peso)}`).join(' ');
-      const area = `${sx(0)},${H-pad.b} ${pts} ${sx(data.length-1)},${H-pad.b}`;
-      const grid = [0.25,0.5,0.75,1].map(f=>{const y=pad.t+f*(H-pad.t-pad.b);const v=(maxW-f*(maxW-minW)).toFixed(1);return `<line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="rgba(255,255,255,0.04)" stroke-dasharray="3,3"/><text x="${pad.l-5}" y="${y+4}" text-anchor="end" fill="#444" font-size="9" font-family="Sora">${v}</text>`;}).join('');
-      const labels = data.map((p,i)=>{const d=new Date(p.fecha+'T00:00:00');return `<text x="${sx(i)}" y="${H-8}" text-anchor="middle" fill="#555" font-size="9" font-family="Sora">${d.getDate()}/${d.getMonth()+1}</text>`;}).join('');
-      const dots = data.map((p,i)=>`<circle cx="${sx(i)}" cy="${sy(p.peso)}" r="5" fill="url(#pcg)" stroke="#131313" stroke-width="2"/><text x="${sx(i)}" y="${sy(p.peso)-10}" text-anchor="middle" fill="#fff" font-size="9" font-family="Sora" font-weight="700">${p.peso}</text>`).join('');
-      chartHtml = `<div class="card" style="margin-bottom:16px">
-        <div class="card-header"><h2>📈 Evolución del Peso</h2></div>
-        <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">
-          <defs>
-            <linearGradient id="pcg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF3CAC"/><stop offset="100%" stop-color="#2B86C5"/></linearGradient>
-            <linearGradient id="pag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF3CAC" stop-opacity=".25"/><stop offset="100%" stop-color="#FF3CAC" stop-opacity="0"/></linearGradient>
-          </defs>
-          ${grid}
-          <polygon points="${area}" fill="url(#pag)"/>
-          <polyline points="${pts}" fill="none" stroke="url(#pcg)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-          ${labels}${dots}
-        </svg>
-      </div>`;
-    }
+    let weightSvgHtml = 'No hay suficientes datos de peso para graficar.';
+    if (weightPoints.length >= 1) {
+      const W = 600, H = 220, pad = { t: 30, r: 25, b: 40, l: 50 };
+      const yValues = weightPoints.map(p => p.y);
+      const minW = Math.min(...yValues) - 2;
+      const maxW = Math.max(...yValues) + 2;
+      const range = maxW - minW || 1;
 
-    // Comparison
-    const primero = progresos[progresos.length-1], ultimo = progresos[0];
-    let compHtml = '';
-    if (primero && primero !== ultimo) {
-      const rows = [['Peso (kg)',primero.peso,ultimo.peso],['Pecho (cm)',primero.pecho||u?.pecho,ultimo.pecho],['Cintura (cm)',primero.cintura||u?.cintura,ultimo.cintura],['Cadera (cm)',primero.cadera||u?.cadera,ultimo.cadera]].filter(r=>r[1]&&r[2]);
-      if (rows.length) compHtml = `<div class="card" style="margin-bottom:16px">
-        <div class="card-header"><h2>📐 Comparativa Inicial vs Actual</h2></div>
-        <table class="ejercicios-table"><thead><tr><th>Medida</th><th>Inicio (${formatDate(primero.fecha)})</th><th>Ahora (${formatDate(ultimo.fecha)})</th><th>Diferencia</th></tr></thead><tbody>
-          ${rows.map(([l,ini,fin])=>{const d=(fin-ini).toFixed(1);const good=l.includes('Peso')||l.includes('Cintura')?parseFloat(d)<=0:parseFloat(d)>=0;const c=parseFloat(d)===0?'var(--text-muted)':(good?'var(--green)':'var(--orange)');return `<tr><td><strong>${l}</strong></td><td>${ini}</td><td><strong>${fin}</strong></td><td style="color:${c};font-weight:800">${parseFloat(d)>0?'+':''}${d}</td></tr>`;}).join('')}
-        </tbody></table>
-      </div>`;
-    }
+      const sx = idx => pad.l + (weightPoints[idx].x / 12) * (W - pad.l - pad.r);
+      const sy = val => H - pad.b - ((val - minW) / range) * (H - pad.t - pad.b);
 
-    // History
-    const histHtml = progresos.map((p,i)=>{
-      const prev = progresos[i+1];
-      const pd = prev?(p.peso-prev.peso).toFixed(1):null;
-      const medidas = [['Pecho',p.pecho],['Cintura',p.cintura],['Cadera',p.cadera],['B.Izq',p.brazoIzq],['B.Der',p.brazoDer],['M.Izq',p.musloIzq],['M.Der',p.musloDer],['Pant.',p.pantorrilla]].filter(([,v])=>v);
-      return `<div class="progreso-item">
-        <div class="progreso-item-header">
-          <div><div class="progreso-fecha">📅 ${formatDate(p.fecha)}</div>${p.notas?`<div style="font-size:11px;color:var(--text-muted);margin-top:2px">${p.notas}</div>`:''}</div>
-          <div style="display:flex;align-items:center;gap:10px">
-            ${pd!==null?`<span class="peso-diff ${parseFloat(pd)<=0?'pos':'neg'}">${parseFloat(pd)>0?'+':''}${pd}kg</span>`:''}
-            <div class="progreso-peso">${p.peso} kg</div>
-            <button class="btn-ghost btn-danger" onclick="eliminarMedicion('${p.id}')" style="padding:5px 8px">✕</button>
-          </div>
+      const pts = weightPoints.map((p, i) => `${sx(i)},${sy(p.y)}`).join(' ');
+      const areaPoints = `${sx(0)},${H-pad.b} ${pts} ${sx(weightPoints.length-1)},${H-pad.b}`;
+
+      const gridLines = [0, 0.25, 0.5, 0.75, 1].map(f => {
+        const y = pad.t + f * (H - pad.t - pad.b);
+        const val = (maxW - f * range).toFixed(1);
+        return `<line x1="${pad.l}" y1="${y}" x2="${W - pad.r}" y2="${y}" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3,3"/><text x="${pad.l - 8}" y="${y + 4}" text-anchor="end" fill="#777" font-size="9" font-family="Sora">${val} kg</text>`;
+      }).join('');
+
+      const monthGridLines = Array.from({length: 13}, (_, i) => {
+        const x = pad.l + (i / 12) * (W - pad.l - pad.r);
+        const label = i === 0 ? 'Ini' : `M${i}`;
+        return `<line x1="${x}" y1="${pad.t}" x2="${x}" y2="${H - pad.b}" stroke="rgba(255,255,255,0.02)"/><text x="${x}" y="${H - 10}" text-anchor="middle" fill="#777" font-size="9" font-family="Sora">${label}</text>`;
+      }).join('');
+
+      const dotElements = weightPoints.map((p, i) => `<circle cx="${sx(i)}" cy="${sy(p.y)}" r="4.5" fill="url(#pcg)" stroke="#1c1c1c" stroke-width="2"/><text x="${sx(i)}" y="${sy(p.y) - 8}" text-anchor="middle" fill="#fff" font-size="9" font-family="Sora" font-weight="700">${p.y}</text>`).join('');
+
+      weightSvgHtml = `
+        <div class="card">
+          <div class="card-header"><h2>📈 Cambio de Peso (kg)</h2></div>
+          <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;background:var(--bg-card);padding:10px 0;">
+            <defs>
+              <linearGradient id="pcg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF3CAC"/><stop offset="100%" stop-color="#2B86C5"/></linearGradient>
+              <linearGradient id="pag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF3CAC" stop-opacity=".15"/><stop offset="100%" stop-color="#FF3CAC" stop-opacity="0"/></linearGradient>
+            </defs>
+            ${gridLines}
+            ${monthGridLines}
+            <polygon points="${areaPoints}" fill="url(#pag)"/>
+            <polyline points="${pts}" fill="none" stroke="url(#pcg)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+            ${dotElements}
+          </svg>
         </div>
-        ${medidas.length?`<div class="medidas-mini">${medidas.map(([l,v])=>`<div class="medida-chip"><div class="val">${v} cm</div><div class="lbl">${l}</div></div>`).join('')}</div>`:''}
-      </div>`;
-    }).join('');
+      `;
+    }
 
-    // Photos Comparison
+    // Comparison measures chart
+    const measurements = [
+      { label: 'Cintura', field: 'cintura', color: '#FF3CAC' },
+      { label: 'Pecho', field: 'pecho', color: '#2B86C5' },
+      { label: 'Cadera', field: 'cadera', color: '#00E5A0' },
+      { label: 'Muslo', field: 'musloDer', color: '#FF7043' }
+    ];
+
+    let measuresPoints = { cintura: [], pecho: [], cadera: [], musloDer: [] };
+    measurements.forEach(m => {
+      if (u[m.field]) {
+        measuresPoints[m.field].push({ x: 0, y: u[m.field] });
+      }
+    });
+
+    for (let month = 1; month <= 12; month++) {
+      if (mesMap[month]) {
+        measurements.forEach(m => {
+          if (mesMap[month][m.field]) {
+            measuresPoints[m.field].push({ x: month, y: mesMap[month][m.field] });
+          }
+        });
+      }
+    }
+
+    let measuresSvgHtml = 'No hay suficientes medidas para graficar la evolución.';
+    if (measurements.some(m => measuresPoints[m.field].length >= 1)) {
+      const W = 600, H = 220, pad = { t: 30, r: 25, b: 40, l: 50 };
+      
+      let allY = [];
+      measurements.forEach(m => {
+        measuresPoints[m.field].forEach(p => allY.push(p.y));
+      });
+      const minVal = Math.max(0, Math.min(...allY) - 5);
+      const maxVal = Math.max(...allY) + 5;
+      const rangeVal = maxVal - minVal || 1;
+
+      const sx = monthVal => pad.l + (monthVal / 12) * (W - pad.l - pad.r);
+      const sy = val => H - pad.b - ((val - minVal) / rangeVal) * (H - pad.t - pad.b);
+
+      const gridLines = [0, 0.25, 0.5, 0.75, 1].map(f => {
+        const y = pad.t + f * (H - pad.t - pad.b);
+        const val = (maxVal - f * rangeVal).toFixed(0);
+        return `<line x1="${pad.l}" y1="${y}" x2="${W - pad.r}" y2="${y}" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3,3"/><text x="${pad.l - 8}" y="${y + 4}" text-anchor="end" fill="#777" font-size="9" font-family="Sora">${val} cm</text>`;
+      }).join('');
+
+      const monthGridLines = Array.from({length: 13}, (_, i) => {
+        const x = pad.l + (i / 12) * (W - pad.l - pad.r);
+        const label = i === 0 ? 'Ini' : `M${i}`;
+        return `<line x1="${x}" y1="${pad.t}" x2="${x}" y2="${H - pad.b}" stroke="rgba(255,255,255,0.02)"/><text x="${x}" y="${H - 10}" text-anchor="middle" fill="#777" font-size="9" font-family="Sora">${label}</text>`;
+      }).join('');
+
+      let pathsHtml = '';
+      let dotsHtml = '';
+      measurements.forEach(m => {
+        const ptsList = measuresPoints[m.field];
+        if (ptsList.length >= 1) {
+          const pts = ptsList.map(p => `${sx(p.x)},${sy(p.y)}`).join(' ');
+          pathsHtml += `<polyline points="${pts}" fill="none" stroke="${m.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+          dotsHtml += ptsList.map(p => `<circle cx="${sx(p.x)}" cy="${sy(p.y)}" r="3" fill="${m.color}" stroke="#1c1c1c" stroke-width="1"/><text x="${sx(p.x)}" y="${sy(p.y) - 6}" text-anchor="middle" fill="${m.color}" font-size="7.5" font-weight="700" font-family="Sora">${p.y}</text>`).join('');
+        }
+      });
+
+      measuresSvgHtml = `
+        <div class="card">
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <h2>📐 Comparativo de Medidas (cm)</h2>
+            <div style="display:flex; gap:10px; font-size:10px;">
+              ${measurements.map(m => `<span style="color:${m.color}">● ${m.label}</span>`).join('')}
+            </div>
+          </div>
+          <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;background:var(--bg-card);padding:10px 0;">
+            ${gridLines}
+            ${monthGridLines}
+            ${pathsHtml}
+            ${dotsHtml}
+          </svg>
+        </div>
+      `;
+    }
+
+    html += `
+      <div class="evolution-charts-grid">
+        ${weightSvgHtml}
+        ${measuresSvgHtml}
+      </div>
+    `;
+
+    // Silhouettes
+    let latestMeasures = {
+      pecho: u.pecho,
+      cintura: u.cintura,
+      cadera: u.cadera,
+      brazoIzq: u.brazoIzq,
+      brazoDer: u.brazoDer,
+      musloIzq: u.musloIzq,
+      musloDer: u.musloDer,
+      pantorrilla: u.pantorrilla
+    };
+    
+    for (let month = 12; month >= 1; month--) {
+      if (mesMap[month]) {
+        Object.keys(latestMeasures).forEach(k => {
+          if (mesMap[month][k] !== null && mesMap[month][k] !== undefined) {
+            latestMeasures[k] = mesMap[month][k];
+          }
+        });
+      }
+    }
+
+    const isFemale = u.genero === 'Femenino';
+    const silhouettePath = isFemale ? 
+      'M50,16 C53,16 56,19 56,22 C56,25 53,28 50,28 C47,28 44,25 44,22 C44,19 47,16 50,16 Z M48,28 L52,28 L53,33 L47,33 Z M35,37 L45,33 L55,33 L65,37 C68,38 70,41 70,44 L67,82 C67,84 65,86 63,86 C61,86 59,84 59,82 L61,46 L57,46 C57,56 59,68 59,76 C59,86 55,94 55,102 L55,205 C55,208 53,210 50,210 C47,210 45,208 45,205 L45,135 L55,135 L45,135 L45,205 L45,102 C45,94 41,86 41,76 C41,68 43,56 43,46 L39,46 L41,82 C41,84 39,86 37,86 C35,86 33,84 33,82 L30,44 C30,41 32,38 35,37 Z' :
+      'M50,15 C54,15 57,18 57,22 C57,26 54,29 50,29 C46,29 43,26 43,22 C43,18 46,15 50,15 Z M47,29 L53,29 L54,34 L46,34 Z M32,38 L44,34 L56,34 L68,38 C72,39 74,42 74,45 L71,85 C71,87 69,89 67,89 C65,89 63,87 63,85 L65,48 L59,48 L60,95 C60,105 58,115 58,125 L58,205 C58,208 56,210 53,210 C50,210 49,207 49,205 L49,135 L51,135 L51,125 C51,115 40,115 40,125 L40,205 C40,208 38,210 35,210 C32,210 31,207 31,205 L31,125 C31,115 40,105 40,95 L41,48 L35,48 L37,85 C37,87 35,89 33,89 C31,89 29,87 29,85 L26,45 C26,42 28,39 32,38 Z';
+
+    function getSilhouetteBadge(label, val) {
+      return `<div class="sil-indicator-badge"><span>${label}</span>${val ? val + ' cm' : '—'}</div>`;
+    }
+
+    let initialSilhouetteHtml = `
+      <div class="silhouette-box">
+        <div class="silhouette-title-label inicial">Inicial (Antes)</div>
+        <div class="silhouette-wrapper">
+          <svg class="silhouette-svg" viewBox="0 0 100 220"><path d="${silhouettePath}" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+          <div class="sil-indicator sil-pecho left-align">${getSilhouetteBadge('Pecho', u.pecho)}</div>
+          <div class="sil-indicator sil-cintura right-align">${getSilhouetteBadge('Cintura', u.cintura)}</div>
+          <div class="sil-indicator sil-cadera left-align">${getSilhouetteBadge('Cadera', u.cadera)}</div>
+          <div class="sil-indicator sil-brazo-der right-align">${getSilhouetteBadge('B. Der', u.brazoDer)}</div>
+          <div class="sil-indicator sil-brazo-izq left-align">${getSilhouetteBadge('B. Izq', u.brazoIzq)}</div>
+          <div class="sil-indicator sil-muslo-der right-align">${getSilhouetteBadge('M. Der', u.musloDer)}</div>
+          <div class="sil-indicator sil-muslo-izq left-align">${getSilhouetteBadge('M. Izq', u.musloIzq)}</div>
+          <div class="sil-indicator sil-pantorrilla left-align">${getSilhouetteBadge('Pant.', u.pantorrilla)}</div>
+        </div>
+      </div>
+    `;
+
+    let actualSilhouetteHtml = `
+      <div class="silhouette-box">
+        <div class="silhouette-title-label actual">Actual (Evolución)</div>
+        <div class="silhouette-wrapper">
+          <svg class="silhouette-svg" viewBox="0 0 100 220"><path d="${silhouettePath}" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+          <div class="sil-indicator sil-pecho left-align">${getSilhouetteBadge('Pecho', latestMeasures.pecho)}</div>
+          <div class="sil-indicator sil-cintura right-align">${getSilhouetteBadge('Cintura', latestMeasures.cintura)}</div>
+          <div class="sil-indicator sil-cadera left-align">${getSilhouetteBadge('Cadera', latestMeasures.cadera)}</div>
+          <div class="sil-indicator sil-brazo-der right-align">${getSilhouetteBadge('B. Der', latestMeasures.brazoDer)}</div>
+          <div class="sil-indicator sil-brazo-izq left-align">${getSilhouetteBadge('B. Izq', latestMeasures.brazoIzq)}</div>
+          <div class="sil-indicator sil-muslo-der right-align">${getSilhouetteBadge('M. Der', latestMeasures.musloDer)}</div>
+          <div class="sil-indicator sil-muslo-izq left-align">${getSilhouetteBadge('M. Izq', latestMeasures.musloIzq)}</div>
+          <div class="sil-indicator sil-pantorrilla left-align">${getSilhouetteBadge('Pant.', latestMeasures.pantorrilla)}</div>
+        </div>
+      </div>
+    `;
+
+    html += `
+      <div class="matrix-section-title">👤 Evolución Física y Puntos de Medida</div>
+      <div class="silhouettes-section">
+        ${initialSilhouetteHtml}
+        ${actualSilhouetteHtml}
+      </div>
+    `;
+
+    // Photos Evolution
     let photosHtml = `<div class="card" style="margin-bottom:16px">
-      <div class="card-header"><h2>📷 Evolución Visual (Antes y Después)</h2></div>
+      <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <h2>📷 Evolución Visual (Antes y Después)</h2>
+        <button class="btn-primary" onclick="window.print()" style="padding:6px 12px; font-size:11px;">🖨️ Imprimir Ficha</button>
+      </div>
       <div class="before-after-grid" style="margin-top: 0; padding: 0 14px 14px;">
         <!-- Frente -->
         <div class="before-after-card">
@@ -192,25 +479,13 @@
           <div class="ba-photos-container">
             <div class="ba-photo-box">
               <div class="ba-photo-frame" id="prog-iniFrente">
-                ${u.fotoIniFrente ? `
-                  <img src="${u.fotoIniFrente}" />
-                  <button class="photo-remove-btn" onclick="eliminarFotoInicial('${u.id}', 'Frente', event)">✕</button>
-                ` : `
-                  <span class="ba-empty-photo">👤</span>
-                  <div class="ba-upload-btn-overlay" onclick="subirFotoInicial('${u.id}', 'Frente')">📷 Tomar</div>
-                `}
+                ${u.fotoIniFrente ? `<img src="${u.fotoIniFrente}" />` : `<span class="ba-empty-photo">👤</span>`}
               </div>
               <span class="ba-label antes">Antes</span>
             </div>
             <div class="ba-photo-box">
               <div class="ba-photo-frame" id="prog-finFrente">
-                ${u.fotoFinFrente ? `
-                  <img src="${u.fotoFinFrente}" />
-                  <button class="photo-remove-btn" onclick="eliminarFotoFinal('${u.id}', 'Frente', event)">✕</button>
-                ` : `
-                  <span class="ba-empty-photo">👤</span>
-                  <div class="ba-upload-btn-overlay" onclick="subirFotoFinal('${u.id}', 'Frente')">📷 Tomar</div>
-                `}
+                ${u.fotoFinFrente ? `<img src="${u.fotoFinFrente}" />` : `<span class="ba-empty-photo">👤</span>`}
               </div>
               <span class="ba-label despues">Después</span>
             </div>
@@ -223,25 +498,13 @@
           <div class="ba-photos-container">
             <div class="ba-photo-box">
               <div class="ba-photo-frame" id="prog-iniPerfil">
-                ${u.fotoIniPerfil ? `
-                  <img src="${u.fotoIniPerfil}" />
-                  <button class="photo-remove-btn" onclick="eliminarFotoInicial('${u.id}', 'Perfil', event)">✕</button>
-                ` : `
-                  <span class="ba-empty-photo">👤</span>
-                  <div class="ba-upload-btn-overlay" onclick="subirFotoInicial('${u.id}', 'Perfil')">📷 Tomar</div>
-                `}
+                ${u.fotoIniPerfil ? `<img src="${u.fotoIniPerfil}" />` : `<span class="ba-empty-photo">👤</span>`}
               </div>
               <span class="ba-label antes">Antes</span>
             </div>
             <div class="ba-photo-box">
               <div class="ba-photo-frame" id="prog-finPerfil">
-                ${u.fotoFinPerfil ? `
-                  <img src="${u.fotoFinPerfil}" />
-                  <button class="photo-remove-btn" onclick="eliminarFotoFinal('${u.id}', 'Perfil', event)">✕</button>
-                ` : `
-                  <span class="ba-empty-photo">👤</span>
-                  <div class="ba-upload-btn-overlay" onclick="subirFotoFinal('${u.id}', 'Perfil')">📷 Tomar</div>
-                `}
+                ${u.fotoFinPerfil ? `<img src="${u.fotoFinPerfil}" />` : `<span class="ba-empty-photo">👤</span>`}
               </div>
               <span class="ba-label despues">Después</span>
             </div>
@@ -254,25 +517,13 @@
           <div class="ba-photos-container">
             <div class="ba-photo-box">
               <div class="ba-photo-frame" id="prog-iniEspalda">
-                ${u.fotoIniEspalda ? `
-                  <img src="${u.fotoIniEspalda}" />
-                  <button class="photo-remove-btn" onclick="eliminarFotoInicial('${u.id}', 'Espalda', event)">✕</button>
-                ` : `
-                  <span class="ba-empty-photo">👤</span>
-                  <div class="ba-upload-btn-overlay" onclick="subirFotoInicial('${u.id}', 'Espalda')">📷 Tomar</div>
-                `}
+                ${u.fotoIniEspalda ? `<img src="${u.fotoIniEspalda}" />` : `<span class="ba-empty-photo">👤</span>`}
               </div>
               <span class="ba-label antes">Antes</span>
             </div>
             <div class="ba-photo-box">
               <div class="ba-photo-frame" id="prog-finEspalda">
-                ${u.fotoFinEspalda ? `
-                  <img src="${u.fotoFinEspalda}" />
-                  <button class="photo-remove-btn" onclick="eliminarFotoFinal('${u.id}', 'Espalda', event)">✕</button>
-                ` : `
-                  <span class="ba-empty-photo">👤</span>
-                  <div class="ba-upload-btn-overlay" onclick="subirFotoFinal('${u.id}', 'Espalda')">📷 Tomar</div>
-                `}
+                ${u.fotoFinEspalda ? `<img src="${u.fotoFinEspalda}" />` : `<span class="ba-empty-photo">👤</span>`}
               </div>
               <span class="ba-label despues">Después</span>
             </div>
@@ -281,8 +532,38 @@
       </div>
     </div>`;
 
-    html += chartHtml + compHtml + photosHtml + `<h3 style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.8px">📋 Historial</h3><div class="progreso-registros">${histHtml}</div>`;
+    // History and final structure
+    const histHtml = progresos.map((p,i)=>{
+      const prev = progresos[i+1];
+      const pd = prev ? (p.peso-prev.peso).toFixed(1) : null;
+      const medidas = [['Pecho',p.pecho],['Cintura',p.cintura],['Cadera',p.cadera],['B.Izq',p.brazoIzq],['B.Der',p.brazoDer],['M.Izq',p.musloIzq],['M.Der',p.musloDer],['Pant.',p.pantorrilla],['% Grasa',p.grasaPct]].filter(([,v])=>v);
+      const mesLabel = p.mes ? `Mes ${p.mes}` : 'Registro único';
+      return `<div class="progreso-item">
+        <div class="progreso-item-header">
+          <div>
+            <div class="progreso-fecha">📅 ${formatDate(p.fecha)} · <span class="badge badge-purple">${mesLabel}</span></div>
+            ${p.notes || p.notas ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px">	ext${p.notes || p.notas}</div>`:''}
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            ${pd!==null?`<span class="peso-diff ${parseFloat(pd)<=0?'pos':'neg'}">${parseFloat(pd)>0?'+':''}${pd}kg</span>`:''}
+            <div class="progreso-peso">${p.peso} kg</div>
+            <button class="btn-ghost btn-danger" onclick="eliminarMedicion('${p.id}')" style="padding:5px 8px">✕</button>
+          </div>
+        </div>
+        ${medidas.length?`<div class="medidas-mini">${medidas.map(([l,v])=>`<div class="medida-chip"><div class="val">${v}${l==='% Grasa'?'%':' cm'}</div><div class="lbl">${l}</div></div>`).join('')}</div>`:''}
+      </div>`;
+    }).join('');
+
+    html += photosHtml + `<h3 style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.8px">📋 Historial de Registros</h3><div class="progreso-registros">${histHtml}</div>`;
     container.innerHTML = html;
+
+    // Check if printing query is present
+    const isPrint = new URLSearchParams(window.location.search).get('print');
+    if (isPrint) {
+      setTimeout(() => {
+        window.print();
+      }, 1200);
+    }
   }
 
   function abrirModalMedicion() {
@@ -292,6 +573,8 @@
     const u = DB.usuarios.find(x=>x.id===uid);
     const last = DB.progresos.filter(p=>p.usuarioId===uid).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
     document.getElementById('p-peso').value = last?.peso || u?.peso || '';
+    document.getElementById('p-grasa-pct').value = last?.grasaPct || u?.grasaPct || '';
+    document.getElementById('p-mes').value = '';
     ['pecho','cintura','cadera'].forEach(m => { document.getElementById(`p-${m}`).value = last?.[m] || u?.[m] || ''; });
     document.getElementById('p-brazo-izq').value = last?.brazoIzq || u?.brazoIzq || '';
     document.getElementById('p-brazo-der').value = last?.brazoDer || u?.brazoDer || '';
@@ -304,13 +587,27 @@
   function guardarMedicion(e) {
     e.preventDefault();
     const uid = sel.value;
-    const m = { id:genId(), usuarioId:uid, fecha:document.getElementById('p-fecha').value, peso:parseFloat(document.getElementById('p-peso').value), pecho:parseFloat(document.getElementById('p-pecho').value)||null, cintura:parseFloat(document.getElementById('p-cintura').value)||null, cadera:parseFloat(document.getElementById('p-cadera').value)||null, brazoIzq:parseFloat(document.getElementById('p-brazo-izq').value)||null, brazoDer:parseFloat(document.getElementById('p-brazo-der').value)||null, musloIzq:parseFloat(document.getElementById('p-muslo-izq').value)||null, musloDer:parseFloat(document.getElementById('p-muslo-der').value)||null, pantorrilla:parseFloat(document.getElementById('p-pantorrilla').value)||null, notas:document.getElementById('p-notas').value.trim() };
+    const m = {
+      id: genId(),
+      usuarioId: uid,
+      fecha: document.getElementById('p-fecha').value,
+      mes: parseInt(document.getElementById('p-mes').value) || null,
+      peso: parseFloat(document.getElementById('p-peso').value),
+      pecho: parseFloat(document.getElementById('p-pecho').value) || null,
+      cintura: parseFloat(document.getElementById('p-cintura').value) || null,
+      cadera: parseFloat(document.getElementById('p-cadera').value) || null,
+      brazoIzq: parseFloat(document.getElementById('p-brazo-izq').value) || null,
+      brazoDer: parseFloat(document.getElementById('p-brazo-der').value) || null,
+      musloIzq: parseFloat(document.getElementById('p-muslo-izq').value) || null,
+      musloDer: parseFloat(document.getElementById('p-muslo-der').value) || null,
+      pantorrilla: parseFloat(document.getElementById('p-pantorrilla').value) || null,
+      grasaPct: parseFloat(document.getElementById('p-grasa-pct').value) || null,
+      notas: document.getElementById('p-notas').value.trim()
+    };
     DB.progresos.push(m);
     saveDB(); closeModal('modal-medicion'); renderProgreso(uid);
     showToast('✅ Medición guardada correctamente');
-  }
-
-  function eliminarMedicion(id) {
+  }  function eliminarMedicion(id) {
     if (!confirm('¿Eliminar esta medición?')) return;
     DB.progresos = DB.progresos.filter(p=>p.id!==id);
     saveDB(); renderProgreso(sel.value); showToast('🗑️ Medición eliminada', 'error');
