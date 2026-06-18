@@ -90,6 +90,55 @@
         <div class="form-group"><label>Nivel de Experiencia</label><select id="u-nivel"><option>Principiante</option><option>Intermedio</option><option>Avanzado</option></select></div>
         <div class="form-group full"><label>Observaciones / Lesiones</label><textarea id="u-obs" placeholder="Lesiones previas, restricciones, notas..." rows="3"></textarea></div>
       </div>
+      
+      <div class="form-section-title">Fotos Iniciales (Antes)</div>
+      <div class="photo-upload-grid">
+        <!-- Frente -->
+        <div class="photo-upload-card">
+          <div class="photo-label">Frente</div>
+          <div class="photo-preview-box" id="preview-box-iniFrente">
+            <svg class="ph-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <span>Sin Foto</span>
+          </div>
+          <input type="hidden" id="u-fotoIniFrente" />
+          <input type="file" id="file-iniFrente" accept="image/*" style="display:none" onchange="handlePhotoUpload(this, 'iniFrente')" />
+          <div class="photo-actions-btn">
+            <button type="button" class="photo-btn" onclick="document.getElementById('file-iniFrente').click()">📁 Subir</button>
+            <button type="button" class="photo-btn" onclick="triggerWebcam('iniFrente')">📸 Cámara</button>
+          </div>
+        </div>
+
+        <!-- Perfil -->
+        <div class="photo-upload-card">
+          <div class="photo-label">Perfil</div>
+          <div class="photo-preview-box" id="preview-box-iniPerfil">
+            <svg class="ph-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <span>Sin Foto</span>
+          </div>
+          <input type="hidden" id="u-fotoIniPerfil" />
+          <input type="file" id="file-iniPerfil" accept="image/*" style="display:none" onchange="handlePhotoUpload(this, 'iniPerfil')" />
+          <div class="photo-actions-btn">
+            <button type="button" class="photo-btn" onclick="document.getElementById('file-iniPerfil').click()">📁 Subir</button>
+            <button type="button" class="photo-btn" onclick="triggerWebcam('iniPerfil')">📸 Cámara</button>
+          </div>
+        </div>
+
+        <!-- Espalda -->
+        <div class="photo-upload-card">
+          <div class="photo-label">Espalda</div>
+          <div class="photo-preview-box" id="preview-box-iniEspalda">
+            <svg class="ph-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <span>Sin Foto</span>
+          </div>
+          <input type="hidden" id="u-fotoIniEspalda" />
+          <input type="file" id="file-iniEspalda" accept="image/*" style="display:none" onchange="handlePhotoUpload(this, 'iniEspalda')" />
+          <div class="photo-actions-btn">
+            <button type="button" class="photo-btn" onclick="document.getElementById('file-iniEspalda').click()">📁 Subir</button>
+            <button type="button" class="photo-btn" onclick="triggerWebcam('iniEspalda')">📸 Cámara</button>
+          </div>
+        </div>
+      </div>
+
       <div class="modal-footer">
         <button type="button" class="btn-secondary" onclick="closeModal('modal-usuario')">Cancelar</button>
         <button type="submit" class="btn-primary">Guardar Cliente</button>
@@ -226,10 +275,20 @@
     }).join('');
   }
 
+
   function abrirModal(uid = null) {
     document.getElementById('form-usuario').reset();
     document.getElementById('uid').value = '';
     document.getElementById('modal-title').textContent = 'Nuevo Cliente';
+    
+    // Limpiar campos y previsualizaciones de fotos
+    document.getElementById('u-fotoIniFrente').value = '';
+    document.getElementById('u-fotoIniPerfil').value = '';
+    document.getElementById('u-fotoIniEspalda').value = '';
+    updatePhotoPreview('iniFrente', '');
+    updatePhotoPreview('iniPerfil', '');
+    updatePhotoPreview('iniEspalda', '');
+
     if (uid) {
       const u = DB.usuarios.find(x => x.id === uid);
       if (!u) return;
@@ -254,6 +313,14 @@
       document.getElementById('u-objetivo').value = u.objetivo;
       document.getElementById('u-nivel').value = u.nivel;
       document.getElementById('u-obs').value = u.obs || '';
+
+      // Cargar fotos existentes
+      document.getElementById('u-fotoIniFrente').value = u.fotoIniFrente || '';
+      document.getElementById('u-fotoIniPerfil').value = u.fotoIniPerfil || '';
+      document.getElementById('u-fotoIniEspalda').value = u.fotoIniEspalda || '';
+      updatePhotoPreview('iniFrente', u.fotoIniFrente || '');
+      updatePhotoPreview('iniPerfil', u.fotoIniPerfil || '');
+      updatePhotoPreview('iniEspalda', u.fotoIniEspalda || '');
     }
     openModal('modal-usuario');
   }
@@ -273,6 +340,12 @@
       musloDer: parseFloat(document.getElementById('u-muslo-der').value) || null, pantorrilla: parseFloat(document.getElementById('u-pantorrilla').value) || null,
       objetivo: document.getElementById('u-objetivo').value, nivel: document.getElementById('u-nivel').value,
       obs: document.getElementById('u-obs').value.trim(),
+      fotoIniFrente: document.getElementById('u-fotoIniFrente').value || null,
+      fotoIniPerfil: document.getElementById('u-fotoIniPerfil').value || null,
+      fotoIniEspalda: document.getElementById('u-fotoIniEspalda').value || null,
+      fotoFinFrente: id ? (DB.usuarios.find(x=>x.id===id)?.fotoFinFrente || null) : null,
+      fotoFinPerfil: id ? (DB.usuarios.find(x=>x.id===id)?.fotoFinPerfil || null) : null,
+      fotoFinEspalda: id ? (DB.usuarios.find(x=>x.id===id)?.fotoFinEspalda || null) : null,
       creado: id ? (DB.usuarios.find(x=>x.id===id)?.creado || new Date().toISOString()) : new Date().toISOString(),
     };
     if (id) { const i = DB.usuarios.findIndex(x=>x.id===id); if(i>=0) DB.usuarios[i]=u; }
@@ -326,7 +399,86 @@
             .map(([l,v])=>`<div class="medida-card"><div class="val">${v?v+' cm':'—'}</div><div class="lbl">${l}</div></div>`).join('')}
         </div>
         ${u.obs?`<div class="perfil-obs" style="margin-top:16px"><strong style="color:var(--pink)">📝 Observaciones:</strong><br>${u.obs}</div>`:''}
-        <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap">
+        
+        <div class="form-section-title" style="margin-top:20px">Evolución Visual (Antes y Después)</div>
+        <div class="before-after-grid">
+          <!-- Frente -->
+          <div class="before-after-card">
+            <h3>Frente</h3>
+            <div class="ba-photos-container">
+              <div class="ba-photo-box">
+                <div class="ba-photo-frame">
+                  ${u.fotoIniFrente ? `<img src="${u.fotoIniFrente}" />` : `<span class="ba-empty-photo">👤</span>`}
+                </div>
+                <span class="ba-label antes">Antes</span>
+              </div>
+              <div class="ba-photo-box">
+                <div class="ba-photo-frame" id="frame-finFrente">
+                  ${u.fotoFinFrente ? `
+                    <img src="${u.fotoFinFrente}" />
+                    <button class="photo-remove-btn" onclick="eliminarFotoFinal('${u.id}', 'Frente', event)">✕</button>
+                  ` : `
+                    <span class="ba-empty-photo">👤</span>
+                    <div class="ba-upload-btn-overlay" onclick="subirFotoFinal('${u.id}', 'Frente')">📷 Tomar</div>
+                  `}
+                </div>
+                <span class="ba-label despues">Después</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Perfil -->
+          <div class="before-after-card">
+            <h3>Perfil</h3>
+            <div class="ba-photos-container">
+              <div class="ba-photo-box">
+                <div class="ba-photo-frame">
+                  ${u.fotoIniPerfil ? `<img src="${u.fotoIniPerfil}" />` : `<span class="ba-empty-photo">👤</span>`}
+                </div>
+                <span class="ba-label antes">Antes</span>
+              </div>
+              <div class="ba-photo-box">
+                <div class="ba-photo-frame" id="frame-finPerfil">
+                  ${u.fotoFinPerfil ? `
+                    <img src="${u.fotoFinPerfil}" />
+                    <button class="photo-remove-btn" onclick="eliminarFotoFinal('${u.id}', 'Perfil', event)">✕</button>
+                  ` : `
+                    <span class="ba-empty-photo">👤</span>
+                    <div class="ba-upload-btn-overlay" onclick="subirFotoFinal('${u.id}', 'Perfil')">📷 Tomar</div>
+                  `}
+                </div>
+                <span class="ba-label despues">Después</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Espalda -->
+          <div class="before-after-card">
+            <h3>Espalda</h3>
+            <div class="ba-photos-container">
+              <div class="ba-photo-box">
+                <div class="ba-photo-frame">
+                  ${u.fotoIniEspalda ? `<img src="${u.fotoIniEspalda}" />` : `<span class="ba-empty-photo">👤</span>`}
+                </div>
+                <span class="ba-label antes">Antes</span>
+              </div>
+              <div class="ba-photo-box">
+                <div class="ba-photo-frame" id="frame-finEspalda">
+                  ${u.fotoFinEspalda ? `
+                    <img src="${u.fotoFinEspalda}" />
+                    <button class="photo-remove-btn" onclick="eliminarFotoFinal('${u.id}', 'Espalda', event)">✕</button>
+                  ` : `
+                    <span class="ba-empty-photo">👤</span>
+                    <div class="ba-upload-btn-overlay" onclick="subirFotoFinal('${u.id}', 'Espalda')">📷 Tomar</div>
+                  `}
+                </div>
+                <span class="ba-label despues">Después</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:24px;flex-wrap:wrap">
           <button class="btn-primary" onclick="closeModal('modal-perfil');abrirModal('${u.id}')">✏️ Editar</button>
           <a href="rutinas.html?usuario=${u.id}" class="btn-secondary">🏋️ Rutinas</a>
           <a href="progreso.html?usuario=${u.id}" class="btn-secondary">📊 Progreso</a>
@@ -334,6 +486,92 @@
         </div>
       </div>`;
     openModal('modal-perfil');
+  }
+
+  // Métodos de ayuda para el manejo de fotos de progreso
+  function handlePhotoUpload(input, type) {
+    if (input.files && input.files[0]) {
+      compressImage(input.files[0], 400, 533, 0.6, function(dataUrl) {
+        document.getElementById(`u-foto${type.charAt(0).toUpperCase() + type.slice(1)}`).value = dataUrl;
+        updatePhotoPreview(type, dataUrl);
+      });
+    }
+  }
+
+  function triggerWebcam(type) {
+    openWebcamModal(function(dataUrl) {
+      document.getElementById(`u-foto${type.charAt(0).toUpperCase() + type.slice(1)}`).value = dataUrl;
+      updatePhotoPreview(type, dataUrl);
+    });
+  }
+
+  function updatePhotoPreview(type, dataUrl) {
+    const box = document.getElementById(`preview-box-${type}`);
+    if (!box) return;
+    if (dataUrl) {
+      box.innerHTML = `
+        <img src="${dataUrl}" class="photo-preview-img" />
+        <button type="button" class="photo-remove-btn" onclick="removePhoto('${type}')">✕</button>
+      `;
+    } else {
+      box.innerHTML = `
+        <svg class="ph-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span>Sin Foto</span>
+      `;
+    }
+  }
+
+  function removePhoto(type) {
+    const input = document.getElementById(`u-foto${type.charAt(0).toUpperCase() + type.slice(1)}`);
+    if (input) input.value = '';
+    updatePhotoPreview(type, '');
+  }
+
+  function subirFotoFinal(uid, angle) {
+    const u = DB.usuarios.find(x => x.id === uid);
+    if (!u) return;
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+
+    const choice = confirm("¿Quieres usar la cámara web de este computador?\n(Aceptar = Usar cámara web, Cancelar = Buscar archivo de imagen)");
+    if (choice) {
+      openWebcamModal(function(dataUrl) {
+        saveFinalPhoto(uid, angle, dataUrl);
+      });
+    } else {
+      input.onchange = function(e) {
+        if (e.target.files && e.target.files[0]) {
+          compressImage(e.target.files[0], 400, 533, 0.6, function(dataUrl) {
+            saveFinalPhoto(uid, angle, dataUrl);
+          });
+        }
+      };
+      input.click();
+    }
+  }
+
+  function saveFinalPhoto(uid, angle, dataUrl) {
+    const idx = DB.usuarios.findIndex(x => x.id === uid);
+    if (idx < 0) return;
+    const field = `fotoFin${angle}`;
+    DB.usuarios[idx][field] = dataUrl;
+    saveDB();
+    showToast(`✅ Foto de ${angle} ("Después") guardada`);
+    verPerfil(uid);
+  }
+
+  function eliminarFotoFinal(uid, angle, event) {
+    if (event) event.stopPropagation();
+    if (!confirm(`¿Eliminar la foto "Después" de ${angle}?`)) return;
+    const idx = DB.usuarios.findIndex(x => x.id === uid);
+    if (idx < 0) return;
+    const field = `fotoFin${angle}`;
+    DB.usuarios[idx][field] = null;
+    saveDB();
+    showToast(`🗑️ Foto "Después" de ${angle} eliminada`, 'error');
+    verPerfil(uid);
   }
 
   function programarSesion(uid) {

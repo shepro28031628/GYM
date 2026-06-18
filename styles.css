@@ -1334,3 +1334,287 @@ form { padding: 20px 24px; }
   .summary-item { border-right: none; border-bottom: 1px solid var(--border); padding-bottom: 14px; }
   .summary-item:last-child { border-bottom: none; padding-bottom: 0; }
 }
+
+/* ============================================================
+   FOTOS DE PROGRESO (ANTES Y DESPUÉS)
+   ============================================================ */
+.photo-upload-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.photo-upload-card {
+  background: var(--bg-surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px;
+  text-align: center;
+  transition: var(--ease);
+  position: relative;
+}
+
+.photo-upload-card:hover {
+  border-color: var(--pink);
+  background: rgba(255, 60, 172, 0.02);
+}
+
+.photo-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.photo-preview-box {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background: var(--bg-input);
+  border-radius: var(--r-xs);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+  position: relative;
+}
+
+.photo-preview-box svg.ph-placeholder {
+  width: 32px;
+  height: 32px;
+  stroke: var(--text-muted);
+  stroke-width: 1.5;
+  margin-bottom: 8px;
+}
+
+.photo-preview-box span {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.photo-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-actions-btn {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.photo-btn {
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--r-xs);
+  cursor: pointer;
+  transition: var(--ease);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.photo-btn:hover {
+  background: var(--pink);
+  border-color: var(--pink);
+  color: white;
+}
+
+.photo-remove-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(255, 69, 96, 0.9);
+  color: white;
+  border: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: var(--ease);
+}
+
+.photo-remove-btn:hover {
+  transform: scale(1.1);
+  background: var(--red);
+}
+
+/* Modal Webcam Sizing */
+.webcam-modal {
+  max-width: 450px !important;
+}
+
+.webcam-preview-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #000;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+
+#webcam-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.webcam-overlay-guide {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px dashed rgba(0, 229, 160, 0.4);
+  width: 65%;
+  height: 85%;
+  border-radius: 120px / 180px;
+  pointer-events: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 14px;
+  color: rgba(0, 229, 160, 0.7);
+  font-size: 10px;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  letter-spacing: 0.5px;
+}
+
+/* Antes y Después Grid */
+.before-after-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.before-after-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.before-after-card h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.ba-photos-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.ba-photo-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.ba-photo-frame {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background: var(--bg-input);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--ease);
+}
+
+.ba-photo-frame:hover {
+  border-color: rgba(255, 60, 172, 0.4);
+}
+
+.ba-photo-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ba-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.ba-label.antes {
+  background: rgba(43, 134, 197, 0.15);
+  color: var(--blue);
+}
+
+.ba-label.despues {
+  background: rgba(255, 60, 172, 0.15);
+  color: var(--pink);
+}
+
+.ba-empty-photo {
+  font-size: 24px;
+  opacity: 0.15;
+  margin-bottom: 4px;
+}
+
+.ba-upload-btn-overlay {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  right: 6px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 9px;
+  font-weight: 700;
+  text-align: center;
+  padding: 4px 2px;
+  border-radius: var(--r-xs);
+  cursor: pointer;
+  transition: var(--ease);
+}
+
+.ba-upload-btn-overlay:hover {
+  background: var(--pink);
+  color: white;
+  border-color: var(--pink);
+}
+
+@media (max-width: 900px) {
+  .before-after-grid { grid-template-columns: 1fr; gap: 14px; }
+  .photo-upload-grid { grid-template-columns: 1fr; gap: 10px; }
+}
+

@@ -231,5 +231,132 @@ function getQuoteOfDay() {
   return QUOTES[d % QUOTES.length];
 }
 
+// ===================== IMAGE UTILITIES & WEBCAM =====================
+function compressImage(file, maxWidth, maxHeight, quality, callback) {
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = function(e) {
+    const img = new Image();
+    img.src = e.target.result;
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      let w = img.width;
+      let h = img.height;
+      if (w > h) {
+        if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
+      } else {
+        if (h > maxHeight) { w = Math.round((w * maxHeight) / h); h = maxHeight; }
+      }
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/jpeg', quality));
+    };
+  };
+}
+
+let webcamStream = null;
+
+function openWebcamModal(onCapture) {
+  // Remover modal existente si lo hay
+  closeWebcamModal();
+
+  const modal = document.createElement('div');
+  modal.id = 'webcam-modal-container';
+  modal.className = 'modal-overlay active';
+  modal.innerHTML = `
+    <div class="modal webcam-modal">
+      <div class="modal-header">
+        <h2>Tomar Foto</h2>
+        <button class="modal-close" onclick="closeWebcamModal()">✕</button>
+      </div>
+      <div class="webcam-preview-container">
+        <video id="webcam-video" autoplay playsinline></video>
+        <div class="webcam-overlay-guide">Alinea al cliente</div>
+      </div>
+      <div class="modal-footer" style="justify-content: space-between;">
+        <button type="button" class="btn-secondary" id="webcam-switch-btn" style="display:none; padding: 8px 12px; font-size: 13px;">🔄 Girar Cámara</button>
+        <div style="display:flex; gap: 8px; margin-left: auto;">
+          <button type="button" class="btn-secondary" onclick="closeWebcamModal()">Cancelar</button>
+          <button type="button" class="btn-primary" id="webcam-capture-btn">📸 Capturar</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const video = document.getElementById('webcam-video');
+  const captureBtn = document.getElementById('webcam-capture-btn');
+  const switchBtn = document.getElementById('webcam-switch-btn');
+
+  let currentFacingMode = 'environment';
+  let devices = [];
+
+  async function startStream(facingMode) {
+    if (webcamStream) {
+      webcamStream.getTracks().forEach(track => track.stop());
+    }
+    try {
+      const constraints = {
+        video: {
+          facingMode: facingMode,
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        }
+      };
+      webcamStream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = webcamStream;
+    } catch (err) {
+      console.error("Error al iniciar webcam, reintentando con valores por defecto...", err);
+      try {
+        webcamStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = webcamStream;
+      } catch (err2) {
+        showToast("No se pudo acceder a la cámara", "error");
+        closeWebcamModal();
+      }
+    }
+  }
+
+  // Detectar múltiples cámaras
+  if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+    navigator.mediaDevices.enumerateDevices().then(devs => {
+      devices = devs.filter(d => d.kind === 'videoinput');
+      if (devices.length > 1) {
+        switchBtn.style.display = 'block';
+      }
+    });
+  }
+
+  switchBtn.onclick = () => {
+    currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+    startStream(currentFacingMode);
+  };
+
+  captureBtn.onclick = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.6); // Comprimir en JPEG calidad 0.6
+    onCapture(dataUrl);
+    closeWebcamModal();
+  };
+
+  startStream(currentFacingMode);
+}
+
+function closeWebcamModal() {
+  if (webcamStream) {
+    webcamStream.getTracks().forEach(track => track.stop());
+    webcamStream = null;
+  }
+  const modal = document.getElementById('webcam-modal-container');
+  if (modal) modal.remove();
+}
+
 // Init
 loadDB();
+

@@ -182,7 +182,88 @@
       </div>`;
     }).join('');
 
-    html += chartHtml + compHtml + `<h3 style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.8px">📋 Historial</h3><div class="progreso-registros">${histHtml}</div>`;
+    // Photos Comparison
+    let photosHtml = `<div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h2>📷 Evolución Visual (Antes y Después)</h2></div>
+      <div class="before-after-grid" style="margin-top: 0; padding: 0 14px 14px;">
+        <!-- Frente -->
+        <div class="before-after-card">
+          <h3>Frente</h3>
+          <div class="ba-photos-container">
+            <div class="ba-photo-box">
+              <div class="ba-photo-frame">
+                ${u.fotoIniFrente ? `<img src="${u.fotoIniFrente}" />` : `<span class="ba-empty-photo">👤</span>`}
+              </div>
+              <span class="ba-label antes">Antes</span>
+            </div>
+            <div class="ba-photo-box">
+              <div class="ba-photo-frame" id="prog-finFrente">
+                ${u.fotoFinFrente ? `
+                  <img src="${u.fotoFinFrente}" />
+                  <button class="photo-remove-btn" onclick="eliminarFotoFinal('${u.id}', 'Frente', event)">✕</button>
+                ` : `
+                  <span class="ba-empty-photo">👤</span>
+                  <div class="ba-upload-btn-overlay" onclick="subirFotoFinal('${u.id}', 'Frente')">📷 Tomar</div>
+                `}
+              </div>
+              <span class="ba-label despues">Después</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Perfil -->
+        <div class="before-after-card">
+          <h3>Perfil</h3>
+          <div class="ba-photos-container">
+            <div class="ba-photo-box">
+              <div class="ba-photo-frame">
+                ${u.fotoIniPerfil ? `<img src="${u.fotoIniPerfil}" />` : `<span class="ba-empty-photo">👤</span>`}
+              </div>
+              <span class="ba-label antes">Antes</span>
+            </div>
+            <div class="ba-photo-box">
+              <div class="ba-photo-frame" id="prog-finPerfil">
+                ${u.fotoFinPerfil ? `
+                  <img src="${u.fotoFinPerfil}" />
+                  <button class="photo-remove-btn" onclick="eliminarFotoFinal('${u.id}', 'Perfil', event)">✕</button>
+                ` : `
+                  <span class="ba-empty-photo">👤</span>
+                  <div class="ba-upload-btn-overlay" onclick="subirFotoFinal('${u.id}', 'Perfil')">📷 Tomar</div>
+                `}
+              </div>
+              <span class="ba-label despues">Después</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Espalda -->
+        <div class="before-after-card">
+          <h3>Espalda</h3>
+          <div class="ba-photos-container">
+            <div class="ba-photo-box">
+              <div class="ba-photo-frame">
+                ${u.fotoIniEspalda ? `<img src="${u.fotoIniEspalda}" />` : `<span class="ba-empty-photo">👤</span>`}
+              </div>
+              <span class="ba-label antes">Antes</span>
+            </div>
+            <div class="ba-photo-box">
+              <div class="ba-photo-frame" id="prog-finEspalda">
+                ${u.fotoFinEspalda ? `
+                  <img src="${u.fotoFinEspalda}" />
+                  <button class="photo-remove-btn" onclick="eliminarFotoFinal('${u.id}', 'Espalda', event)">✕</button>
+                ` : `
+                  <span class="ba-empty-photo">👤</span>
+                  <div class="ba-upload-btn-overlay" onclick="subirFotoFinal('${u.id}', 'Espalda')">📷 Tomar</div>
+                `}
+              </div>
+              <span class="ba-label despues">Después</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+    html += chartHtml + compHtml + photosHtml + `<h3 style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.8px">📋 Historial</h3><div class="progreso-registros">${histHtml}</div>`;
     container.innerHTML = html;
   }
 
@@ -215,6 +296,54 @@
     if (!confirm('¿Eliminar esta medición?')) return;
     DB.progresos = DB.progresos.filter(p=>p.id!==id);
     saveDB(); renderProgreso(sel.value); showToast('🗑️ Medición eliminada', 'error');
+  }
+
+  // Métodos de ayuda para fotos
+  function subirFotoFinal(uid, angle) {
+    const u = DB.usuarios.find(x => x.id === uid);
+    if (!u) return;
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+
+    const choice = confirm("¿Quieres usar la cámara web de este computador?\n(Aceptar = Usar cámara web, Cancelar = Buscar archivo de imagen)");
+    if (choice) {
+      openWebcamModal(function(dataUrl) {
+        saveFinalPhoto(uid, angle, dataUrl);
+      });
+    } else {
+      input.onchange = function(e) {
+        if (e.target.files && e.target.files[0]) {
+          compressImage(e.target.files[0], 400, 533, 0.6, function(dataUrl) {
+            saveFinalPhoto(uid, angle, dataUrl);
+          });
+        }
+      };
+      input.click();
+    }
+  }
+
+  function saveFinalPhoto(uid, angle, dataUrl) {
+    const idx = DB.usuarios.findIndex(x => x.id === uid);
+    if (idx < 0) return;
+    const field = `fotoFin${angle}`;
+    DB.usuarios[idx][field] = dataUrl;
+    saveDB();
+    showToast(`✅ Foto de ${angle} ("Después") guardada`);
+    renderProgreso(uid);
+  }
+
+  function eliminarFotoFinal(uid, angle, event) {
+    if (event) event.stopPropagation();
+    if (!confirm(`¿Eliminar la foto "Después" de ${angle}?`)) return;
+    const idx = DB.usuarios.findIndex(x => x.id === uid);
+    if (idx < 0) return;
+    const field = `fotoFin${angle}`;
+    DB.usuarios[idx][field] = null;
+    saveDB();
+    showToast(`🗑️ Foto "Después" de ${angle} eliminada`, 'error');
+    renderProgreso(uid);
   }
 </script>
 </body>
