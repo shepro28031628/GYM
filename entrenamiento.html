@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Romeo Personal Trainer — Entrenamiento en Vivo</title>
+  <meta name="description" content="Vista del cliente: checklist de ejercicios, timer de sesión, volumen total y calorías estimadas." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .timer-display { font-size: 52px; font-weight: 800; letter-spacing: -2px; line-height: 1; font-variant-numeric: tabular-nums; }
+    .rest-banner { display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#1c1c1c; border:1px solid rgba(255,60,172,0.4); border-radius:var(--r); padding:14px 28px; z-index:500; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.7); animation:fadeUp .3s ease; }
+    .rest-countdown { font-size:36px; font-weight:800; background:var(--grad-main); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .session-complete { text-align:center; padding:48px 20px; }
+    .session-complete-icon { font-size:80px; animation:bounce .8s infinite alternate; margin-bottom:16px; }
+    @keyframes bounce { to { transform: translateY(-12px); } }
+    .session-complete h2 { font-size:28px; font-weight:800; background:var(--grad-main); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:10px; }
+  </style>
+</head>
+<body>
+
+<div id="sidebar-container"></div>
+<main class="main-content">
+  <div id="topbar-container"></div>
+  <div class="page-body">
+
+    <!-- Motivational Quote -->
+    <div class="motivational-banner" id="motivational">
+      <div class="motivational-icon">🔥</div>
+      <div>
+        <div class="motivational-quote" id="quote-text"></div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px" id="quote-author"></div>
+      </div>
+    </div>
+
+    <!-- Session Setup (shown when no session active) -->
+    <div id="setup-section">
+      <div class="toolbar">
+        <div class="select-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          <select id="sel-usuario" onchange="onUsuarioChange()">
+            <option value="">— Seleccionar Cliente —</option>
+          </select>
+        </div>
+        <div class="select-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <select id="sel-rutina">
+            <option value="">— Seleccionar Rutina —</option>
+          </select>
+        </div>
+        <button class="btn-primary" id="btn-iniciar" onclick="iniciarSesion()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Iniciar Sesión
+        </button>
+      </div>
+      <div id="preview-rutina">
+        <div class="empty-state">
+          <span class="empty-icon">💪</span>
+          <h3>Selecciona un cliente y una rutina</h3>
+          <p>Una vez seleccionados, inicia la sesión para activar el modo de entrenamiento</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Session (shown when training) -->
+    <div id="session-section" style="display:none">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <div>
+          <div class="section-header" style="margin-bottom:0"><h1 id="session-title">Sesión Activa</h1></div>
+          <div style="font-size:12px;color:var(--text-muted)" id="session-meta"></div>
+        </div>
+        <button class="btn-secondary" onclick="terminarSesion()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+          Terminar Sesión
+        </button>
+      </div>
+
+      <!-- Session Metrics Bar -->
+      <div class="session-metrics-bar">
+        <div class="session-metric sm-time">
+          <div class="timer-display" id="timer-display">00:00</div>
+          <div class="sm-lbl">⏱ Tiempo</div>
+        </div>
+        <div class="session-metric sm-volume">
+          <div class="sm-val" id="meter-volume">0</div>
+          <div class="sm-lbl">🏋️ Volumen (kg)</div>
+        </div>
+        <div class="session-metric sm-kcal">
+          <div class="sm-val" id="meter-kcal">0</div>
+          <div class="sm-lbl">🔥 Calorías</div>
+        </div>
+        <div class="session-metric sm-pct">
+          <div class="sm-val" id="meter-pct">0%</div>
+          <div class="sm-lbl">✅ Completado</div>
+        </div>
+      </div>
+
+      <!-- Overall Progress Ring -->
+      <div class="card" style="margin-bottom:20px;display:flex;align-items:center;gap:24px">
+        <div style="flex-shrink:0">
+          <svg width="100" height="100" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10"/>
+            <circle cx="50" cy="50" r="40" fill="none" stroke="url(#rgrad)" stroke-width="10"
+              id="progress-ring" stroke-dasharray="0 251.3" stroke-dashoffset="62.8" stroke-linecap="round"
+              style="transition:stroke-dasharray 0.5s ease"/>
+            <defs><linearGradient id="rgrad"><stop offset="0%" stop-color="#FF3CAC"/><stop offset="100%" stop-color="#2B86C5"/></linearGradient></defs>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px">Progreso de la Sesión</div>
+          <div id="ring-label" style="font-size:22px;font-weight:800;background:var(--grad-main);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">0 / 0 sets</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Completa cada set para avanzar</div>
+        </div>
+      </div>
+
+      <!-- Exercises Checklist -->
+      <h3 style="font-size:14px;font-weight:700;color:var(--text-secondary);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.8px">Lista de Ejercicios</h3>
+      <div class="checklist-section" id="checklist"></div>
+
+    </div>
+
+    <!-- Session History -->
+    <div style="margin-top:32px">
+      <div class="card-header" style="margin-bottom:14px">
+        <h2>📋 Historial de Sesiones</h2>
+        <span class="badge badge-pink" id="badge-sesiones">0</span>
+      </div>
+      <div id="sesiones-historial"></div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Rest Timer Banner -->
+<div class="rest-banner" id="rest-banner">
+  <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">⏸ Descanso</div>
+  <div class="rest-countdown" id="rest-countdown">60</div>
+  <div style="font-size:11px;color:var(--text-muted);margin-top:4px">segundos restantes</div>
+  <button class="btn-ghost" style="margin-top:8px;font-size:11px" onclick="cancelarDescanso()">Saltar descanso</button>
+</div>
+
+<div id="toast-container"></div>
+<script src="shared.js"></script>
+<script>
+  document.getElementById('sidebar-container').innerHTML = buildSidebar('entrenamiento');
+  document.getElementById('topbar-container').innerHTML = buildTopbar('Entrenamiento en Vivo');
+  document.getElementById('toast-container').innerHTML = buildToast();
+
+  // Quotes
+  const q = getQuoteOfDay();
+  document.getElementById('quote-text').textContent = `"${q.text}"`;
+  document.getElementById('quote-author').textContent = `— ${q.author}`;
+
+  // Populate selects
+  const selU = document.getElementById('sel-usuario');
+  DB.usuarios.forEach(u => { const o = document.createElement('option'); o.value = u.id; o.textContent = u.nombre; selU.appendChild(o); });
+
+  // Auto from URL
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('usuario')) { selU.value = params.get('usuario'); onUsuarioChange(); }
+  if (params.get('rutina')) {
+    const selR = document.getElementById('sel-rutina');
+    setTimeout(() => { selR.value = params.get('rutina'); previewRutina(); }, 50);
+  }
+
+  function onUsuarioChange() {
+    const uid = selU.value;
+    const selR = document.getElementById('sel-rutina');
+    selR.innerHTML = '<option value="">— Seleccionar Rutina —</option>';
+    if (!uid) { document.getElementById('btn-iniciar').disabled = true; previewVacio(); return; }
+    DB.rutinas.filter(r=>r.usuarioId===uid).forEach(r => {
+      const o = document.createElement('option');
+      o.value = r.id; o.textContent = `${r.mes} ${r.anio} — ${r.tipo} (${r.ejercicios.length} ej.)`;
+      selR.appendChild(o);
+    });
+    selR.onchange = () => previewRutina();
+    previewVacio();
+  }
+
+  function previewVacio() {
+    document.getElementById('btn-iniciar').disabled = true;
+    document.getElementById('preview-rutina').innerHTML = `<div class="empty-state"><span class="empty-icon">💪</span><h3>Selecciona un cliente y una rutina</h3><p>Una vez seleccionados, inicia la sesión para activar el modo de entrenamiento</p></div>`;
+  }
+
+  function previewRutina() {
+    const rid = document.getElementById('sel-rutina').value;
+    const btn = document.getElementById('btn-iniciar');
+    if (!rid) { btn.disabled = true; previewVacio(); return; }
+    const r = DB.rutinas.find(x=>x.id===rid);
+    if (!r) { btn.disabled = true; return; }
+    btn.disabled = false;
+    document.getElementById('preview-rutina').innerHTML = `
+      <div class="card">
+        <div class="card-header">
+          <h2>📋 Vista Previa — ${r.mes} ${r.anio}</h2>
+          <span class="badge badge-pink">${r.tipo}</span>
+        </div>
+        <table class="ejercicios-table">
+          <thead><tr><th>#</th><th>Ejercicio</th><th>Grupo</th><th>Series × Reps</th><th>Peso</th><th>Descanso</th></tr></thead>
+          <tbody>${r.ejercicios.map((ej,i)=>`<tr>
+            <td style="color:var(--text-muted)">${i+1}</td>
+            <td><strong>${ej.nombre}</strong></td>
+            <td><span class="tag-muscular">${ej.grupo}</span></td>
+            <td>${ej.series||'—'}</td>
+            <td style="font-weight:800;color:var(--pink)">${ej.peso?ej.peso+' kg':'—'}</td>
+            <td>${ej.descanso?ej.descanso+'s':'—'}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+        ${r.notas?`<div class="rutina-notas" style="margin-top:12px">📝 ${r.notas}</div>`:''}
+      </div>`;
+  }
+
+  // ======= SESSION STATE =======
+  let timerInterval = null, timerSec = 0;
+  let setsTotal = 0, setsCompletados = 0;
+  let volumenKg = 0;
+  let restInterval = null, restSec = 0;
+  let sessionRutina = null;
+
+  function iniciarSesion() {
+    const rid = document.getElementById('sel-rutina').value;
+    const uid = selU.value;
+    if (!rid || !uid) return;
+    sessionRutina = DB.rutinas.find(x=>x.id===rid);
+    if (!sessionRutina) return;
+    const u = DB.usuarios.find(x=>x.id===uid);
+
+    // Switch views
+    document.getElementById('setup-section').style.display = 'none';
+    document.getElementById('session-section').style.display = '';
+    document.getElementById('session-title').textContent = `${sessionRutina.mes} ${sessionRutina.anio} — ${sessionRutina.tipo}`;
+    document.getElementById('session-meta').textContent = u ? `📍 ${u.nombre} · ${sessionRutina.ejercicios.length} ejercicios` : '';
+
+    // Timer
+    timerSec = 0; setsCompletados = 0; volumenKg = 0;
+    timerInterval = setInterval(() => {
+      timerSec++;
+      const m = Math.floor(timerSec/60).toString().padStart(2,'0');
+      const s = (timerSec%60).toString().padStart(2,'0');
+      document.getElementById('timer-display').textContent = `${m}:${s}`;
+      // Estimate calories: ~7 kcal/min base for strength
+      document.getElementById('meter-kcal').textContent = Math.round(timerSec / 60 * 7);
+    }, 1000);
+
+    // Build checklist
+    buildChecklist(sessionRutina.ejercicios);
+    updateMetrics();
+    showToast('🏋️ ¡Sesión iniciada! ¡Dale con todo!', 'info');
+  }
+
+  function buildChecklist(ejercicios) {
+    const cl = document.getElementById('checklist');
+    setsTotal = 0;
+    const items = [];
+    ejercicios.forEach((ej, ei) => {
+      const seriesMatch = ej.series?.match(/(\d+)\s*[x×]\s*(\d+)/i);
+      const numSeries = seriesMatch ? parseInt(seriesMatch[1]) : 3;
+      const numReps = seriesMatch ? parseInt(seriesMatch[2]) : 10;
+      for (let s = 1; s <= numSeries; s++) {
+        setsTotal++;
+        const sid = `set-${ei}-${s}`;
+        const peso = parseFloat(ej.peso) || 0;
+        const descanso = parseInt(ej.descanso) || 60;
+        items.push(`<div class="checklist-item" id="${sid}" onclick="toggleSet('${sid}', ${numReps}, ${peso}, ${descanso})">
+          <div class="check-box" id="cb-${sid}"></div>
+          <div class="check-info">
+            <div class="check-name">${ej.nombre} — Serie ${s}/${numSeries}</div>
+            <div class="check-detail"><span class="tag-muscular" style="font-size:9px">${ej.grupo}</span> &nbsp; ${numReps} reps &nbsp;·&nbsp; Descanso: ${descanso}s</div>
+          </div>
+          <div class="check-weight">${peso ? peso + ' kg' : '—'}</div>
+        </div>`);
+      }
+    });
+    cl.innerHTML = items.join('');
+    updateProgressRing();
+  }
+
+  function toggleSet(sid, reps, peso, descanso) {
+    const item = document.getElementById(sid);
+    const cb = document.getElementById('cb-' + sid);
+    if (!item) return;
+    const wasDone = item.classList.contains('done');
+    if (!wasDone) {
+      item.classList.add('done');
+      cb.textContent = '✓';
+      setsCompletados++;
+      volumenKg += reps * peso;
+      showToast(`✅ Set completado! +${reps * peso}kg volumen`, 'success');
+      // Start rest timer
+      if (descanso > 0) iniciarDescanso(descanso);
+    } else {
+      item.classList.remove('done');
+      cb.textContent = '';
+      setsCompletados = Math.max(0, setsCompletados - 1);
+      volumenKg = Math.max(0, volumenKg - reps * peso);
+    }
+    updateMetrics();
+    updateProgressRing();
+    if (setsCompletados === setsTotal) {
+      setTimeout(() => mostrarCompletion(), 600);
+    }
+  }
+
+  function updateMetrics() {
+    document.getElementById('meter-volume').textContent = Math.round(volumenKg).toLocaleString('es-CO');
+    const pct = setsTotal > 0 ? Math.round(setsCompletados / setsTotal * 100) : 0;
+    document.getElementById('meter-pct').textContent = pct + '%';
+  }
+
+  function updateProgressRing() {
+    const pct = setsTotal > 0 ? setsCompletados / setsTotal : 0;
+    const circ = 251.3;
+    const dash = pct * circ;
+    document.getElementById('progress-ring').setAttribute('stroke-dasharray', `${dash} ${circ}`);
+    document.getElementById('ring-label').textContent = `${setsCompletados} / ${setsTotal} sets`;
+  }
+
+  function iniciarDescanso(secs) {
+    cancelarDescanso();
+    restSec = secs;
+    const banner = document.getElementById('rest-banner');
+    banner.style.display = 'block';
+    document.getElementById('rest-countdown').textContent = restSec;
+    restInterval = setInterval(() => {
+      restSec--;
+      document.getElementById('rest-countdown').textContent = restSec;
+      if (restSec <= 0) {
+        cancelarDescanso();
+        showToast('⚡ ¡Fin del descanso! Siguiente serie.', 'info');
+      }
+    }, 1000);
+  }
+
+  function cancelarDescanso() {
+    clearInterval(restInterval);
+    document.getElementById('rest-banner').style.display = 'none';
+  }
+
+  function mostrarCompletion() {
+    const cl = document.getElementById('checklist');
+    cl.innerHTML = `<div class="session-complete">
+      <div class="session-complete-icon">🏆</div>
+      <h2>¡Sesión Completada!</h2>
+      <p style="color:var(--text-secondary);font-size:14px;margin-bottom:24px">Felicitaciones! Has completado todos los ejercicios</p>
+      <div class="session-metrics-bar" style="max-width:500px;margin:0 auto 24px">
+        <div class="session-metric sm-time"><div class="sm-val" style="font-size:24px">${document.getElementById('timer-display').textContent}</div><div class="sm-lbl">Tiempo total</div></div>
+        <div class="session-metric sm-volume"><div class="sm-val">${Math.round(volumenKg).toLocaleString('es-CO')}</div><div class="sm-lbl">kg Volumen</div></div>
+        <div class="session-metric sm-kcal"><div class="sm-val">${document.getElementById('meter-kcal').textContent}</div><div class="sm-lbl">Calorías</div></div>
+        <div class="session-metric sm-pct"><div class="sm-val">100%</div><div class="sm-lbl">Completado</div></div>
+      </div>
+      <button class="btn-primary" onclick="terminarSesion()">Finalizar y Guardar</button>
+    </div>`;
+  }
+
+  function terminarSesion() {
+    if (!confirm('¿Finalizar la sesión?')) return;
+    clearInterval(timerInterval);
+    cancelarDescanso();
+    // Save session to DB
+    const uid = selU.value;
+    const rid = document.getElementById('sel-rutina').value;
+    const pct = setsTotal > 0 ? Math.round(setsCompletados / setsTotal * 100) : 0;
+    if (uid) {
+      const sesion = { id: genId(), usuarioId: uid, rutinaId: rid || null, fecha: new Date().toISOString().split('T')[0], hora: new Date().toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit'}), estado: pct === 100 ? 'completada' : 'pendiente', duracionSeg: timerSec, volumenKg: Math.round(volumenKg), setsCompletados, setsTotal, notas: '' };
+      DB.sesiones.push(sesion);
+      saveDB();
+    }
+    document.getElementById('session-section').style.display = 'none';
+    document.getElementById('setup-section').style.display = '';
+    timerSec = 0; setsCompletados = 0; volumenKg = 0; sessionRutina = null;
+    document.getElementById('timer-display').textContent = '00:00';
+    renderHistorial();
+    showToast('🏆 Sesión guardada en el historial', 'success');
+  }
+
+  // ======= HISTORIAL =======
+  function renderHistorial() {
+    const hist = DB.sesiones.slice().sort((a,b) => b.fecha.localeCompare(a.fecha)).slice(0, 20);
+    document.getElementById('badge-sesiones').textContent = DB.sesiones.length;
+    const el = document.getElementById('sesiones-historial');
+    if (!hist.length) { el.innerHTML = `<div class="empty-state-sm"><p>Sin sesiones registradas aún.</p></div>`; return; }
+    el.innerHTML = hist.map(s => {
+      const u = DB.usuarios.find(x=>x.id===s.usuarioId);
+      const r = DB.rutinas.find(x=>x.id===s.rutinaId);
+      const avClass = u ? avatarClass(u.nombre) : 'av-0';
+      const ini = u ? initials(u.nombre) : '?';
+      const estadoBadge = { pendiente:'badge-blue', completada:'badge-green', cancelada:'badge-orange' }[s.estado] || 'badge-blue';
+      const durMin = s.duracionSeg ? Math.floor(s.duracionSeg/60) + 'min' : '—';
+      return `<div class="session-item">
+        <div class="user-avatar-lg ${avClass}" style="width:36px;height:36px;font-size:13px;flex-shrink:0">${ini}</div>
+        <div class="session-info">
+          <div class="session-name">${u?.nombre||'Cliente eliminado'} ${r?`— ${r.mes} ${r.anio}`:''}</div>
+          <div class="session-meta">📅 ${formatDate(s.fecha)} ${s.hora} &nbsp;·&nbsp; ⏱ ${durMin} &nbsp;·&nbsp; 🏋️ ${s.volumenKg||0}kg &nbsp;·&nbsp; ✅ ${s.setsCompletados||0}/${s.setsTotal||0} sets</div>
+        </div>
+        <span class="badge ${estadoBadge}">${s.estado}</span>
+        <button class="btn-ghost btn-danger" onclick="eliminarSesionHistorial('${s.id}')" title="Eliminar" style="padding:5px 8px">🗑️</button>
+      </div>`;
+    }).join('');
+  }
+
+  function eliminarSesionHistorial(id) {
+    if (!confirm('¿Eliminar esta sesión del historial?')) return;
+    DB.sesiones = DB.sesiones.filter(s=>s.id!==id);
+    saveDB(); renderHistorial(); showToast('🗑️ Sesión eliminada', 'error');
+  }
+
+  renderHistorial();
+</script>
+</body>
+</html>

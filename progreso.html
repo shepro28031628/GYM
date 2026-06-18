@@ -3,112 +3,79 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Romeo Personal Trainer — Progreso</title>
-  <meta name="description" content="Monitorea la evolución física de tus usuarios: peso, medidas corporales y gráficas de progreso." />
+  <title>Romeo Personal Trainer — Progreso Corporal</title>
+  <meta name="description" content="Registra y monitorea la evolución física: peso, medidas corporales y gráficas de progreso." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
 <div id="sidebar-container"></div>
-
 <main class="main-content">
   <div id="topbar-container"></div>
-
   <div class="page-body">
+
     <div class="section-header">
-      <h1>Seguimiento de Progreso</h1>
-      <p class="section-subtitle">Monitorea la evolución física de tus usuarios con medidas y gráficas</p>
+      <h1>Seguimiento Corporal</h1>
+      <p class="section-subtitle">Monitorea la evolución física de tus clientes con medidas y gráficas</p>
     </div>
 
     <div class="toolbar">
       <div class="select-box">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-        <select id="select-usuario" onchange="onUsuarioChange()">
-          <option value="">— Seleccionar Usuario —</option>
+        <select id="sel-usuario" onchange="onUsuarioChange()">
+          <option value="">— Seleccionar Cliente —</option>
         </select>
       </div>
-      <button class="btn-primary" id="btn-nuevo-progreso" onclick="abrirModalProgreso()" disabled>
+      <button class="btn-primary" id="btn-medicion" onclick="abrirModalMedicion()" disabled>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Registrar Medición
+        Nueva Medición
       </button>
     </div>
 
     <div id="progreso-container">
       <div class="empty-state">
         <span class="empty-icon">📊</span>
-        <h3>Selecciona un usuario</h3>
-        <p>Elige un usuario para ver su historial de mediciones y evolución</p>
+        <h3>Selecciona un cliente</h3>
+        <p>Elige un cliente para ver su historial de mediciones y evolución corporal</p>
       </div>
     </div>
+
   </div>
 </main>
 
-<!-- ========== MODAL REGISTRAR PROGRESO ========== -->
-<div class="modal-overlay" id="modal-progreso">
+<!-- Modal Nueva Medición -->
+<div class="modal-overlay" id="modal-medicion">
   <div class="modal">
     <div class="modal-header">
       <h2>Registrar Medición</h2>
-      <button class="modal-close" onclick="closeModal('modal-progreso')">✕</button>
+      <button class="modal-close" onclick="closeModal('modal-medicion')">✕</button>
     </div>
-    <form id="form-progreso" onsubmit="guardarProgreso(event)">
+    <form id="form-medicion" onsubmit="guardarMedicion(event)">
       <div class="form-section-title">Fecha y Peso</div>
       <div class="form-grid">
-        <div class="form-group">
-          <label>Fecha *</label>
-          <input type="date" id="p-fecha" required />
-        </div>
-        <div class="form-group">
-          <label>Peso Actual (kg) *</label>
-          <input type="number" id="p-peso" step="0.1" placeholder="70.5" required />
-        </div>
+        <div class="form-group"><label>Fecha *</label><input type="date" id="p-fecha" required /></div>
+        <div class="form-group"><label>Peso Actual (kg) *</label><input type="number" id="p-peso" step="0.1" placeholder="70.5" required /></div>
       </div>
-
       <div class="form-section-title">Medidas Corporales (cm)</div>
       <div class="form-grid">
-        <div class="form-group">
-          <label>Pecho</label>
-          <input type="number" id="p-pecho" step="0.5" placeholder="95" />
-        </div>
-        <div class="form-group">
-          <label>Cintura</label>
-          <input type="number" id="p-cintura" step="0.5" placeholder="80" />
-        </div>
-        <div class="form-group">
-          <label>Cadera</label>
-          <input type="number" id="p-cadera" step="0.5" placeholder="95" />
-        </div>
-        <div class="form-group">
-          <label>Brazo Izquierdo</label>
-          <input type="number" id="p-brazo-izq" step="0.5" placeholder="35" />
-        </div>
-        <div class="form-group">
-          <label>Brazo Derecho</label>
-          <input type="number" id="p-brazo-der" step="0.5" placeholder="35" />
-        </div>
-        <div class="form-group">
-          <label>Muslo Izquierdo</label>
-          <input type="number" id="p-muslo-izq" step="0.5" placeholder="55" />
-        </div>
-        <div class="form-group">
-          <label>Muslo Derecho</label>
-          <input type="number" id="p-muslo-der" step="0.5" placeholder="55" />
-        </div>
-        <div class="form-group">
-          <label>Pantorrilla</label>
-          <input type="number" id="p-pantorrilla" step="0.5" placeholder="38" />
-        </div>
+        <div class="form-group"><label>Pecho</label><input type="number" id="p-pecho" step="0.5" placeholder="95" /></div>
+        <div class="form-group"><label>Cintura</label><input type="number" id="p-cintura" step="0.5" placeholder="80" /></div>
+        <div class="form-group"><label>Cadera</label><input type="number" id="p-cadera" step="0.5" placeholder="95" /></div>
+        <div class="form-group"><label>Brazo Izquierdo</label><input type="number" id="p-brazo-izq" step="0.5" placeholder="35" /></div>
+        <div class="form-group"><label>Brazo Derecho</label><input type="number" id="p-brazo-der" step="0.5" placeholder="35" /></div>
+        <div class="form-group"><label>Muslo Izquierdo</label><input type="number" id="p-muslo-izq" step="0.5" placeholder="55" /></div>
+        <div class="form-group"><label>Muslo Derecho</label><input type="number" id="p-muslo-der" step="0.5" placeholder="55" /></div>
+        <div class="form-group"><label>Pantorrilla</label><input type="number" id="p-pantorrilla" step="0.5" placeholder="38" /></div>
       </div>
-
       <div class="form-section-title">Observaciones</div>
       <div class="form-group full" style="padding:0 0 8px">
-        <label>Notas de la sesión</label>
-        <textarea id="p-notas" rows="3" placeholder="¿Cómo se siente el usuario? Observaciones, estado de ánimo, energía..."></textarea>
+        <label>Notas del entrenador</label>
+        <textarea id="p-notas" rows="2" placeholder="Estado del cliente, observaciones..."></textarea>
       </div>
-
       <div class="modal-footer">
-        <button type="button" class="btn-secondary" onclick="closeModal('modal-progreso')">Cancelar</button>
+        <button type="button" class="btn-secondary" onclick="closeModal('modal-medicion')">Cancelar</button>
         <button type="submit" class="btn-primary">Guardar Medición</button>
       </div>
     </form>
@@ -116,219 +83,138 @@
 </div>
 
 <div id="toast-container"></div>
-
 <script src="shared.js"></script>
 <script>
   document.getElementById('sidebar-container').innerHTML = buildSidebar('progreso');
-  document.getElementById('topbar-container').innerHTML = buildTopbar('Seguimiento de Progreso');
+  document.getElementById('topbar-container').innerHTML = buildTopbar('Seguimiento Corporal');
   document.getElementById('toast-container').innerHTML = buildToast();
 
-  const sel = document.getElementById('select-usuario');
-  DB.usuarios.forEach(u => {
-    const opt = document.createElement('option');
-    opt.value = u.id; opt.textContent = u.nombre;
-    sel.appendChild(opt);
-  });
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const paramUsuario = urlParams.get('usuario');
-  if (paramUsuario) { sel.value = paramUsuario; onUsuarioChange(); }
+  const sel = document.getElementById('sel-usuario');
+  DB.usuarios.forEach(u => { const o = document.createElement('option'); o.value = u.id; o.textContent = u.nombre; sel.appendChild(o); });
+  const param = new URLSearchParams(window.location.search).get('usuario');
+  if (param) { sel.value = param; onUsuarioChange(); }
 
   function onUsuarioChange() {
     const uid = sel.value;
-    document.getElementById('btn-nuevo-progreso').disabled = !uid;
+    document.getElementById('btn-medicion').disabled = !uid;
     renderProgreso(uid);
   }
 
   function renderProgreso(uid) {
     const container = document.getElementById('progreso-container');
-    if (!uid) {
-      container.innerHTML = `<div class="empty-state"><span class="empty-icon">📊</span><h3>Selecciona un usuario</h3><p>Elige un usuario para ver su historial</p></div>`;
-      return;
-    }
-    const u = DB.usuarios.find(x => x.id === uid);
-    const progresos = DB.progresos.filter(p => p.usuarioId === uid).sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+    if (!uid) { container.innerHTML = `<div class="empty-state"><span class="empty-icon">📊</span><h3>Selecciona un cliente</h3><p>Elige un cliente para ver su historial</p></div>`; return; }
+    const u = DB.usuarios.find(x=>x.id===uid);
+    const progresos = DB.progresos.filter(p=>p.usuarioId===uid).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
     const pesoActual = progresos[0]?.peso || u?.peso || 0;
-    const pesoInicial = u?.peso || 0;
-    const diff = pesoInicial ? (pesoActual - pesoInicial).toFixed(1) : 0;
-    const imc = bmi(pesoActual, u?.estatura);
+    const diff = u?.peso ? (pesoActual - u.peso).toFixed(1) : 0;
+    const b = bmi(pesoActual, u?.estatura);
 
     let html = `<div class="progreso-header-info">
-      <div class="pi-item"><div class="pi-val" style="font-size:16px;background:var(--gradient-main);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${u?.nombre?.split(' ').slice(0,2).join(' ') || '—'}</div><div class="pi-lbl">Usuario</div></div>
-      <div class="pi-item"><div class="pi-val" style="color:var(--accent-blue)">${pesoInicial} kg</div><div class="pi-lbl">Peso Inicial</div></div>
-      <div class="pi-item"><div class="pi-val" style="color:var(--accent-cyan)">${pesoActual} kg</div><div class="pi-lbl">Peso Actual</div></div>
-      <div class="pi-item"><div class="pi-val" style="color:${parseFloat(diff)<=0?'var(--accent-green)':'var(--accent-orange)'}">${parseFloat(diff)>0?'+':''}${diff} kg</div><div class="pi-lbl">Variación</div></div>
-      <div class="pi-item"><div class="pi-val">${imc}</div><div class="pi-lbl">IMC Actual</div></div>
-      <div class="pi-item"><div class="pi-val">${progresos.length}</div><div class="pi-lbl">Mediciones</div></div>
+      <div class="pi-item"><div class="pi-val" style="background:var(--grad-main);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${u?.nombre?.split(' ').slice(0,2).join(' ')||'—'}</div><div class="pi-lbl">Cliente</div></div>
+      <div class="pi-item"><div class="pi-val" style="color:var(--blue)">${u?.peso||'—'} kg</div><div class="pi-lbl">Peso Inicial</div></div>
+      <div class="pi-item"><div class="pi-val" style="color:var(--pink)">${pesoActual} kg</div><div class="pi-lbl">Peso Actual</div></div>
+      <div class="pi-item"><div class="pi-val" style="color:${parseFloat(diff)<=0?'var(--green)':'var(--orange)'}">${parseFloat(diff)>0?'+':''}${diff} kg</div><div class="pi-lbl">Variación</div></div>
+      <div class="pi-item"><div class="pi-val">${b}</div><div class="pi-lbl">IMC Actual</div></div>
     </div>`;
 
-    if (progresos.length === 0) {
-      html += `<div class="empty-state"><span class="empty-icon">📈</span><h3>Sin mediciones</h3><p>Aún no hay registros de progreso para este usuario.</p><button class="btn-primary" onclick="abrirModalProgreso()">Registrar Primera Medición</button></div>`;
+    if (!progresos.length) {
+      html += `<div class="empty-state"><span class="empty-icon">📈</span><h3>Sin mediciones</h3><p>Registra la primera medición de este cliente.</p><button class="btn-primary" onclick="abrirModalMedicion()">Primera Medición</button></div>`;
       container.innerHTML = html; return;
     }
 
-    // Weight chart
-    const chartHtml = buildWeightChart(progresos);
+    // Weight Chart SVG
+    const data = progresos.slice().reverse();
+    const weights = data.map(p=>p.peso);
+    const minW = Math.min(...weights)-2, maxW = Math.max(...weights)+2;
+    const W = 600, H = 200, pad = { t:20, r:20, b:36, l:48 };
+    const sx = i => pad.l + (i/(data.length-1||1))*(W-pad.l-pad.r);
+    const sy = v => H-pad.b-((v-minW)/(maxW-minW))*(H-pad.t-pad.b);
+    let chartHtml = '';
+    if (data.length >= 2) {
+      const pts = data.map((p,i)=>`${sx(i)},${sy(p.peso)}`).join(' ');
+      const area = `${sx(0)},${H-pad.b} ${pts} ${sx(data.length-1)},${H-pad.b}`;
+      const grid = [0.25,0.5,0.75,1].map(f=>{const y=pad.t+f*(H-pad.t-pad.b);const v=(maxW-f*(maxW-minW)).toFixed(1);return `<line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="rgba(255,255,255,0.04)" stroke-dasharray="3,3"/><text x="${pad.l-5}" y="${y+4}" text-anchor="end" fill="#444" font-size="9" font-family="Sora">${v}</text>`;}).join('');
+      const labels = data.map((p,i)=>{const d=new Date(p.fecha+'T00:00:00');return `<text x="${sx(i)}" y="${H-8}" text-anchor="middle" fill="#555" font-size="9" font-family="Sora">${d.getDate()}/${d.getMonth()+1}</text>`;}).join('');
+      const dots = data.map((p,i)=>`<circle cx="${sx(i)}" cy="${sy(p.peso)}" r="5" fill="url(#pcg)" stroke="#131313" stroke-width="2"/><text x="${sx(i)}" y="${sy(p.peso)-10}" text-anchor="middle" fill="#fff" font-size="9" font-family="Sora" font-weight="700">${p.peso}</text>`).join('');
+      chartHtml = `<div class="card" style="margin-bottom:16px">
+        <div class="card-header"><h2>📈 Evolución del Peso</h2></div>
+        <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">
+          <defs>
+            <linearGradient id="pcg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF3CAC"/><stop offset="100%" stop-color="#2B86C5"/></linearGradient>
+            <linearGradient id="pag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF3CAC" stop-opacity=".25"/><stop offset="100%" stop-color="#FF3CAC" stop-opacity="0"/></linearGradient>
+          </defs>
+          ${grid}
+          <polygon points="${area}" fill="url(#pag)"/>
+          <polyline points="${pts}" fill="none" stroke="url(#pcg)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+          ${labels}${dots}
+        </svg>
+      </div>`;
+    }
 
-    // Measurements comparison table (first vs last)
-    const primero = progresos[progresos.length - 1];
-    const ultimo = progresos[0];
-    const compHtml = buildComparacion(primero, ultimo, u);
+    // Comparison
+    const primero = progresos[progresos.length-1], ultimo = progresos[0];
+    let compHtml = '';
+    if (primero && primero !== ultimo) {
+      const rows = [['Peso (kg)',primero.peso,ultimo.peso],['Pecho (cm)',primero.pecho||u?.pecho,ultimo.pecho],['Cintura (cm)',primero.cintura||u?.cintura,ultimo.cintura],['Cadera (cm)',primero.cadera||u?.cadera,ultimo.cadera]].filter(r=>r[1]&&r[2]);
+      if (rows.length) compHtml = `<div class="card" style="margin-bottom:16px">
+        <div class="card-header"><h2>📐 Comparativa Inicial vs Actual</h2></div>
+        <table class="ejercicios-table"><thead><tr><th>Medida</th><th>Inicio (${formatDate(primero.fecha)})</th><th>Ahora (${formatDate(ultimo.fecha)})</th><th>Diferencia</th></tr></thead><tbody>
+          ${rows.map(([l,ini,fin])=>{const d=(fin-ini).toFixed(1);const good=l.includes('Peso')||l.includes('Cintura')?parseFloat(d)<=0:parseFloat(d)>=0;const c=parseFloat(d)===0?'var(--text-muted)':(good?'var(--green)':'var(--orange)');return `<tr><td><strong>${l}</strong></td><td>${ini}</td><td><strong>${fin}</strong></td><td style="color:${c};font-weight:800">${parseFloat(d)>0?'+':''}${d}</td></tr>`;}).join('')}
+        </tbody></table>
+      </div>`;
+    }
 
-    // History list
-    const historialHtml = progresos.map((p, i) => {
-      const prev = progresos[i + 1];
-      const pesoDiff = prev ? (p.peso - prev.peso).toFixed(1) : null;
+    // History
+    const histHtml = progresos.map((p,i)=>{
+      const prev = progresos[i+1];
+      const pd = prev?(p.peso-prev.peso).toFixed(1):null;
       const medidas = [['Pecho',p.pecho],['Cintura',p.cintura],['Cadera',p.cadera],['B.Izq',p.brazoIzq],['B.Der',p.brazoDer],['M.Izq',p.musloIzq],['M.Der',p.musloDer],['Pant.',p.pantorrilla]].filter(([,v])=>v);
       return `<div class="progreso-item">
         <div class="progreso-item-header">
-          <div>
-            <div class="progreso-fecha">📅 ${formatDate(p.fecha)}</div>
-            ${p.notas?`<div style="font-size:11px;color:var(--text-muted);margin-top:3px;font-style:italic">💬 ${p.notas}</div>`:''}
-          </div>
+          <div><div class="progreso-fecha">📅 ${formatDate(p.fecha)}</div>${p.notas?`<div style="font-size:11px;color:var(--text-muted);margin-top:2px">${p.notas}</div>`:''}</div>
           <div style="display:flex;align-items:center;gap:10px">
-            ${pesoDiff!==null?`<span class="peso-diff ${parseFloat(pesoDiff)<=0?'pos':'neg'}">${parseFloat(pesoDiff)>0?'+':''}${pesoDiff} kg</span>`:''}
+            ${pd!==null?`<span class="peso-diff ${parseFloat(pd)<=0?'pos':'neg'}">${parseFloat(pd)>0?'+':''}${pd}kg</span>`:''}
             <div class="progreso-peso">${p.peso} kg</div>
-            <button class="btn-remove" onclick="eliminarProgreso('${p.id}')" title="Eliminar">✕</button>
+            <button class="btn-ghost btn-danger" onclick="eliminarMedicion('${p.id}')" style="padding:5px 8px">✕</button>
           </div>
         </div>
-        ${medidas.length>0?`<div class="medidas-mini">${medidas.map(([l,v])=>`<div class="medida-chip"><div class="val">${v} cm</div><div class="lbl">${l}</div></div>`).join('')}</div>`:''}
+        ${medidas.length?`<div class="medidas-mini">${medidas.map(([l,v])=>`<div class="medida-chip"><div class="val">${v} cm</div><div class="lbl">${l}</div></div>`).join('')}</div>`:''}
       </div>`;
     }).join('');
 
-    html += `
-      <div class="card" style="margin-bottom:20px">
-        <div class="card-header"><h2>📈 Evolución del Peso</h2></div>
-        ${chartHtml}
-      </div>
-      ${compHtml}
-      <div style="margin-top:20px">
-        <h3 style="font-size:14px;font-weight:700;color:var(--text-secondary);margin-bottom:12px">📋 Historial de Mediciones</h3>
-        <div class="progreso-registros">${historialHtml}</div>
-      </div>`;
+    html += chartHtml + compHtml + `<h3 style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.8px">📋 Historial</h3><div class="progreso-registros">${histHtml}</div>`;
     container.innerHTML = html;
   }
 
-  function buildComparacion(primero, ultimo, u) {
-    if (!primero || primero === ultimo) return '';
-    const rows = [
-      { lbl: 'Peso (kg)', ini: primero.peso, fin: ultimo.peso },
-      { lbl: 'Pecho (cm)', ini: primero.pecho || u?.pecho, fin: ultimo.pecho },
-      { lbl: 'Cintura (cm)', ini: primero.cintura || u?.cintura, fin: ultimo.cintura },
-      { lbl: 'Cadera (cm)', ini: primero.cadera || u?.cadera, fin: ultimo.cadera },
-      { lbl: 'Brazo Izq. (cm)', ini: primero.brazoIzq || u?.brazoIzq, fin: ultimo.brazoIzq },
-      { lbl: 'Muslo Izq. (cm)', ini: primero.musloIzq || u?.musloIzq, fin: ultimo.musloIzq },
-    ].filter(r => r.ini && r.fin);
-
-    if (rows.length === 0) return '';
-    return `<div class="card">
-      <div class="card-header"><h2>📐 Comparativa: Inicio vs Actualidad</h2></div>
-      <div style="overflow-x:auto">
-        <table class="ejercicios-table">
-          <thead><tr><th>Medida</th><th>Inicial (${formatDate(primero.fecha)})</th><th>Actual (${formatDate(ultimo.fecha)})</th><th>Diferencia</th></tr></thead>
-          <tbody>
-            ${rows.map(r => {
-              const diff = (r.fin - r.ini).toFixed(1);
-              const isGood = r.lbl.includes('Peso') || r.lbl.includes('Cintura') ? parseFloat(diff) <= 0 : parseFloat(diff) >= 0;
-              const color = parseFloat(diff) === 0 ? 'var(--text-muted)' : (isGood ? 'var(--accent-green)' : 'var(--accent-orange)');
-              return `<tr>
-                <td><strong>${r.lbl}</strong></td>
-                <td>${r.ini}</td>
-                <td><strong>${r.fin}</strong></td>
-                <td style="color:${color};font-weight:700">${parseFloat(diff)>0?'+':''}${diff}</td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>`;
-  }
-
-  function buildWeightChart(progresos) {
-    const data = progresos.slice().reverse();
-    if (data.length < 2) return '<p style="color:var(--text-muted);font-size:13px;padding:10px">Necesitas al menos 2 mediciones para ver la gráfica.</p>';
-    const weights = data.map(p => p.peso);
-    const minW = Math.min(...weights) - 2;
-    const maxW = Math.max(...weights) + 2;
-    const W = 700, H = 220, pad = 44;
-    const sx = i => pad + (i / (data.length - 1)) * (W - pad * 2);
-    const sy = v => H - pad - ((v - minW) / (maxW - minW)) * (H - pad * 2);
-    const points = data.map((p,i) => `${sx(i)},${sy(p.peso)}`).join(' ');
-    const area = `${sx(0)},${H-pad} ` + points + ` ${sx(data.length-1)},${H-pad}`;
-    const gridY = [0.2, 0.4, 0.6, 0.8].map(f => {
-      const y = pad + f*(H-pad*2);
-      const v = (maxW - f*(maxW-minW)).toFixed(1);
-      return `<line x1="${pad}" y1="${y}" x2="${W-pad}" y2="${y}" stroke="#2a2a40" stroke-dasharray="4,4"/>
-              <text x="${pad-5}" y="${y+4}" text-anchor="end" fill="#5A5A80" font-size="9">${v}</text>`;
-    }).join('');
-    const labels = data.map((p,i) => {
-      const d = new Date(p.fecha + 'T00:00:00');
-      return `<text x="${sx(i)}" y="${H-8}" text-anchor="middle" fill="#5A5A80" font-size="9">${d.getDate()}/${d.getMonth()+1}</text>`;
-    }).join('');
-    const dots = data.map((p,i) => `
-      <circle cx="${sx(i)}" cy="${sy(p.peso)}" r="5" fill="url(#cg)" stroke="var(--bg-card)" stroke-width="2"/>
-      <text x="${sx(i)}" y="${sy(p.peso)-10}" text-anchor="middle" fill="#F0F0FF" font-size="10" font-weight="700">${p.peso}</text>`).join('');
-    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;padding:0 4px">
-      <defs>
-        <linearGradient id="cg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#6C63FF"/><stop offset="100%" stop-color="#00D4FF"/></linearGradient>
-        <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6C63FF" stop-opacity=".35"/><stop offset="100%" stop-color="#6C63FF" stop-opacity="0"/></linearGradient>
-      </defs>
-      ${gridY}
-      <polygon points="${area}" fill="url(#ag)"/>
-      <polyline points="${points}" fill="none" stroke="url(#cg)" stroke-width="3" stroke-linejoin="round"/>
-      ${labels}${dots}
-    </svg>`;
-  }
-
-  function abrirModalProgreso() {
-    const uid = sel.value;
-    if (!uid) { showToast('Selecciona un usuario primero', 'error'); return; }
-    document.getElementById('form-progreso').reset();
+  function abrirModalMedicion() {
+    const uid = sel.value; if (!uid) { showToast('Selecciona un cliente primero', 'error'); return; }
+    document.getElementById('form-medicion').reset();
     document.getElementById('p-fecha').value = new Date().toISOString().split('T')[0];
-    const u = DB.usuarios.find(x => x.id === uid);
-    const last = DB.progresos.filter(p => p.usuarioId === uid).sort((a,b) => new Date(b.fecha)-new Date(a.fecha))[0];
+    const u = DB.usuarios.find(x=>x.id===uid);
+    const last = DB.progresos.filter(p=>p.usuarioId===uid).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
     document.getElementById('p-peso').value = last?.peso || u?.peso || '';
-    document.getElementById('p-pecho').value = last?.pecho || u?.pecho || '';
-    document.getElementById('p-cintura').value = last?.cintura || u?.cintura || '';
-    document.getElementById('p-cadera').value = last?.cadera || u?.cadera || '';
+    ['pecho','cintura','cadera'].forEach(m => { document.getElementById(`p-${m}`).value = last?.[m] || u?.[m] || ''; });
     document.getElementById('p-brazo-izq').value = last?.brazoIzq || u?.brazoIzq || '';
     document.getElementById('p-brazo-der').value = last?.brazoDer || u?.brazoDer || '';
     document.getElementById('p-muslo-izq').value = last?.musloIzq || u?.musloIzq || '';
     document.getElementById('p-muslo-der').value = last?.musloDer || u?.musloDer || '';
     document.getElementById('p-pantorrilla').value = last?.pantorrilla || u?.pantorrilla || '';
-    openModal('modal-progreso');
+    openModal('modal-medicion');
   }
 
-  function guardarProgreso(e) {
+  function guardarMedicion(e) {
     e.preventDefault();
     const uid = sel.value;
-    const prog = {
-      id: genId(), usuarioId: uid,
-      fecha: document.getElementById('p-fecha').value,
-      peso: parseFloat(document.getElementById('p-peso').value),
-      pecho: parseFloat(document.getElementById('p-pecho').value) || null,
-      cintura: parseFloat(document.getElementById('p-cintura').value) || null,
-      cadera: parseFloat(document.getElementById('p-cadera').value) || null,
-      brazoIzq: parseFloat(document.getElementById('p-brazo-izq').value) || null,
-      brazoDer: parseFloat(document.getElementById('p-brazo-der').value) || null,
-      musloIzq: parseFloat(document.getElementById('p-muslo-izq').value) || null,
-      musloDer: parseFloat(document.getElementById('p-muslo-der').value) || null,
-      pantorrilla: parseFloat(document.getElementById('p-pantorrilla').value) || null,
-      notas: document.getElementById('p-notas').value.trim(),
-    };
-    DB.progresos.push(prog);
-    saveDB();
-    closeModal('modal-progreso');
-    renderProgreso(uid);
-    showToast('✅ Medición registrada correctamente');
+    const m = { id:genId(), usuarioId:uid, fecha:document.getElementById('p-fecha').value, peso:parseFloat(document.getElementById('p-peso').value), pecho:parseFloat(document.getElementById('p-pecho').value)||null, cintura:parseFloat(document.getElementById('p-cintura').value)||null, cadera:parseFloat(document.getElementById('p-cadera').value)||null, brazoIzq:parseFloat(document.getElementById('p-brazo-izq').value)||null, brazoDer:parseFloat(document.getElementById('p-brazo-der').value)||null, musloIzq:parseFloat(document.getElementById('p-muslo-izq').value)||null, musloDer:parseFloat(document.getElementById('p-muslo-der').value)||null, pantorrilla:parseFloat(document.getElementById('p-pantorrilla').value)||null, notas:document.getElementById('p-notas').value.trim() };
+    DB.progresos.push(m);
+    saveDB(); closeModal('modal-medicion'); renderProgreso(uid);
+    showToast('✅ Medición guardada correctamente');
   }
 
-  function eliminarProgreso(id) {
+  function eliminarMedicion(id) {
     if (!confirm('¿Eliminar esta medición?')) return;
-    DB.progresos = DB.progresos.filter(p => p.id !== id);
-    saveDB();
-    renderProgreso(sel.value);
-    showToast('🗑️ Medición eliminada', 'error');
+    DB.progresos = DB.progresos.filter(p=>p.id!==id);
+    saveDB(); renderProgreso(sel.value); showToast('🗑️ Medición eliminada', 'error');
   }
 </script>
 </body>
