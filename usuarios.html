@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Romeo Personal Trainer — Clientes</title>
+  <meta name="description" content="Roster de clientes: métricas de ingresos, tasa de completitud, perfil completo y barra de progreso semanal." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div id="sidebar-container"></div>
+<main class="main-content">
+  <div id="topbar-container"></div>
+  <div class="page-body">
+
+    <div class="section-header">
+      <h1>Roster de Clientes</h1>
+      <p class="section-subtitle">Gestiona perfiles, métricas y progreso de cada cliente</p>
+    </div>
+
+    <!-- Revenue Summary Bar -->
+    <div class="summary-bar" id="summary-bar">
+      <div class="summary-item"><div class="summary-val" id="sum-clientes">0</div><div class="summary-lbl">Clientes Totales</div></div>
+      <div class="summary-item"><div class="summary-val" id="sum-revenue">$0</div><div class="summary-lbl">Ingresos / Mes</div></div>
+      <div class="summary-item"><div class="summary-val" id="sum-completitud">0%</div><div class="summary-lbl">Completitud Promedio</div></div>
+      <div class="summary-item"><div class="summary-val" id="sum-rutinas">0</div><div class="summary-lbl">Rutinas Activas</div></div>
+    </div>
+
+    <!-- Filter chips -->
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="filter-btn active" onclick="setFiltroObjetivo('', this)">Todos</button>
+      <button class="filter-btn" onclick="setFiltroObjetivo('Perder peso', this)">💧 Perder Peso</button>
+      <button class="filter-btn" onclick="setFiltroObjetivo('Ganar músculo', this)">💪 Ganar Músculo</button>
+      <button class="filter-btn" onclick="setFiltroObjetivo('Mantenimiento', this)">⚖️ Mantenimiento</button>
+      <button class="filter-btn" onclick="setFiltroObjetivo('Mejorar resistencia', this)">🏃 Resistencia</button>
+    </div>
+
+    <div class="toolbar">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search-input" placeholder="Buscar cliente por nombre..." oninput="renderUsuarios()" />
+      </div>
+      <button class="btn-primary" onclick="abrirModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nuevo Cliente
+      </button>
+    </div>
+
+    <div class="users-grid" id="usuarios-grid"></div>
+  </div>
+</main>
+
+<!-- Modal Usuario -->
+<div class="modal-overlay" id="modal-usuario">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">Nuevo Cliente</h2>
+      <button class="modal-close" onclick="closeModal('modal-usuario')">✕</button>
+    </div>
+    <form id="form-usuario" onsubmit="guardarUsuario(event)">
+      <input type="hidden" id="uid" />
+      <div class="form-section-title">Datos Personales</div>
+      <div class="form-grid">
+        <div class="form-group full"><label>Nombre Completo *</label><input type="text" id="u-nombre" placeholder="Juan García López" required /></div>
+        <div class="form-group"><label>Edad *</label><input type="number" id="u-edad" placeholder="25" min="10" max="100" required /></div>
+        <div class="form-group"><label>Género</label><select id="u-genero"><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
+        <div class="form-group"><label>Email</label><input type="email" id="u-email" placeholder="juan@email.com" /></div>
+        <div class="form-group"><label>Teléfono</label><input type="text" id="u-telefono" placeholder="+57 300 000 0000" /></div>
+        <div class="form-group"><label>Tarifa Mensual ($)</label><input type="number" id="u-tarifa" placeholder="150000" step="1000" /></div>
+      </div>
+      <div class="form-section-title">Medidas Físicas Iniciales</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Peso Inicial (kg) *</label><input type="number" id="u-peso" placeholder="70.5" step="0.1" min="30" required /></div>
+        <div class="form-group"><label>Estatura (cm) *</label><input type="number" id="u-estatura" placeholder="175" min="100" required /></div>
+        <div class="form-group"><label>Pecho (cm)</label><input type="number" id="u-pecho" placeholder="95" step="0.5" /></div>
+        <div class="form-group"><label>Cintura (cm)</label><input type="number" id="u-cintura" placeholder="80" step="0.5" /></div>
+        <div class="form-group"><label>Cadera (cm)</label><input type="number" id="u-cadera" placeholder="95" step="0.5" /></div>
+        <div class="form-group"><label>Brazo Izq. (cm)</label><input type="number" id="u-brazo-izq" placeholder="35" step="0.5" /></div>
+        <div class="form-group"><label>Brazo Der. (cm)</label><input type="number" id="u-brazo-der" placeholder="35" step="0.5" /></div>
+        <div class="form-group"><label>Muslo Izq. (cm)</label><input type="number" id="u-muslo-izq" placeholder="55" step="0.5" /></div>
+        <div class="form-group"><label>Muslo Der. (cm)</label><input type="number" id="u-muslo-der" placeholder="55" step="0.5" /></div>
+        <div class="form-group"><label>Pantorrilla (cm)</label><input type="number" id="u-pantorrilla" placeholder="38" step="0.5" /></div>
+      </div>
+      <div class="form-section-title">Objetivo y Plan</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Objetivo Principal</label><select id="u-objetivo"><option>Perder peso</option><option>Ganar músculo</option><option>Mantenimiento</option><option>Mejorar resistencia</option><option>Rehabilitación</option></select></div>
+        <div class="form-group"><label>Nivel de Experiencia</label><select id="u-nivel"><option>Principiante</option><option>Intermedio</option><option>Avanzado</option></select></div>
+        <div class="form-group full"><label>Observaciones / Lesiones</label><textarea id="u-obs" placeholder="Lesiones previas, restricciones, notas..." rows="3"></textarea></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeModal('modal-usuario')">Cancelar</button>
+        <button type="submit" class="btn-primary">Guardar Cliente</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Perfil -->
+<div class="modal-overlay" id="modal-perfil">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h2>Perfil del Cliente</h2>
+      <button class="modal-close" onclick="closeModal('modal-perfil')">✕</button>
+    </div>
+    <div id="perfil-content"></div>
+  </div>
+</div>
+
+<!-- Modal Sesión -->
+<div class="modal-overlay" id="modal-sesion">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Programar Sesión</h2>
+      <button class="modal-close" onclick="closeModal('modal-sesion')">✕</button>
+    </div>
+    <form id="form-sesion" onsubmit="guardarSesion(event)">
+      <input type="hidden" id="sesion-uid" />
+      <div class="form-section-title">Datos de la Sesión</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Fecha *</label><input type="date" id="s-fecha" required /></div>
+        <div class="form-group"><label>Hora *</label><input type="time" id="s-hora" required /></div>
+        <div class="form-group full"><label>Rutina Asignada</label><select id="s-rutina"><option value="">Sin rutina específica</option></select></div>
+        <div class="form-group full"><label>Notas de la Sesión</label><textarea id="s-notas" placeholder="Indicaciones especiales para esta sesión..." rows="2"></textarea></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeModal('modal-sesion')">Cancelar</button>
+        <button type="submit" class="btn-primary">Programar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="shared.js"></script>
+<script>
+  document.getElementById('sidebar-container').innerHTML = buildSidebar('usuarios');
+  document.getElementById('topbar-container').innerHTML = buildTopbar('Clientes', `<button class="btn-primary" onclick="abrirModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nuevo Cliente</button>`);
+  document.getElementById('toast-container').innerHTML = buildToast();
+
+  let filtroObjetivo = '';
+
+  function setFiltroObjetivo(val, btn) {
+    filtroObjetivo = val;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderUsuarios();
+  }
+
+  function updateSummary() {
+    document.getElementById('sum-clientes').textContent = DB.usuarios.length;
+    document.getElementById('sum-revenue').textContent = '$' + calcRevenue().toLocaleString('es-CO');
+    document.getElementById('sum-completitud').textContent = calcCompletitudPromedio() + '%';
+    document.getElementById('sum-rutinas').textContent = DB.rutinas.length;
+  }
+
+  function renderUsuarios() {
+    updateSummary();
+    const grid = document.getElementById('usuarios-grid');
+    const q = document.getElementById('search-input').value.toLowerCase();
+    let lista = DB.usuarios;
+    if (q) lista = lista.filter(u => u.nombre.toLowerCase().includes(q));
+    if (filtroObjetivo) lista = lista.filter(u => u.objetivo === filtroObjetivo);
+
+    if (lista.length === 0) {
+      grid.innerHTML = `<div class="empty-state"><span class="empty-icon">👤</span><h3>${q||filtroObjetivo?'Sin resultados':'Sin clientes registrados'}</h3><p>${q||filtroObjetivo?'Ajusta el filtro o búsqueda':'Comienza registrando tu primer cliente.'}</p>${!q&&!filtroObjetivo?'<button class="btn-primary" onclick="abrirModal()">Agregar Cliente</button>':''}</div>`;
+      return;
+    }
+
+    const OBJETIVO_ICONS = { 'Perder peso':'💧','Ganar músculo':'💪','Mantenimiento':'⚖️','Mejorar resistencia':'🏃','Rehabilitación':'🏥' };
+
+    grid.innerHTML = lista.map(u => {
+      const avClass = avatarClass(u.nombre);
+      const ini = initials(u.nombre);
+      const rutinas = DB.rutinas.filter(r => r.usuarioId === u.id).length;
+      const completitud = calcCompletitudUsuario(u.id);
+      const b = bmi(u.peso, u.estatura);
+      const proximaSesion = DB.sesiones.filter(s => s.usuarioId === u.id && s.estado === 'pendiente' && s.fecha >= new Date().toISOString().split('T')[0]).sort((a,b2)=>a.fecha.localeCompare(b2.fecha))[0];
+      const badgeCls = badgeClass(u.nivel);
+
+      return `<div class="user-card">
+        <div class="user-card-top">
+          <div class="user-avatar-lg ${avClass}">${ini}</div>
+          <div style="flex:1">
+            <div class="user-name">${u.nombre}</div>
+            <div class="user-meta">${u.edad} años · ${u.genero}</div>
+            <div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap">
+              <span class="badge ${badgeCls}">${u.nivel}</span>
+              <span class="badge badge-purple">${OBJETIVO_ICONS[u.objetivo]||'🎯'} ${u.objetivo}</span>
+            </div>
+          </div>
+          ${u.tarifa ? `<div style="text-align:right;flex-shrink:0"><div style="font-size:14px;font-weight:800;background:var(--grad-main);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">$${parseInt(u.tarifa).toLocaleString('es-CO')}</div><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">/ mes</div></div>` : ''}
+        </div>
+
+        <div class="user-stats-row">
+          <div class="user-stat"><div class="user-stat-val">${u.peso} kg</div><div class="user-stat-lbl">Peso</div></div>
+          <div class="user-stat"><div class="user-stat-val">${u.estatura} cm</div><div class="user-stat-lbl">Estatura</div></div>
+          <div class="user-stat"><div class="user-stat-val">${b}</div><div class="user-stat-lbl">IMC</div></div>
+        </div>
+
+        <div class="user-progress-section">
+          <div class="user-progress-label">
+            <span>Completitud Semanal</span>
+            <span style="color:var(--pink);font-weight:700">${completitud}%</span>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" style="width:${completitud}%"></div>
+          </div>
+        </div>
+
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">
+          🏋️ ${rutinas} rutina${rutinas!==1?'s':''} &nbsp;·&nbsp;
+          📅 ${proximaSesion ? formatDate(proximaSesion.fecha) + ' ' + proximaSesion.hora : 'Sin próxima sesión'}
+        </div>
+        ${u.email ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">📧 ${u.email}</div>` : '<div style="margin-bottom:10px"></div>'}
+
+        <div class="user-card-actions">
+          <button class="btn-ghost" style="flex:1" onclick="verPerfil('${u.id}')">👁 Perfil</button>
+          <button class="btn-ghost" onclick="programarSesion('${u.id}')">📅</button>
+          <button class="btn-ghost" onclick="abrirModal('${u.id}')">✏️</button>
+          <button class="btn-ghost btn-danger" onclick="eliminarUsuario('${u.id}')">🗑️</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function abrirModal(uid = null) {
+    document.getElementById('form-usuario').reset();
+    document.getElementById('uid').value = '';
+    document.getElementById('modal-title').textContent = 'Nuevo Cliente';
+    if (uid) {
+      const u = DB.usuarios.find(x => x.id === uid);
+      if (!u) return;
+      document.getElementById('modal-title').textContent = 'Editar Cliente';
+      document.getElementById('uid').value = u.id;
+      document.getElementById('u-nombre').value = u.nombre;
+      document.getElementById('u-edad').value = u.edad;
+      document.getElementById('u-genero').value = u.genero;
+      document.getElementById('u-email').value = u.email || '';
+      document.getElementById('u-telefono').value = u.telefono || '';
+      document.getElementById('u-tarifa').value = u.tarifa || '';
+      document.getElementById('u-peso').value = u.peso;
+      document.getElementById('u-estatura').value = u.estatura;
+      document.getElementById('u-pecho').value = u.pecho || '';
+      document.getElementById('u-cintura').value = u.cintura || '';
+      document.getElementById('u-cadera').value = u.cadera || '';
+      document.getElementById('u-brazo-izq').value = u.brazoIzq || '';
+      document.getElementById('u-brazo-der').value = u.brazoDer || '';
+      document.getElementById('u-muslo-izq').value = u.musloIzq || '';
+      document.getElementById('u-muslo-der').value = u.musloDer || '';
+      document.getElementById('u-pantorrilla').value = u.pantorrilla || '';
+      document.getElementById('u-objetivo').value = u.objetivo;
+      document.getElementById('u-nivel').value = u.nivel;
+      document.getElementById('u-obs').value = u.obs || '';
+    }
+    openModal('modal-usuario');
+  }
+
+  function guardarUsuario(e) {
+    e.preventDefault();
+    const id = document.getElementById('uid').value;
+    const u = {
+      id: id || genId(), nombre: document.getElementById('u-nombre').value.trim(),
+      edad: parseInt(document.getElementById('u-edad').value), genero: document.getElementById('u-genero').value,
+      email: document.getElementById('u-email').value.trim(), telefono: document.getElementById('u-telefono').value.trim(),
+      tarifa: parseFloat(document.getElementById('u-tarifa').value) || null,
+      peso: parseFloat(document.getElementById('u-peso').value), estatura: parseFloat(document.getElementById('u-estatura').value),
+      pecho: parseFloat(document.getElementById('u-pecho').value) || null, cintura: parseFloat(document.getElementById('u-cintura').value) || null,
+      cadera: parseFloat(document.getElementById('u-cadera').value) || null, brazoIzq: parseFloat(document.getElementById('u-brazo-izq').value) || null,
+      brazoDer: parseFloat(document.getElementById('u-brazo-der').value) || null, musloIzq: parseFloat(document.getElementById('u-muslo-izq').value) || null,
+      musloDer: parseFloat(document.getElementById('u-muslo-der').value) || null, pantorrilla: parseFloat(document.getElementById('u-pantorrilla').value) || null,
+      objetivo: document.getElementById('u-objetivo').value, nivel: document.getElementById('u-nivel').value,
+      obs: document.getElementById('u-obs').value.trim(),
+      creado: id ? (DB.usuarios.find(x=>x.id===id)?.creado || new Date().toISOString()) : new Date().toISOString(),
+    };
+    if (id) { const i = DB.usuarios.findIndex(x=>x.id===id); if(i>=0) DB.usuarios[i]=u; }
+    else DB.usuarios.push(u);
+    saveDB(); closeModal('modal-usuario'); renderUsuarios();
+    showToast(id ? '✅ Cliente actualizado' : '✅ Cliente registrado');
+  }
+
+  function eliminarUsuario(id) {
+    if (!confirm('¿Eliminar este cliente? Se borrarán sus rutinas, progresos y sesiones.')) return;
+    DB.usuarios = DB.usuarios.filter(u=>u.id!==id);
+    DB.rutinas = DB.rutinas.filter(r=>r.usuarioId!==id);
+    DB.progresos = DB.progresos.filter(p=>p.usuarioId!==id);
+    DB.sesiones = DB.sesiones.filter(s=>s.usuarioId!==id);
+    saveDB(); renderUsuarios(); showToast('🗑️ Cliente eliminado', 'error');
+  }
+
+  function verPerfil(id) {
+    const u = DB.usuarios.find(x=>x.id===id); if(!u) return;
+    const b = bmi(u.peso, u.estatura);
+    const avClass = avatarClass(u.nombre); const ini = initials(u.nombre);
+    const rutinas = DB.rutinas.filter(r=>r.usuarioId===id).length;
+    const sesiones = DB.sesiones.filter(s=>s.usuarioId===id);
+    const completadas = sesiones.filter(s=>s.estado==='completada').length;
+    document.getElementById('perfil-content').innerHTML = `
+      <div class="perfil-hero">
+        <div class="perfil-avatar ${avClass}">${ini}</div>
+        <div style="flex:1">
+          <div class="perfil-name">${u.nombre}</div>
+          <div class="perfil-meta">${u.edad} años · ${u.genero} · ${u.nivel}</div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <span class="badge badge-pink">🎯 ${u.objetivo}</span>
+            ${u.tarifa?`<span class="badge badge-purple">💰 $${parseInt(u.tarifa).toLocaleString('es-CO')}/mes</span>`:''}
+          </div>
+        </div>
+      </div>
+      <div class="perfil-body">
+        <div class="medidas-grid" style="grid-template-columns:repeat(4,1fr)">
+          <div class="medida-card"><div class="val">${u.peso} kg</div><div class="lbl">Peso</div></div>
+          <div class="medida-card"><div class="val">${u.estatura} cm</div><div class="lbl">Estatura</div></div>
+          <div class="medida-card"><div class="val">${b}</div><div class="lbl">IMC</div></div>
+          <div class="medida-card"><div class="val">${bmiCategory(b)}</div><div class="lbl">Categoría</div></div>
+          <div class="medida-card"><div class="val">${rutinas}</div><div class="lbl">Rutinas</div></div>
+          <div class="medida-card"><div class="val">${sesiones.length}</div><div class="lbl">Sesiones</div></div>
+          <div class="medida-card"><div class="val">${completadas}</div><div class="lbl">Completadas</div></div>
+          <div class="medida-card"><div class="val">${sesiones.length?Math.round(completadas/sesiones.length*100):0}%</div><div class="lbl">Completitud</div></div>
+        </div>
+        <div class="form-section-title" style="padding-top:0">Medidas Corporales Iniciales</div>
+        <div class="medidas-grid" style="grid-template-columns:repeat(5,1fr)">
+          ${[['Pecho',u.pecho],['Cintura',u.cintura],['Cadera',u.cadera],['B.Izq',u.brazoIzq],['B.Der',u.brazoDer],['M.Izq',u.musloIzq],['M.Der',u.musloDer],['Pantorrilla',u.pantorrilla]]
+            .map(([l,v])=>`<div class="medida-card"><div class="val">${v?v+' cm':'—'}</div><div class="lbl">${l}</div></div>`).join('')}
+        </div>
+        ${u.obs?`<div class="perfil-obs" style="margin-top:16px"><strong style="color:var(--pink)">📝 Observaciones:</strong><br>${u.obs}</div>`:''}
+        <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap">
+          <button class="btn-primary" onclick="closeModal('modal-perfil');abrirModal('${u.id}')">✏️ Editar</button>
+          <a href="rutinas.html?usuario=${u.id}" class="btn-secondary">🏋️ Rutinas</a>
+          <a href="progreso.html?usuario=${u.id}" class="btn-secondary">📊 Progreso</a>
+          <button class="btn-secondary" onclick="closeModal('modal-perfil');programarSesion('${u.id}')">📅 Sesión</button>
+        </div>
+      </div>`;
+    openModal('modal-perfil');
+  }
+
+  function programarSesion(uid) {
+    document.getElementById('form-sesion').reset();
+    document.getElementById('sesion-uid').value = uid;
+    document.getElementById('s-fecha').value = new Date().toISOString().split('T')[0];
+    document.getElementById('s-hora').value = '08:00';
+    const rutSel = document.getElementById('s-rutina');
+    rutSel.innerHTML = '<option value="">Sin rutina específica</option>';
+    DB.rutinas.filter(r => r.usuarioId === uid).forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.id; opt.textContent = `${r.mes} ${r.anio} — ${r.tipo}`;
+      rutSel.appendChild(opt);
+    });
+    openModal('modal-sesion');
+  }
+
+  function guardarSesion(e) {
+    e.preventDefault();
+    const uid = document.getElementById('sesion-uid').value;
+    const sesion = {
+      id: genId(), usuarioId: uid,
+      fecha: document.getElementById('s-fecha').value,
+      hora: document.getElementById('s-hora').value,
+      rutinaId: document.getElementById('s-rutina').value || null,
+      notas: document.getElementById('s-notas').value,
+      estado: 'pendiente',
+    };
+    DB.sesiones.push(sesion);
+    saveDB(); closeModal('modal-sesion'); renderUsuarios();
+    showToast('📅 Sesión programada correctamente');
+  }
+
+  renderUsuarios();
+
+  // Auto-open perfil if ?perfil=id
+  const perfilId = new URLSearchParams(window.location.search).get('perfil');
+  if (perfilId) verPerfil(perfilId);
+</script>
+</body>
+</html>

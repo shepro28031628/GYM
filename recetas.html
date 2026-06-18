@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Romeo Personal Trainer — Nutrición y Recetas</title>
+  <meta name="description" content="Recetas y recomendaciones nutricionales para potenciar los resultados de tus usuarios." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div id="sidebar-container"></div>
+
+<main class="main-content">
+  <div id="topbar-container"></div>
+
+  <div class="page-body">
+    <div class="section-header">
+      <h1>Nutrición y Recetas</h1>
+      <p class="section-subtitle">Recomendaciones alimenticias para potenciar los resultados de tus usuarios</p>
+    </div>
+
+    <!-- Macro Guide Banner -->
+    <div class="macro-guide">
+      <div class="macro-guide-item">
+        <div class="mg-icon" style="background:rgba(108,99,255,0.15);border:1px solid rgba(108,99,255,0.3)">💪</div>
+        <div>
+          <div class="mg-title">Proteína</div>
+          <div class="mg-sub">1.6 – 2.2 g/kg de peso corporal</div>
+        </div>
+      </div>
+      <div class="macro-guide-item">
+        <div class="mg-icon" style="background:rgba(255,112,67,0.15);border:1px solid rgba(255,112,67,0.3)">⚡</div>
+        <div>
+          <div class="mg-title">Carbohidratos</div>
+          <div class="mg-sub">3 – 5 g/kg para entrenamiento moderado</div>
+        </div>
+      </div>
+      <div class="macro-guide-item">
+        <div class="mg-icon" style="background:rgba(0,229,160,0.15);border:1px solid rgba(0,229,160,0.3)">🥑</div>
+        <div>
+          <div class="mg-title">Grasas Saludables</div>
+          <div class="mg-sub">25 – 35% del total calórico diario</div>
+        </div>
+      </div>
+      <div class="macro-guide-item">
+        <div class="mg-icon" style="background:rgba(0,212,255,0.15);border:1px solid rgba(0,212,255,0.3)">💧</div>
+        <div>
+          <div class="mg-title">Hidratación</div>
+          <div class="mg-sub">35 ml/kg de peso + 500ml por hora de ejercicio</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="recetas-filter">
+      <button class="filter-btn active" id="filter-todas" onclick="filtrarRecetas('todas', this)">🍽️ Todas</button>
+      <button class="filter-btn" id="filter-proteina" onclick="filtrarRecetas('proteina', this)">💪 Alta Proteína</button>
+      <button class="filter-btn" id="filter-carbohidratos" onclick="filtrarRecetas('carbohidratos', this)">⚡ Pre-Entreno</button>
+      <button class="filter-btn" id="filter-recuperacion" onclick="filtrarRecetas('recuperacion', this)">🔄 Recuperación</button>
+      <button class="filter-btn" id="filter-snack" onclick="filtrarRecetas('snack', this)">🍎 Snacks</button>
+    </div>
+
+    <div class="recetas-grid" id="recetas-grid"></div>
+
+    <!-- Nutrition Tips -->
+    <div style="margin-top: 40px;">
+      <h2 style="font-size:20px;font-weight:800;margin-bottom:20px;color:var(--text-primary)">📚 Guía de Timing Nutricional</h2>
+      <div class="timing-grid">
+        <div class="timing-card">
+          <div class="timing-badge" style="background:rgba(255,112,67,0.15);color:var(--accent-orange);border:1px solid rgba(255,112,67,0.3)">⏰ 2-3h antes</div>
+          <h3>Pre-Entreno</h3>
+          <p>Comida completa con carbohidratos de digestión lenta, proteína moderada y poca grasa. Ej: avena con frutas y proteína.</p>
+          <div class="timing-macros">
+            <span>🍞 Carbos: 60%</span>
+            <span>🥩 Proteína: 30%</span>
+            <span>🥑 Grasa: 10%</span>
+          </div>
+        </div>
+        <div class="timing-card">
+          <div class="timing-badge" style="background:rgba(108,99,255,0.15);color:var(--accent-blue);border:1px solid rgba(108,99,255,0.3)">⚡ 30-60min antes</div>
+          <h3>Snack Pre-Entreno</h3>
+          <p>Carbohidratos simples de rápida digestión para energía inmediata. Ej: banana, dátiles o batido de frutas.</p>
+          <div class="timing-macros">
+            <span>🍌 Carbos: 80%</span>
+            <span>🥩 Proteína: 15%</span>
+            <span>🥑 Grasa: 5%</span>
+          </div>
+        </div>
+        <div class="timing-card">
+          <div class="timing-badge" style="background:rgba(0,229,160,0.15);color:var(--accent-green);border:1px solid rgba(0,229,160,0.3)">✅ 30-60min después</div>
+          <h3>Post-Entreno</h3>
+          <p>Ventana anabólica: proteína de rápida absorción + carbohidratos para reponer glucógeno muscular.</p>
+          <div class="timing-macros">
+            <span>🍞 Carbos: 50%</span>
+            <span>🥩 Proteína: 40%</span>
+            <span>🥑 Grasa: 10%</span>
+          </div>
+        </div>
+        <div class="timing-card">
+          <div class="timing-badge" style="background:rgba(155,89,245,0.15);color:var(--accent-purple);border:1px solid rgba(155,89,245,0.3)">🌙 Antes de dormir</div>
+          <h3>Recuperación Nocturna</h3>
+          <p>Proteína de digestión lenta (caseína) para síntesis muscular durante el sueño. Ej: caseína, requesón o yogur griego.</p>
+          <div class="timing-macros">
+            <span>🍞 Carbos: 20%</span>
+            <span>🥩 Proteína: 60%</span>
+            <span>🥑 Grasa: 20%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Modal Detalle Receta -->
+<div class="modal-overlay" id="modal-receta">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-receta-title">Detalle de Receta</h2>
+      <button class="modal-close" onclick="closeModal('modal-receta')">✕</button>
+    </div>
+    <div id="modal-receta-content" style="padding:24px"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="shared.js"></script>
+<script>
+  document.getElementById('sidebar-container').innerHTML = buildSidebar('recetas');
+  document.getElementById('topbar-container').innerHTML = buildTopbar('Nutrición y Recetas');
+  document.getElementById('toast-container').innerHTML = buildToast();
+
+  const INGREDIENTES = {
+    1: ['150g arroz integral cocido', '180g pechuga de pollo a la plancha', '1 taza de brócoli al vapor', '½ aguacate', 'Sal, pimienta, limón al gusto'],
+    2: ['1 scoop proteína en polvo (vainilla)', '1 banana mediana', '250ml leche de almendras', '2 cdas mantequilla de maní natural', 'Hielo al gusto'],
+    3: ['80g avena en hojuelas', '200ml leche o agua', '1 banana en rodajas', '1 cda miel de abeja', '30g nueces mixtas', 'Canela al gusto'],
+    4: ['2 rebanadas pan integral', '3 huevos', '½ aguacate maduro', 'Sal, pimienta', 'Opcional: chile flakes'],
+    5: ['180g filete de salmón', '2 tazas espinacas baby', '1 zanahoria mediana', '1 camote pequeño', 'Aceite de oliva, sal, limón'],
+    6: ['2 tazas espinaca fresca', '1 taza piña en cubos', '1 cm raíz de jengibre', '1 scoop proteína en polvo', '200ml leche de coco'],
+    7: ['2 huevos duros', '30g almendras tostadas sin sal', 'Sal de mar al gusto'],
+    8: ['200g yogur griego natural (0% azúcar)', '½ taza arándanos frescos', '¼ taza fresas troceadas', '2 cdas granola casera'],
+    9: ['1 lata atún en agua (180g)', '½ taza garbanzos cocidos', '1 tomate mediano', '½ pepino', 'Jugo de 1 limón', '1 cda aceite de oliva extra virgen'],
+    10: ['200g pasta integral', '150g carne molida de pavo', '1 taza salsa de tomate casera', '½ cebolla', '2 dientes de ajo', 'Orégano, basil'],
+    11: ['300ml caldo de res desgrasado', '1 zanahoria', '2 tallos de apio', '100g res magra cocida', 'Sal, pimienta, cilantro'],
+    12: ['1 manzana mediana (verde o roja)', '2 cdas mantequilla de maní natural (sin azúcar añadida)'],
+  };
+
+  const PREPARACION = {
+    1: 'Cocina el arroz integral. Sazona y cocina el pollo a la plancha hasta dorar. Cocina el brócoli al vapor 5 min. Sirve en bowl y agrega el aguacate en rodajas. Exprime limón y sazona al gusto.',
+    2: 'Coloca todos los ingredientes en la licuadora. Procesa por 30-60 segundos hasta obtener una consistencia cremosa. Sirve inmediatamente.',
+    3: 'Cocina la avena con agua o leche a fuego medio. Agrega la banana en rodajas. Mezcla bien. Sirve en bowl y decora con nueces, miel y canela.',
+    4: 'Tuesta el pan integral. Bate los huevos y cocina a fuego bajo revolviendo constantemente. Aplasta el aguacate, sazona con sal y limón. Monta: pan + aguacate + huevo.',
+    5: 'Sazona el salmón con sal, pimienta y limón. Cocina en sartén con poco aceite 4 min por cada lado. Cocina las verduras al vapor o al horno 20 min. Sirve junto.',
+    6: 'Licúa todos los ingredientes hasta conseguir una textura suave. Agrega hielo si deseas más frío. Consume inmediatamente tras el entrenamiento.',
+    7: 'Hierve los huevos 10 min en agua. Enfría en agua con hielo. Pela y corta a la mitad. Sirve con almendras. Ideal como snack entre comidas.',
+    8: 'En un bowl, mezcla el yogur griego con los arándanos y fresas. Agrega la granola al momento de servir para mantener la textura crujiente.',
+    9: 'Escurre y enjuaga el atún. Mezcla con garbanzos, tomate y pepino picados. Aliña con limón, aceite de oliva, sal y pimienta. Refrigera 10 min antes de servir.',
+    10: 'Cocina la pasta al dente. Saltea cebolla y ajo, agrega el pavo y cocina hasta dorar. Agrega la salsa de tomate y cocina 10 min. Mezcla con la pasta.',
+    11: 'Hierve la res con las verduras a fuego lento 1-2 horas. Desgrasa el caldo. Filtra y sirve con la carne desmenuzada. Agrega cilantro al final.',
+    12: 'Lava la manzana y córtala en gajos. Sirve con la mantequilla de maní como dip. Sin cocción. Consume como snack entre el desayuno y el almuerzo.',
+  };
+
+  function filtrarRecetas(cat, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    const lista = cat === 'todas' ? RECETAS : RECETAS.filter(r => r.categoria === cat);
+    renderRecetasGrid(lista);
+  }
+
+  function renderRecetasGrid(lista) {
+    const grid = document.getElementById('recetas-grid');
+    grid.innerHTML = lista.map(r => `
+      <div class="receta-card" onclick="verReceta(${r.id})">
+        <div class="receta-img" style="background:${getCatGradient(r.categoria)}">
+          <span style="position:relative;z-index:1;font-size:64px">${r.emoji}</span>
+          <span class="receta-category-tag" style="color:white">${r.tag}</span>
+        </div>
+        <div class="receta-body">
+          <div class="receta-name">${r.nombre}</div>
+          <div class="receta-desc">${r.desc}</div>
+          <div class="receta-macros">
+            <div class="macro-chip macro-p"><div class="m-val">${r.proteina}</div><div class="m-lbl">Proteína</div></div>
+            <div class="macro-chip macro-c"><div class="m-val">${r.carbs}</div><div class="m-lbl">Carbos</div></div>
+            <div class="macro-chip macro-g"><div class="m-val">${r.grasas}</div><div class="m-lbl">Grasas</div></div>
+            <div class="macro-chip macro-k"><div class="m-val">${r.kcal}</div><div class="m-lbl">kcal</div></div>
+          </div>
+          <button class="btn-secondary" style="width:100%;margin-top:12px;font-size:12px;padding:8px" onclick="event.stopPropagation();verReceta(${r.id})">Ver Preparación →</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function verReceta(id) {
+    const r = RECETAS.find(x => x.id === id);
+    if (!r) return;
+    document.getElementById('modal-receta-title').textContent = r.emoji + ' ' + r.nombre;
+    const ings = INGREDIENTES[id] || [];
+    const prep = PREPARACION[id] || 'Preparación no disponible.';
+    document.getElementById('modal-receta-content').innerHTML = `
+      <div style="background:${getCatGradient(r.categoria)};border-radius:var(--radius-sm);padding:20px;text-align:center;margin-bottom:20px">
+        <div style="font-size:72px;margin-bottom:8px">${r.emoji}</div>
+        <span style="background:rgba(0,0,0,0.3);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;color:white">${r.tag}</span>
+      </div>
+      <div class="receta-macros" style="margin-bottom:20px">
+        <div class="macro-chip macro-p" style="padding:12px"><div class="m-val" style="font-size:18px">${r.proteina}</div><div class="m-lbl">Proteína</div></div>
+        <div class="macro-chip macro-c" style="padding:12px"><div class="m-val" style="font-size:18px">${r.carbs}</div><div class="m-lbl">Carbohidratos</div></div>
+        <div class="macro-chip macro-g" style="padding:12px"><div class="m-val" style="font-size:18px">${r.grasas}</div><div class="m-lbl">Grasas</div></div>
+        <div class="macro-chip macro-k" style="padding:12px"><div class="m-val" style="font-size:18px">${r.kcal}</div><div class="m-lbl">Calorías</div></div>
+      </div>
+      <div style="margin-bottom:20px">
+        <h3 style="font-size:14px;font-weight:700;color:var(--text-secondary);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px">🛒 Ingredientes</h3>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:6px">
+          ${ings.map(i => `<li style="display:flex;align-items:center;gap:8px;font-size:13px;padding:8px 10px;background:var(--bg-input);border-radius:var(--radius-xs);border:1px solid var(--border)"><span style="color:var(--accent-green)">✓</span> ${i}</li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h3 style="font-size:14px;font-weight:700;color:var(--text-secondary);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px">👨‍🍳 Preparación</h3>
+        <div style="background:rgba(108,99,255,0.06);border:1px solid rgba(108,99,255,0.15);border-radius:var(--radius-sm);padding:16px;font-size:13px;color:var(--text-secondary);line-height:1.7">${prep}</div>
+      </div>`;
+    openModal('modal-receta');
+  }
+
+  // Initial render
+  renderRecetasGrid(RECETAS);
+</script>
+</body>
+</html>
