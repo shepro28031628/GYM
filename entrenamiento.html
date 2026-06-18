@@ -198,9 +198,12 @@
           <span class="badge badge-pink">${r.tipo}</span>
         </div>
         <table class="ejercicios-table">
-          <thead><tr><th>#</th><th>Ejercicio</th><th>Grupo</th><th>Series × Reps</th><th>Peso</th><th>Descanso</th></tr></thead>
+          <thead><tr><th>#</th><th>Ilustración</th><th>Ejercicio</th><th>Grupo</th><th>Series × Reps</th><th>Peso</th><th>Descanso</th></tr></thead>
           <tbody>${r.ejercicios.map((ej,i)=>`<tr>
             <td style="color:var(--text-muted)">${i+1}</td>
+            <td>
+              ${ej.imagen ? `<img src="img/${ej.imagen}" style="width:45px; height:45px; object-fit:cover; border-radius:6px; border:1px solid var(--border);" />` : '<span style="color:var(--text-muted); font-size:11px;">—</span>'}
+            </td>
             <td><strong>${ej.nombre}</strong></td>
             <td><span class="tag-muscular">${ej.grupo}</span></td>
             <td>${ej.series||'—'}</td>
@@ -208,7 +211,7 @@
             <td>${ej.descanso?ej.descanso+'s':'—'}</td>
           </tr>`).join('')}</tbody>
         </table>
-        ${r.notas?`<div class="rutina-notas" style="margin-top:12px">📝 ${r.notas}</div>`:''}
+        ${r.notes || r.notas?`<div class="rutina-notas" style="margin-top:12px">📝 ${r.notes || r.notas}</div>`:''}
       </div>`;
   }
 
@@ -265,6 +268,7 @@
         const descanso = parseInt(ej.descanso) || 60;
         items.push(`<div class="checklist-item" id="${sid}" onclick="toggleSet('${sid}', ${numReps}, ${peso}, ${descanso})">
           <div class="check-box" id="cb-${sid}"></div>
+          ${ej.imagen ? `<img src="img/${ej.imagen}" style="width:40px; height:40px; object-fit:cover; border-radius:6px; border:1px solid var(--border); margin: 0 10px; flex-shrink: 0;" />` : ''}
           <div class="check-info">
             <div class="check-name">${ej.nombre} — Serie ${s}/${numSeries}</div>
             <div class="check-detail"><span class="tag-muscular" style="font-size:9px">${ej.grupo}</span> &nbsp; ${numReps} reps &nbsp;·&nbsp; Descanso: ${descanso}s</div>

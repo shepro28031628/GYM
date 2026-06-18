@@ -148,6 +148,7 @@ function buildSidebar(activePage) {
     { id:'entrenamiento', href:'entrenamiento.html',   label:'Entrenamiento',icon:`<polyline points="13 2 13 9 20 9"/><path d="M20 9L13 2"/><path d="M4 4h7"/><path d="M4 8h5"/><path d="M4 12h9"/><path d="M4 16h16"/><path d="M4 20h16"/>` },
     { id:'progreso',      href:'progreso.html',        label:'Progreso',     icon:`<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>` },
     { id:'recetas',       href:'recetas.html',         label:'Nutrición',    icon:`<path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 2a10 10 0 0 1 10 10h-10V2z" opacity=".5"/>` },
+    { id:'macros',        href:'macros.html',          label:'Macros',       icon:`<circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10H12z"/>` },
   ];
 
   const badges = {

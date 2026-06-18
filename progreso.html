@@ -191,8 +191,14 @@
           <h3>Frente</h3>
           <div class="ba-photos-container">
             <div class="ba-photo-box">
-              <div class="ba-photo-frame">
-                ${u.fotoIniFrente ? `<img src="${u.fotoIniFrente}" />` : `<span class="ba-empty-photo">👤</span>`}
+              <div class="ba-photo-frame" id="prog-iniFrente">
+                ${u.fotoIniFrente ? `
+                  <img src="${u.fotoIniFrente}" />
+                  <button class="photo-remove-btn" onclick="eliminarFotoInicial('${u.id}', 'Frente', event)">✕</button>
+                ` : `
+                  <span class="ba-empty-photo">👤</span>
+                  <div class="ba-upload-btn-overlay" onclick="subirFotoInicial('${u.id}', 'Frente')">📷 Tomar</div>
+                `}
               </div>
               <span class="ba-label antes">Antes</span>
             </div>
@@ -216,8 +222,14 @@
           <h3>Perfil</h3>
           <div class="ba-photos-container">
             <div class="ba-photo-box">
-              <div class="ba-photo-frame">
-                ${u.fotoIniPerfil ? `<img src="${u.fotoIniPerfil}" />` : `<span class="ba-empty-photo">👤</span>`}
+              <div class="ba-photo-frame" id="prog-iniPerfil">
+                ${u.fotoIniPerfil ? `
+                  <img src="${u.fotoIniPerfil}" />
+                  <button class="photo-remove-btn" onclick="eliminarFotoInicial('${u.id}', 'Perfil', event)">✕</button>
+                ` : `
+                  <span class="ba-empty-photo">👤</span>
+                  <div class="ba-upload-btn-overlay" onclick="subirFotoInicial('${u.id}', 'Perfil')">📷 Tomar</div>
+                `}
               </div>
               <span class="ba-label antes">Antes</span>
             </div>
@@ -241,8 +253,14 @@
           <h3>Espalda</h3>
           <div class="ba-photos-container">
             <div class="ba-photo-box">
-              <div class="ba-photo-frame">
-                ${u.fotoIniEspalda ? `<img src="${u.fotoIniEspalda}" />` : `<span class="ba-empty-photo">👤</span>`}
+              <div class="ba-photo-frame" id="prog-iniEspalda">
+                ${u.fotoIniEspalda ? `
+                  <img src="${u.fotoIniEspalda}" />
+                  <button class="photo-remove-btn" onclick="eliminarFotoInicial('${u.id}', 'Espalda', event)">✕</button>
+                ` : `
+                  <span class="ba-empty-photo">👤</span>
+                  <div class="ba-upload-btn-overlay" onclick="subirFotoInicial('${u.id}', 'Espalda')">📷 Tomar</div>
+                `}
               </div>
               <span class="ba-label antes">Antes</span>
             </div>
@@ -343,6 +361,53 @@
     DB.usuarios[idx][field] = null;
     saveDB();
     showToast(`🗑️ Foto "Después" de ${angle} eliminada`, 'error');
+    renderProgreso(uid);
+  }
+
+  function subirFotoInicial(uid, angle) {
+    const u = DB.usuarios.find(x => x.id === uid);
+    if (!u) return;
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+
+    const choice = confirm("¿Quieres usar la cámara web de este computador?\n(Aceptar = Usar cámara web, Cancelar = Buscar archivo de imagen)");
+    if (choice) {
+      openWebcamModal(function(dataUrl) {
+        saveInitialPhoto(uid, angle, dataUrl);
+      });
+    } else {
+      input.onchange = function(e) {
+        if (e.target.files && e.target.files[0]) {
+          compressImage(e.target.files[0], 400, 533, 0.6, function(dataUrl) {
+            saveInitialPhoto(uid, angle, dataUrl);
+          });
+        }
+      };
+      input.click();
+    }
+  }
+
+  function saveInitialPhoto(uid, angle, dataUrl) {
+    const idx = DB.usuarios.findIndex(x => x.id === uid);
+    if (idx < 0) return;
+    const field = `fotoIni${angle}`;
+    DB.usuarios[idx][field] = dataUrl;
+    saveDB();
+    showToast(`✅ Foto de ${angle} ("Antes") guardada`);
+    renderProgreso(uid);
+  }
+
+  function eliminarFotoInicial(uid, angle, event) {
+    if (event) event.stopPropagation();
+    if (!confirm(`¿Eliminar la foto "Antes" de ${angle}?`)) return;
+    const idx = DB.usuarios.findIndex(x => x.id === uid);
+    if (idx < 0) return;
+    const field = `fotoIni${angle}`;
+    DB.usuarios[idx][field] = null;
+    saveDB();
+    showToast(`🗑️ Foto "Antes" de ${angle} eliminada`, 'error');
     renderProgreso(uid);
   }
 </script>

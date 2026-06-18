@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Romeo Personal Trainer — Macronutrientes</title>
+  <meta name="description" content="Calculadora de calorías y distribución de macronutrientes (proteínas, grasas y carbohidratos) según objetivos corporales." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div id="sidebar-container"></div>
+<main class="main-content">
+  <div id="topbar-container"></div>
+  <div class="page-body">
+
+    <div class="section-header">
+      <h1>Calculadora de Macros</h1>
+      <p class="section-subtitle">Calcula y personaliza las calorías y distribución de nutrientes de cada cliente</p>
+    </div>
+
+    <div class="toolbar">
+      <div class="select-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        <select id="sel-usuario" onchange="onUsuarioChange()">
+          <option value="">— Seleccionar Cliente —</option>
+        </select>
+      </div>
+      <button class="btn-primary" id="btn-guardar" onclick="guardarPlan()" disabled>
+        💾 Guardar Plan
+      </button>
+    </div>
+
+    <!-- Client Info Banner (Hidden initially) -->
+    <div class="client-info-banner" id="client-banner" style="display:none">
+      <div class="client-info-item"><div class="client-info-val" id="cb-genero">—</div><div class="client-info-lbl">Género</div></div>
+      <div class="client-info-item"><div class="client-info-val" id="cb-edad">—</div><div class="client-info-lbl">Edad</div></div>
+      <div class="client-info-item"><div class="client-info-val" id="cb-peso">—</div><div class="client-info-lbl">Peso Actual</div></div>
+      <div class="client-info-item"><div class="client-info-val" id="cb-estatura">—</div><div class="client-info-lbl">Estatura</div></div>
+      <div class="client-info-item"><div class="client-info-val" id="cb-objetivo">—</div><div class="client-info-lbl">Objetivo Reg.</div></div>
+    </div>
+
+    <div id="macros-container">
+      <div class="empty-state">
+        <span class="empty-icon">🍳</span>
+        <h3>Selecciona un cliente</h3>
+        <p>Elige un cliente para cargar sus datos metabólicos y configurar su plan nutricional</p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div id="toast-container"></div>
+<script src="shared.js"></script>
+<script>
+  document.getElementById('sidebar-container').innerHTML = buildSidebar('macros');
+  document.getElementById('topbar-container').innerHTML = buildTopbar('Macronutrientes');
+  document.getElementById('toast-container').innerHTML = buildToast();
+
+  const sel = document.getElementById('sel-usuario');
+  DB.usuarios.forEach(u => {
+    const o = document.createElement('option');
+    o.value = u.id;
+    o.textContent = u.nombre;
+    sel.appendChild(o);
+  });
+
+  const param = new URLSearchParams(window.location.search).get('usuario');
+  if (param) { sel.value = param; onUsuarioChange(); }
+
+  let currentClient = null;
+
+  function onUsuarioChange() {
+    const uid = sel.value;
+    document.getElementById('btn-guardar').disabled = !uid;
+    const banner = document.getElementById('client-banner');
+    
+    if (!uid) {
+      banner.style.display = 'none';
+      currentClient = null;
+      document.getElementById('macros-container').innerHTML = `
+        <div class="empty-state">
+          <span class="empty-icon">🍳</span>
+          <h3>Selecciona un cliente</h3>
+          <p>Elige un cliente para cargar sus datos metabólicos y configurar su plan nutricional</p>
+        </div>`;
+      return;
+    }
+
+    currentClient = DB.usuarios.find(x => x.id === uid);
+    
+    // Obtener peso actual (último progreso, sino el inicial)
+    const progresos = DB.progresos.filter(p => p.usuarioId === uid).sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+    currentClient.pesoActual = progresos[0]?.peso || currentClient.peso;
+
+    // Llenar Banner
+    document.getElementById('cb-genero').textContent = currentClient.genero;
+    document.getElementById('cb-edad').textContent = currentClient.edad + ' años';
+    document.getElementById('cb-peso').textContent = currentClient.pesoActual + ' kg';
+    document.getElementById('cb-estatura').textContent = currentClient.estatura + ' cm';
+    document.getElementById('cb-objetivo').textContent = currentClient.objetivo;
+    banner.style.display = 'flex';
+
+    renderCalculadora();
+  }
+
+  function renderCalculadora() {
+    const container = document.getElementById('macros-container');
+    const u = currentClient;
+    const m = u.macros || {};
+
+    // Valores por defecto
+    const defAct = m.actividadFactor || 1.375;
+    const defAjuste = m.ajusteCal !== undefined ? m.ajusteCal : (u.objetivo === 'Ganar músculo' ? 400 : (u.objetivo === 'Perder peso' ? -400 : 0));
+    const defProt = m.proteinaFactor || 2.2;
+    const defGrasa = m.grasaPct || 25;
+
+    container.innerHTML = `
+      <div class="macro-input-grid">
+        <!-- Columna Izquierda: Parámetros -->
+        <div class="card">
+          <div class="card-header"><h2>⚙️ Configuración del Plan</h2></div>
+          <div style="padding: 16px; display:flex; flex-direction:column; gap:16px;">
+            
+            <div class="form-group" style="padding:0">
+              <label>Nivel de Actividad Física</label>
+              <select id="m-actividad" onchange="calcular()">
+                <option value="1.2" ${defAct == 1.2 ? 'selected' : ''}>Poco o ningún ejercicio (x1.2)</option>
+                <option value="1.375" ${defAct == 1.375 ? 'selected' : ''}>Ejercicio ligero: 1-3 días/sem (x1.375)</option>
+                <option value="1.55" ${defAct == 1.55 ? 'selected' : ''}>Ejercicio moderado: 3-5 días/sem (x1.55)</option>
+                <option value="1.725" ${defAct == 1.725 ? 'selected' : ''}>Ejercicio intenso: 6-7 días/sem (x1.725)</option>
+              </select>
+            </div>
+
+            <div class="macro-slider-group">
+              <div class="macro-slider-header">
+                <span>Ajuste Calórico (Objetivo)</span>
+                <span class="macro-slider-val" id="v-ajuste">${defAjuste > 0 ? '+' : ''}${defAjuste} kcal</span>
+              </div>
+              <input type="range" class="macro-slider" id="m-ajuste" min="-600" max="600" step="50" value="${defAjuste}" oninput="updateSliderVal('ajuste')" />
+              <div style="display:flex; justify-content: space-between; font-size:10px; color:var(--text-muted)">
+                <span>Definición (-600)</span>
+                <span>Mantenimiento (0)</span>
+                <span>Volumen (+600)</span>
+              </div>
+            </div>
+
+            <div class="macro-slider-group">
+              <div class="macro-slider-header">
+                <span>Factor de Proteínas</span>
+                <span class="macro-slider-val" id="v-proteina">${defProt.toFixed(1)} g / kg</span>
+              </div>
+              <input type="range" class="macro-slider" id="m-proteina" min="2.0" max="2.5" step="0.1" value="${defProt}" oninput="updateSliderVal('proteina')" />
+              <div style="display:flex; justify-content: space-between; font-size:10px; color:var(--text-muted)">
+                <span>Normal (2.0)</span>
+                <span>Óptimo (2.2)</span>
+                <span>Alto (2.5)</span>
+              </div>
+            </div>
+
+            <div class="macro-slider-group">
+              <div class="macro-slider-header">
+                <span>Porcentaje de Grasas</span>
+                <span class="macro-slider-val" id="v-grasa">${defGrasa}%</span>
+              </div>
+              <input type="range" class="macro-slider" id="m-grasa" min="20" max="30" step="1" value="${defGrasa}" oninput="updateSliderVal('grasa')" />
+              <div style="display:flex; justify-content: space-between; font-size:10px; color:var(--text-muted)">
+                <span>Mínimo (20%)</span>
+                <span>Saludable (25%)</span>
+                <span>Máximo (30%)</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Columna Derecha: Resultados -->
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <!-- Resumen de Calorías -->
+          <div class="macro-results-grid">
+            <div class="macro-res-card tmb">
+              <div class="macro-res-val" id="res-tmb">0</div>
+              <div class="macro-res-lbl">TMB (Basal)</div>
+            </div>
+            <div class="macro-res-card maint">
+              <div class="macro-res-val" id="res-mantenimiento">0</div>
+              <div class="macro-res-lbl">Mantenimiento</div>
+            </div>
+            <div class="macro-res-card target">
+              <div class="macro-res-val" id="res-calorias" style="background:var(--grad-main);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">0</div>
+              <div class="macro-res-lbl">Calorías Objetivo</div>
+            </div>
+          </div>
+
+          <!-- Distribución Gráfica -->
+          <div class="macro-dist-container">
+            <div class="macro-dist-bar-wrapper">
+              <div class="macro-dist-segment prot" id="seg-prot" style="width: 33%">Prot</div>
+              <div class="macro-dist-segment fat" id="seg-fat" style="width: 33%">Grasa</div>
+              <div class="macro-dist-segment carb" id="seg-carb" style="width: 34%">Carb</div>
+            </div>
+            <div class="macro-legend">
+              <div class="macro-legend-item"><div class="macro-legend-dot prot"></div><span>Proteínas (<span id="pct-prot">0</span>%)</span></div>
+              <div class="macro-legend-item"><div class="macro-legend-dot fat"></div><span>Grasas (<span id="pct-fat">0</span>%)</span></div>
+              <div class="macro-legend-item"><div class="macro-legend-dot carb"></div><span>Carbohidratos (<span id="pct-carb">0</span>%)</span></div>
+            </div>
+          </div>
+
+          <!-- Desglose de Macronutrientes -->
+          <div class="macro-breakdown-grid">
+            <div class="macro-item-card prot">
+              <div class="macro-item-title">🍗 Proteínas</div>
+              <div class="macro-item-val" id="res-prot-g">0g</div>
+              <div class="macro-item-kcal" id="res-prot-kcal">0 kcal</div>
+            </div>
+            <div class="macro-item-card fat">
+              <div class="macro-item-title">🥑 Grasas</div>
+              <div class="macro-item-val" id="res-fat-g">0g</div>
+              <div class="macro-item-kcal" id="res-fat-kcal">0 kcal</div>
+            </div>
+            <div class="macro-item-card carb">
+              <div class="macro-item-title">🥣 Carbohidratos</div>
+              <div class="macro-item-val" id="res-carb-g">0g</div>
+              <div class="macro-item-kcal" id="res-carb-kcal">0 kcal</div>
+            </div>
+          </div>
+
+        </div>
+      </div>`;
+
+    calcular();
+  }
+
+  function updateSliderVal(type) {
+    const val = document.getElementById(`m-${type}`).value;
+    const disp = document.getElementById(`v-${type}`);
+    if (type === 'ajuste') {
+      disp.textContent = (val > 0 ? '+' : '') + val + ' kcal';
+    } else if (type === 'proteina') {
+      disp.textContent = parseFloat(val).toFixed(1) + ' g / kg';
+    } else if (type === 'grasa') {
+      disp.textContent = val + '%';
+    }
+    calcular();
+  }
+
+  function calcular() {
+    if (!currentClient) return;
+
+    const u = currentClient;
+    const peso = u.pesoActual;
+    const est = u.estatura;
+    const edad = u.edad;
+    const gen = u.genero;
+
+    // 1. TMB - Mifflin-St Jeor
+    let tmb = 0;
+    if (gen === 'Masculino') {
+      tmb = (10 * peso) + (6.25 * est) - (5 * edad) + 5;
+    } else if (gen === 'Femenino') {
+      tmb = (10 * peso) + (6.25 * est) - (5 * edad) - 161;
+    } else {
+      tmb = (10 * peso) + (6.25 * est) - (5 * edad) - 80; // Promedio
+    }
+    tmb = Math.round(tmb);
+
+    // 2. Mantenimiento
+    const actFactor = parseFloat(document.getElementById('m-actividad').value);
+    const maint = Math.round(tmb * actFactor);
+
+    // 3. Calorías Objetivo
+    const ajuste = parseInt(document.getElementById('m-ajuste').value);
+    const targetCal = Math.round(maint + ajuste);
+
+    // 4. Reparto de Macros
+    // Proteína: g/kg. 1g = 4 kcal
+    const protFactor = parseFloat(document.getElementById('m-proteina').value);
+    const protG = Math.round(peso * protFactor);
+    const protKcal = protG * 4;
+
+    // Grasa: Pct% de Calorías totales. 1g = 9 kcal
+    const fatPct = parseInt(document.getElementById('m-grasa').value) / 100;
+    const fatKcal = Math.round(targetCal * fatPct);
+    const fatG = Math.round(fatKcal / 9);
+
+    // Carbohidratos: El resto. 1g = 4 kcal
+    let carbKcal = targetCal - (protKcal + fatKcal);
+    if (carbKcal < 0) carbKcal = 0;
+    const carbG = Math.round(carbKcal / 4);
+
+    // 5. Porcentajes Reales para Gráfica
+    const totalKcalMacros = protKcal + fatKcal + carbKcal;
+    const pctProt = Math.round((protKcal / (totalKcalMacros || 1)) * 100);
+    const pctFat = Math.round((fatKcal / (totalKcalMacros || 1)) * 100);
+    const pctCarb = 100 - (pctProt + pctFat);
+
+    // 6. Actualizar Interfaz
+    document.getElementById('res-tmb').textContent = tmb;
+    document.getElementById('res-mantenimiento').textContent = maint;
+    document.getElementById('res-calorias').textContent = targetCal;
+
+    // Desglose
+    document.getElementById('res-prot-g').textContent = protG + 'g';
+    document.getElementById('res-prot-kcal').textContent = protKcal + ' kcal';
+    document.getElementById('res-fat-g').textContent = fatG + 'g';
+    document.getElementById('res-fat-kcal').textContent = fatKcal + ' kcal';
+    document.getElementById('res-carb-g').textContent = carbG + 'g';
+    document.getElementById('res-carb-kcal').textContent = carbKcal + ' kcal';
+
+    // Gráfica
+    const segProt = document.getElementById('seg-prot');
+    const segFat = document.getElementById('seg-fat');
+    const segCarb = document.getElementById('seg-carb');
+
+    segProt.style.width = pctProt + '%';
+    segFat.style.width = pctFat + '%';
+    segCarb.style.width = pctCarb + '%';
+
+    segProt.textContent = pctProt >= 10 ? pctProt + '%' : '';
+    segFat.textContent = pctFat >= 10 ? pctFat + '%' : '';
+    segCarb.textContent = pctCarb >= 10 ? pctCarb + '%' : '';
+
+    document.getElementById('pct-prot').textContent = pctProt;
+    document.getElementById('pct-fat').textContent = pctFat;
+    document.getElementById('pct-carb').textContent = pctCarb;
+  }
+
+  function guardarPlan() {
+    if (!currentClient) return;
+
+    const uid = currentClient.id;
+    const idx = DB.usuarios.findIndex(x => x.id === uid);
+    if (idx < 0) return;
+
+    const tmb = parseInt(document.getElementById('res-tmb').textContent);
+    const maint = parseInt(document.getElementById('res-mantenimiento').textContent);
+    const targetCal = parseInt(document.getElementById('res-calorias').textContent);
+
+    const protG = parseInt(document.getElementById('res-prot-g').textContent);
+    const protKcal = parseInt(document.getElementById('res-prot-kcal').textContent);
+    const fatG = parseInt(document.getElementById('res-fat-g').textContent);
+    const fatKcal = parseInt(document.getElementById('res-fat-kcal').textContent);
+    const carbG = parseInt(document.getElementById('res-carb-g').textContent);
+    const carbKcal = parseInt(document.getElementById('res-carb-kcal').textContent);
+
+    const actFactor = parseFloat(document.getElementById('m-actividad').value);
+    const actSel = document.getElementById('m-actividad');
+    const actLabel = actSel.options[actSel.selectedIndex].text.split(':')[0];
+    const ajuste = parseInt(document.getElementById('m-ajuste').value);
+    const protFactor = parseFloat(document.getElementById('m-proteina').value);
+    const fatPctVal = parseInt(document.getElementById('m-grasa').value);
+
+    DB.usuarios[idx].macros = {
+      tmb,
+      mantenimiento: maint,
+      calorias: targetCal,
+      proteinasG: protG,
+      proteinasKcal: protKcal,
+      grasasG: fatG,
+      grasasKcal: fatKcal,
+      carbohidratosG: carbG,
+      carbohidratosKcal: carbKcal,
+      actividadFactor: actFactor,
+      actividadLabel: actLabel,
+      ajusteCal: ajuste,
+      proteinaFactor: protFactor,
+      grasaPct: fatPctVal
+    };
+
+    saveDB();
+    showToast('💾 Plan nutricional guardado exitosamente');
+  }
+</script>
+</body>
+</html>

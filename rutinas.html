@@ -115,8 +115,8 @@
       <div style="padding:0 24px 8px">
         <div class="form-section-title" style="margin-top:4px">Ejercicios de la Rutina</div>
         <!-- Column headers -->
-        <div style="display:grid;grid-template-columns:26px 2fr 1fr 1fr 1fr 1fr 1fr 28px;gap:8px;padding:0 0 6px;font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid var(--border);margin-bottom:4px">
-          <span></span><span>Ejercicio</span><span>Grupo Musc.</span><span>Series × Reps</span><span>Peso (kg)</span><span>Descanso (seg)</span><span>Notas</span><span></span>
+        <div style="display:grid;grid-template-columns:26px 2fr 1.2fr 1.2fr 1fr 1fr 1fr 1.5fr 28px;gap:8px;padding:0 0 6px;font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid var(--border);margin-bottom:4px">
+          <span></span><span>Ejercicio</span><span>Grupo Musc.</span><span>Imagen</span><span>Series × Reps</span><span>Peso (kg)</span><span>Descanso (seg)</span><span>Notas</span><span></span>
         </div>
         <div id="blocks-container"></div>
         <button type="button" class="btn-add-block" onclick="agregarBloque()">
@@ -224,10 +224,13 @@
         <div class="rutina-card-body" id="b-${r.id}" style="display:none">
           ${r.ejercicios.length ? `
           <table class="ejercicios-table">
-            <thead><tr><th>#</th><th>Ejercicio</th><th>Grupo Muscular</th><th>Series × Reps</th><th>Peso</th><th>Descanso</th><th>Notas</th></tr></thead>
+            <thead><tr><th>#</th><th>Ilustración</th><th>Ejercicio</th><th>Grupo Muscular</th><th>Series × Reps</th><th>Peso</th><th>Descanso</th><th>Notas</th></tr></thead>
             <tbody>
               ${r.ejercicios.map((ej,i)=>`<tr>
                 <td style="color:var(--text-muted);font-size:11px">${i+1}</td>
+                <td>
+                  ${ej.imagen ? `<img src="img/${ej.imagen}" style="width:45px; height:45px; object-fit:cover; border-radius:6px; border:1px solid var(--border);" />` : '<span style="color:var(--text-muted); font-size:11px;">—</span>'}
+                </td>
                 <td><strong>${ej.nombre}</strong></td>
                 <td><span class="tag-muscular">${ej.grupo}</span></td>
                 <td>${ej.series||'—'}</td>
@@ -296,13 +299,29 @@
     const div = document.createElement('div');
     div.className = 'exercise-block';
     div.id = id;
+    
+    const imgPath = data?.imagen ? `img/${data.imagen}` : '';
+    const imgDisplay = data?.imagen ? 'block' : 'none';
+
     div.innerHTML = `
-      <div class="block-grid">
+      <div class="block-grid" style="display:grid; grid-template-columns:26px 2fr 1.2fr 1.2fr 1fr 1fr 1fr 1.5fr 28px; gap:8px; align-items:center; margin-bottom: 8px;">
         <div class="block-num">${blockCount}</div>
         <input type="text" placeholder="Ej. Press de banca" class="blk-nombre" value="${data?.nombre||''}" />
         <select class="blk-grupo">
           ${Object.keys(BIBLIOTECA).map(g=>`<option ${data?.grupo===g?'selected':''}>${g}</option>`).join('')}
         </select>
+        <div style="display:flex; align-items:center; gap:4px; overflow:hidden;">
+          <select class="blk-imagen" onchange="updateRowImagePreview(this)" style="width:100%; min-width: 60px;">
+            <option value="">Ninguna</option>
+            <option value="1.jpeg" ${data?.imagen==='1.jpeg'?'selected':''}>Img 1</option>
+            <option value="2.jpeg" ${data?.imagen==='2.jpeg'?'selected':''}>Img 2</option>
+            <option value="3.jpeg" ${data?.imagen==='3.jpeg'?'selected':''}>Img 3</option>
+            <option value="4.jpeg" ${data?.imagen==='4.jpeg'?'selected':''}>Img 4</option>
+            <option value="5.jpeg" ${data?.imagen==='5.jpeg'?'selected':''}>Img 5</option>
+            <option value="6.jpeg" ${data?.imagen==='6.jpeg'?'selected':''}>Img 6</option>
+          </select>
+          <img class="row-img-preview" src="${imgPath}" style="width:24px; height:24px; object-fit:cover; border-radius:4px; border:1px solid var(--border); display:${imgDisplay}; flex-shrink:0;" />
+        </div>
         <input type="text" placeholder="4 × 12" class="blk-series" value="${data?.series||''}" />
         <input type="number" placeholder="60" class="blk-peso" value="${data?.peso||''}" step="2.5" />
         <input type="number" placeholder="60" class="blk-descanso" value="${data?.descanso||''}" min="15" />
@@ -310,6 +329,17 @@
         <button type="button" class="btn-remove-block" onclick="document.getElementById('${id}').remove();reNumerarBloques()" title="Eliminar">✕</button>
       </div>`;
     container.appendChild(div);
+  }
+
+  function updateRowImagePreview(select) {
+    const preview = select.nextElementSibling;
+    if (select.value) {
+      preview.src = 'img/' + select.value;
+      preview.style.display = 'block';
+    } else {
+      preview.src = '';
+      preview.style.display = 'none';
+    }
   }
 
   function reNumerarBloques() {
@@ -330,7 +360,15 @@
     const ejercicios = [];
     document.querySelectorAll('#blocks-container .exercise-block').forEach(row => {
       const nombre = row.querySelector('.blk-nombre').value.trim(); if (!nombre) return;
-      ejercicios.push({ nombre, grupo: row.querySelector('.blk-grupo').value, series: row.querySelector('.blk-series').value.trim(), peso: row.querySelector('.blk-peso').value.trim(), descanso: row.querySelector('.blk-descanso').value.trim(), notas: row.querySelector('.blk-notas').value.trim() });
+      ejercicios.push({ 
+        nombre, 
+        grupo: row.querySelector('.blk-grupo').value, 
+        imagen: row.querySelector('.blk-imagen').value || null,
+        series: row.querySelector('.blk-series').value.trim(), 
+        peso: row.querySelector('.blk-peso').value.trim(), 
+        descanso: row.querySelector('.blk-descanso').value.trim(), 
+        notas: row.querySelector('.blk-notas').value.trim() 
+      });
     });
     const rutina = {
       id: id || genId(), usuarioId: uid,
