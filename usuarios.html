@@ -395,7 +395,8 @@
           <div class="medida-card"><div class="val">${rutinas}</div><div class="lbl">Rutinas</div></div>
           <div class="medida-card"><div class="val">${sesiones.length}</div><div class="lbl">Sesiones</div></div>
           <div class="medida-card"><div class="val">${completadas}</div><div class="lbl">Completadas</div></div>
-          <div class="medida-card"><div cla        <div class="form-section-title" style="padding-top:0">Medidas Corporales Iniciales</div>
+        </div>
+        <div class="form-section-title" style="padding-top:0">Medidas Corporales Iniciales</div>
         <div class="medidas-grid" style="grid-template-columns:repeat(5,1fr)">
           ${[['Pecho',u.pecho ? u.pecho+' cm' : null],['Cintura',u.cintura ? u.cintura+' cm' : null],['Cadera',u.cadera ? u.cadera+' cm' : null],['B.Izq',u.brazoIzq ? u.brazoIzq+' cm' : null],['B.Der',u.brazoDer ? u.brazoDer+' cm' : null],['M.Izq',u.musloIzq ? u.musloIzq+' cm' : null],['M.Der',u.musloDer ? u.musloDer+' cm' : null],['Pantorrilla',u.pantorrilla ? u.pantorrilla+' cm' : null],['% Grasa',u.grasaPct ? u.grasaPct+'%' : null]]
             .map(([l,v])=>`<div class="medida-card"><div class="val">${v||'—'}</div><div class="lbl">${l}</div></div>`).join('')}
@@ -513,6 +514,11 @@
           </div>
         </div>
 
+        <div class="form-section-title" style="margin-top:20px">📋 Historial de Entrenamientos</div>
+        <div id="perfil-historial-sesiones" style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+          <!-- Se cargará dinámicamente -->
+        </div>
+
         <div style="display:flex;gap:10px;margin-top:24px;flex-wrap:wrap">
           <button class="btn-primary" onclick="closeModal('modal-perfil');abrirModal('${u.id}')">✏️ Editar</button>
           <a href="rutinas.html?usuario=${u.id}" class="btn-secondary">🏋️ Rutinas</a>
@@ -521,6 +527,7 @@
           <button class="btn-secondary" onclick="closeModal('modal-perfil');programarSesion('${u.id}')">📅 Sesión</button>
         </div>
       </div>`;
+    renderPerfilSesiones(u.id);
     openModal('modal-perfil');
   }
 
@@ -685,6 +692,61 @@
     DB.sesiones.push(sesion);
     saveDB(); closeModal('modal-sesion'); renderUsuarios();
     showToast('📅 Sesión programada correctamente');
+  }
+
+  // ======= HISTORIAL DE ENTRENAMIENTOS EN PERFIL =======
+  function renderPerfilSesiones(uid) {
+    const container = document.getElementById('perfil-historial-sesiones');
+    if (!container) return;
+    const userSessions = DB.sesiones.filter(s => s.usuarioId === uid).sort((a,b) => b.fecha.localeCompare(a.fecha));
+    if (userSessions.length === 0) {
+      container.innerHTML = `<div style="font-size:12px; color:var(--text-secondary); text-align:center; padding:12px; border:1px dashed var(--border); border-radius:var(--r-xs);">Sin sesiones registradas aún.</div>`;
+      return;
+    }
+    container.innerHTML = userSessions.map(s => {
+      const r = DB.rutinas.find(x => x.id === s.rutinaId);
+      const durMin = s.duracionSeg ? Math.floor(s.duracionSeg/60) + ' min' : '—';
+      const estadoBadge = { pendiente:'badge-blue', completada:'badge-green', cancelada:'badge-orange' }[s.estado] || 'badge-blue';
+      return `
+        <div style="border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--bg-card); overflow: hidden; margin-bottom: 4px;">
+          <div style="padding: 10px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;" onclick="togglePerfilSessionDetail('${s.id}')">
+            <div style="flex: 1; text-align: left;">
+              <div style="font-size: 12px; font-weight: 700; color: var(--text-primary);">${r ? `${r.mes} ${r.anio} — ${r.tipo}` : 'Sesión sin rutina'}</div>
+              <div style="font-size: 10px; color: var(--text-secondary); margin-top: 3px;">📅 ${formatDate(s.fecha)} ${s.hora} &nbsp;·&nbsp; ⏱ ${durMin} &nbsp;·&nbsp; 🏋️ ${s.volumenKg||0}kg &nbsp;·&nbsp; ✅ ${s.setsCompletados||0}/${s.setsTotal||0} sets</div>
+            </div>
+            <span class="badge ${estadoBadge}" style="font-size: 9px; padding: 2px 6px;">${s.estado}</span>
+          </div>
+          <div id="psd-${s.id}" style="display: none; padding: 10px 12px; border-top: 1px solid var(--border); background: rgba(0,0,0,0.15); text-align: left;">
+            ${renderPerfilSessionDetailHtml(s)}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function togglePerfilSessionDetail(id) {
+    const el = document.getElementById('psd-' + id);
+    if (el) {
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+  }
+
+  function renderPerfilSessionDetailHtml(s) {
+    if (!s.ejercicios || s.ejercicios.length === 0) {
+      return `<div style="color:var(--text-muted); font-style:italic; font-size: 11px;">Detalle de ejercicios no disponible para esta sesión.</div>`;
+    }
+    return s.ejercicios.map(ej => {
+      const setsHtml = ej.series.map(set => {
+        const complClass = set.completado ? 'completed' : '';
+        const complCheck = set.completado ? '✓ ' : '✗ ';
+        const style = set.completado ? 'color: var(--green); border-color: rgba(0, 229, 160, 0.25); background: rgba(0, 229, 160, 0.03);' : 'color: var(--text-secondary);';
+        return `<span class="session-detail-set-badge ${complClass}" style="display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); margin-right: 5px; margin-bottom: 5px; border: 1px solid var(--border); ${style}">${complCheck}S${set.set}: ${set.reps}x${set.peso}kg</span>`;
+      }).join('');
+      return `<div style="margin-bottom: 8px;">
+        <div style="font-size: 11px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">${ej.nombre} <span class="tag-muscular" style="font-size:8px; padding:1px 5px; vertical-align: middle;">${ej.grupo}</span></div>
+        <div style="display: flex; flex-wrap: wrap;">${setsHtml}</div>
+      </div>`;
+    }).join('');
   }
 
   renderUsuarios();
