@@ -16,6 +16,32 @@
     .session-complete-icon { font-size:80px; animation:bounce .8s infinite alternate; margin-bottom:16px; }
     @keyframes bounce { to { transform: translateY(-12px); } }
     .session-complete h2 { font-size:28px; font-weight:800; background:var(--grad-main); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:10px; }
+    .btn-input-adj {
+      width: 24px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      border-radius: var(--r-xs);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .btn-input-adj:hover:not(:disabled) {
+      border-color: var(--pink);
+      color: var(--pink);
+      background: rgba(255, 60, 172, 0.05);
+    }
+    .btn-input-adj:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -450,18 +476,29 @@
         const peso = setVal.peso;
         const descanso = parseInt(ej.descanso) || 60;
         
+        // Fetch last weight registered
+        const ultimoPeso = obtenerUltimoPesoEjercicio(ej.nombre, currentActiveUserId);
+        const ultimoPesoTxt = ultimoPeso ? ` &nbsp;·&nbsp; <span style="color:var(--yellow); font-weight:700;">⏱️ Último: ${ultimoPeso} kg</span>` : '';
+
         items.push(`<div class="checklist-item ${doneClass}" id="${sid}">
           <div class="check-box" id="cb-${sid}" onclick="toggleSet('${sid}', ${descanso})">${checkChar}</div>
           ${ej.imagen ? `<img src="img/${ej.imagen}" style="width:40px; height:40px; object-fit:cover; border-radius:6px; border:1px solid var(--border); margin: 0 10px; flex-shrink: 0;" />` : ''}
           <div class="check-info" onclick="toggleSet('${sid}', ${descanso})">
             <div class="check-name">${ej.nombre} — Serie ${ser}/${numSeries}</div>
-            <div class="check-detail"><span class="tag-muscular" style="font-size:9px">${ej.grupo}</span> &nbsp;·&nbsp; Descanso: ${descanso}s</div>
+            <div class="check-detail"><span class="tag-muscular" style="font-size:9px">${ej.grupo}</span> &nbsp;·&nbsp; Descanso: ${descanso}s${ultimoPesoTxt}</div>
           </div>
-          <div class="check-inputs">
-            <input type="number" id="reps-${sid}" value="${setVal.reps}" min="1" max="100" style="width:52px;" onchange="onSetInputChange('${sid}')" onclick="event.stopPropagation()" ${disabledAttr} />
-            <span class="check-inputs-label">reps</span>
-            <input type="number" id="peso-${sid}" value="${peso}" min="0" max="500" step="0.5" style="width:64px; font-weight:800; color:var(--pink);" onchange="onSetInputChange('${sid}')" onclick="event.stopPropagation()" ${disabledAttr} />
-            <span class="check-inputs-label">kg</span>
+          <div class="check-inputs" style="display:flex; align-items:center; gap:4px;">
+            <!-- Reps Control -->
+            <button type="button" class="btn-input-adj" onclick="ajustarInputChecklist('${sid}', 'reps', -1)" ${disabledAttr}>-</button>
+            <input type="number" id="reps-${sid}" value="${setVal.reps}" min="1" max="100" style="width:36px; text-align:center; padding: 2px;" onchange="onSetInputChange('${sid}')" onclick="event.stopPropagation()" ${disabledAttr} />
+            <button type="button" class="btn-input-adj" onclick="ajustarInputChecklist('${sid}', 'reps', 1)" ${disabledAttr}>+</button>
+            <span class="check-inputs-label" style="font-size:10px; margin-right:4px;">reps</span>
+
+            <!-- Peso Control -->
+            <button type="button" class="btn-input-adj" onclick="ajustarInputChecklist('${sid}', 'peso', -2.5)" ${disabledAttr}>-</button>
+            <input type="number" id="peso-${sid}" value="${peso}" min="0" max="500" step="0.5" style="width:44px; text-align:center; font-weight:800; color:var(--pink); padding: 2px;" onchange="onSetInputChange('${sid}')" onclick="event.stopPropagation()" ${disabledAttr} />
+            <button type="button" class="btn-input-adj" onclick="ajustarInputChecklist('${sid}', 'peso', 2.5)" ${disabledAttr}>+</button>
+            <span class="check-inputs-label" style="font-size:10px;">kg</span>
           </div>
         </div>`);
       }
@@ -495,6 +532,7 @@
       
       if (repsInput) repsInput.disabled = true;
       if (pesoInput) pesoInput.disabled = true;
+      item.querySelectorAll('.btn-input-adj').forEach(btn => btn.disabled = true);
       
       showToast(`✅ Set completado!`, 'success');
       
@@ -506,6 +544,7 @@
       
       if (repsInput) repsInput.disabled = false;
       if (pesoInput) pesoInput.disabled = false;
+      item.querySelectorAll('.btn-input-adj').forEach(btn => btn.disabled = false);
     }
     
     recalculateMetrics();
@@ -574,6 +613,7 @@
       document.getElementById('rest-countdown').textContent = restSec;
       if (restSec <= 0) {
         cancelarDescanso();
+        emitirBipFinDescanso();
         showToast('⚡ ¡Fin del descanso! Siguiente serie.', 'info');
       }
     }, 1000);
@@ -774,6 +814,78 @@
     if (!confirm('¿Eliminar esta sesión del historial?')) return;
     DB.sesiones = DB.sesiones.filter(s=>s.id!==id);
     saveDB(); renderHistorial(); showToast('🗑️ Sesión eliminada', 'error');
+  }
+
+  function obtenerUltimoPesoEjercicio(nombreEj, usuarioId) {
+    if (!usuarioId || !nombreEj) return null;
+    const norm = nombreEj.trim().toLowerCase();
+
+    // 1. Search in completed sessions
+    const completedSessions = DB.sesiones.filter(s => s.usuarioId === usuarioId && s.estado === 'completada' && s.ejercicios);
+    completedSessions.sort((a, b) => b.fecha.localeCompare(a.fecha));
+
+    for (const s of completedSessions) {
+      const match = s.ejercicios.find(e => e.nombre.trim().toLowerCase() === norm);
+      if (match) {
+        const weights = match.series ? match.series.filter(set => set.completado && set.peso).map(set => set.peso) : [];
+        if (weights.length > 0) {
+          return Math.max(...weights);
+        }
+      }
+    }
+
+    // 2. Fallback to routines
+    const routines = DB.rutinas.filter(r => r.usuarioId === usuarioId && r.ejercicios);
+    routines.sort((a, b) => b.anio - a.anio || MESES.indexOf(b.mes) - MESES.indexOf(a.mes));
+
+    for (const r of routines) {
+      const match = r.ejercicios.find(e => e.nombre.trim().toLowerCase() === norm);
+      if (match && match.peso) {
+        return match.peso;
+      }
+    }
+
+    return null;
+  }
+
+  function ajustarInputChecklist(sid, campo, delta) {
+    const input = document.getElementById(`${campo}-${sid}`);
+    if (!input || input.disabled) return;
+    
+    let val = parseFloat(input.value) || 0;
+    val = Math.max(0, val + delta);
+    
+    input.value = campo === 'peso' ? parseFloat(val.toFixed(1)) : Math.round(val);
+    onSetInputChange(sid);
+  }
+
+  function emitirBipFinDescanso() {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      
+      function playTone(freq, duration, delay) {
+        setTimeout(() => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          
+          gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+          
+          osc.start();
+          osc.stop(audioCtx.currentTime + duration);
+        }, delay);
+      }
+      
+      playTone(880, 0.15, 0);
+      playTone(1046.5, 0.20, 200);
+    } catch (e) {
+      console.warn("AudioContext no está soportado o fue bloqueado:", e);
+    }
   }
 
   renderHistorial();

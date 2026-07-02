@@ -21,7 +21,7 @@
       <p class="section-subtitle">Monitorea la evolución física de tus clientes con medidas y gráficas</p>
     </div>
 
-    <div class="toolbar">
+    <div class="toolbar" style="flex-wrap: wrap; gap: 8px;">
       <div class="select-box">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
         <select id="sel-usuario" onchange="onUsuarioChange()">
@@ -34,6 +34,10 @@
       </button>
       <button class="btn-secondary" id="btn-exportar-pdf" onclick="window.print()" style="display:flex; align-items:center; gap:8px;" disabled>
         🖨️ Exportar PDF
+      </button>
+      <button class="btn-secondary" id="btn-compartir-whatsapp" onclick="compartirProgresoWhatsapp()" style="display:flex; align-items:center; gap:8px; color:#25D366; border-color:rgba(37,211,102,0.3);" disabled>
+        <svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.5-5.739-1.453L0 24zm6.59-4.846c1.6.95 2.568 1.487 4.595 1.488 5.489 0 9.952-4.467 9.955-9.961.002-2.661-1.033-5.164-2.915-7.049C16.345 1.748 13.847.712 11.2.713c-5.492 0-9.957 4.468-9.96 9.961-.001 2.072.548 3.09 1.524 4.77l-.99 3.612 3.883-.989zM17.15 14.88c-.285-.143-1.687-.832-1.947-.927-.26-.096-.45-.143-.64.143-.19.285-.736.927-.9.1.118-.175-.157-.285-.327-.585-.17-.3-.024-.556.048-.7.072-.143.19-.285.285-.429.096-.143.12-.24.18-.383.06-.143.03-.285-.015-.429-.045-.143-.45-1.085-.615-1.485-.164-.393-.347-.323-.48-.328l-.408-.005c-.143 0-.38.053-.578.271-.198.219-.759.742-.759 1.808 0 1.066.775 2.094.883 2.238.109.143 1.524 2.327 3.69 3.262.515.222.917.355 1.23.455.518.165.989.141 1.362.085.415-.062 1.272-.52 1.45-.989.18-.469.18-.871.127-.954-.053-.083-.198-.129-.482-.272z"/></svg>
+        WhatsApp
       </button>
     </div>
 
@@ -79,6 +83,7 @@
         </div>
         <div class="form-group"><label>Peso Actual (kg) *</label><input type="number" id="p-peso" step="0.1" placeholder="70.5" required /></div>
         <div class="form-group"><label>% Grasa Corporal</label><input type="number" id="p-grasa-pct" step="0.1" placeholder="18" min="2" max="60" /></div>
+        <div class="form-group"><label>% Masa Muscular</label><input type="number" id="p-muscular-pct" step="0.1" placeholder="38" min="5" max="80" /></div>
       </div>
       <div class="form-section-title">Medidas Corporales (cm)</div>
       <div class="form-grid">
@@ -120,6 +125,7 @@
     const uid = sel.value;
     document.getElementById('btn-medicion').disabled = !uid;
     document.getElementById('btn-exportar-pdf').disabled = !uid;
+    document.getElementById('btn-compartir-whatsapp').disabled = !uid;
     renderProgreso(uid);
   }
 
@@ -610,6 +616,21 @@
     if (!confirm('¿Eliminar esta medición?')) return;
     DB.progresos = DB.progresos.filter(p=>p.id!==id);
     saveDB(); renderProgreso(sel.value); showToast('🗑️ Medición eliminada', 'error');
+    // Compartir progreso por WhatsApp
+    function compartirProgresoWhatsapp() {
+      const uid = document.getElementById('sel-usuario').value;
+      if (!uid) { showToast('Selecciona un cliente para compartir', 'error'); return; }
+      const u = DB.usuarios.find(x => x.id === uid);
+      const progresos = DB.progresos.filter(p => p.usuarioId === uid).sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+      const latest = progresos[0] || {};
+      const pesoActual = latest.peso || u.peso || '';
+      const diff = u.peso ? (pesoActual - u.peso).toFixed(1) : '';
+      const grasa = latest.grasaPct !== undefined ? `${latest.grasaPct}%` : '—';
+      const mensaje = `*Progreso de ${u.nombre}*\nObjetivo: ${u.objetivo}\nPeso inicial: ${u.peso} kg\nPeso actual: ${pesoActual} kg (${diff > 0 ? '+'+diff : diff} kg)\n% Grasa corporal: ${grasa}\n`; 
+      const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+      window.open(url, '_blank');
+    }
+    
   }
 
   // Métodos de ayuda para fotos

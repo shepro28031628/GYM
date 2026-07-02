@@ -84,6 +84,7 @@
       <div class="form-section-title">Medidas Físicas Iniciales</div>
       <div class="form-grid">
         <div class="form-group"><label>Peso Inicial (kg) *</label><input type="number" id="u-peso" placeholder="70.5" step="0.1" min="30" required /></div>
+        <div class="form-group"><label>Peso Objetivo / Meta (kg)</label><input type="number" id="u-peso-objetivo" placeholder="65.0" step="0.1" /></div>
         <div class="form-group"><label>Estatura (cm) *</label><input type="number" id="u-estatura" placeholder="175" min="100" required /></div>
         <div class="form-group"><label>Pecho (cm)</label><input type="number" id="u-pecho" placeholder="95" step="0.5" /></div>
         <div class="form-group"><label>Cintura (cm)</label><input type="number" id="u-cintura" placeholder="80" step="0.5" /></div>
@@ -311,6 +312,7 @@
     document.getElementById('uid').value = '';
     document.getElementById('modal-title').textContent = 'Nuevo Cliente';
     document.getElementById('u-estado').value = 'Activo';
+    document.getElementById('u-peso-objetivo').value = '';
     
     // Limpiar campos y previsualizaciones de fotos
     document.getElementById('u-fotoIniFrente').value = '';
@@ -333,6 +335,7 @@
       document.getElementById('u-telefono').value = u.telefono || '';
       document.getElementById('u-tarifa').value = u.tarifa || '';
       document.getElementById('u-peso').value = u.peso;
+      document.getElementById('u-peso-objetivo').value = u.pesoObjetivo || '';
       document.getElementById('u-estatura').value = u.estatura;
       document.getElementById('u-pecho').value = u.pecho || '';
       document.getElementById('u-cintura').value = u.cintura || '';
@@ -367,7 +370,9 @@
       edad: parseInt(document.getElementById('u-edad').value), genero: document.getElementById('u-genero').value,
       email: document.getElementById('u-email').value.trim(), telefono: document.getElementById('u-telefono').value.trim(),
       tarifa: parseFloat(document.getElementById('u-tarifa').value) || null,
-      peso: parseFloat(document.getElementById('u-peso').value), estatura: parseFloat(document.getElementById('u-estatura').value),
+      peso: parseFloat(document.getElementById('u-peso').value),
+      pesoObjetivo: parseFloat(document.getElementById('u-peso-objetivo').value) || null,
+      estatura: parseFloat(document.getElementById('u-estatura').value),
       pecho: parseFloat(document.getElementById('u-pecho').value) || null, cintura: parseFloat(document.getElementById('u-cintura').value) || null,
       cadera: parseFloat(document.getElementById('u-cadera').value) || null, brazoIzq: parseFloat(document.getElementById('u-brazo-izq').value) || null,
       brazoDer: parseFloat(document.getElementById('u-brazo-der').value) || null, musloIzq: parseFloat(document.getElementById('u-muslo-izq').value) || null,
