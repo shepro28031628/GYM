@@ -48,6 +48,7 @@
       <button class="filter-btn" onclick="filtrarRecetas('carbohidratos', this)">⚡ Pre-Entreno</button>
       <button class="filter-btn" onclick="filtrarRecetas('recuperacion', this)">🔄 Recuperación</button>
       <button class="filter-btn" onclick="filtrarRecetas('snack', this)">🍎 Snacks</button>
+      <button class="filter-btn" onclick="filtrarRecetas('batidos', this)">🥤 Batidos</button>
     </div>
 
     <div class="recetas-grid" id="recetas-grid"></div>
@@ -117,6 +118,36 @@
     10:['200g pasta integral','150g carne molida de pavo','1 taza salsa tomate casera','½ cebolla','2 dientes ajo'],
     11:['300ml caldo res desgrasado','1 zanahoria','2 tallos apio','100g res magra','Sal, pimienta, cilantro'],
     12:['1 manzana mediana','2 cdas mantequilla de maní natural'],
+    13:['1 scoop proteína de chocolate','1 banana madura','250ml leche de almendras','1½ cdas mantequilla de maní','1 cdta semillas de chía','Hielo'],
+    14:['1½ tazas espinaca fresca','½ manzana verde','½ taza piña picada','200ml agua de coco','1 cm jengibre fresco'],
+    15:['½ taza avena en hojuelas','1 taza fresas frescas','250ml leche descremada o vegetal','1 cda miel de abejas pura','Extracto de vainilla'],
+    16:['½ taza arándanos frescos o congelados','150g yogur griego descremado','200ml leche de almendras','1 cda semillas de linaza molida'],
+    17:['½ aguacate meduro','200ml leche de coco light','1 taza espinacas frescas','Stevia al gusto','Hielo'],
+    18:['1 manzana verde en trozos','3 cdas avena en hojuelas','½ taza yogur griego','1 cdta canela en polvo','Agua y hielo'],
+    19:['½ piña madura picada','½ mango maduro','½ taza yogur griego natural','100ml jugo de naranja natural'],
+    20:['1 toronja rosada (jugo)','1 cm jengibre fresco rallado','2 tallos de apio','1 rodaja de piña'],
+    21:['1 taza café expreso frío','1 scoop proteína de chocolate','150ml leche de almendras','Hielo al gusto'],
+    22:['2 tazas sandía picada sin semillas','5 hojas de menta fresca','150ml agua de coco fresca'],
+    23:['½ taza avena en hojuelas','1 cda mantequilla de almendras','250ml leche descremada','1 cda miel de abejas'],
+    24:['1 taza espinaca fresca','1 kiwi pelado','½ manzana verde','1 cdta semillas de chía','Agua fría'],
+    25:['1 scoop proteína de vainilla','4 nueces de nogal picadas','1 plátano','200ml leche descremada'],
+    26:['3 dátiles sin hueso','4 cdas avena en hojuelas','250ml leche de almendras','½ cdta canela en polvo'],
+    27:['2 tallos de apio','1 pepino mediano','Zumo de 1 limón','½ manzana verde','Agua y hielo'],
+    28:['1 taza papaya picada','1 cda semillas de linaza molida','150g yogur griego natural','Hielo'],
+    29:['1 zanahoria mediana picada','Zumo de 2 naranjas','1 cm jengibre fresco','100ml agua de coco'],
+    30:['1½ tazas melón picado','Zumo de ½ limón','150ml agua de coco','Hojas de menta para decorar'],
+    31:['1 taza fresas frescas','100g requesón bajo en grasa','150ml leche descremada o almendras','Stevia al gusto'],
+    32:['1 cdta espirulina en polvo','1 taza espinaca fresca','1 plátano','200ml leche de almendras o coco'],
+    33:['150ml leche de coco','30g almendras enteras','1 scoop proteína de vainilla','Canela en polvo','Hielo'],
+    34:['1 melocotón maduro picado','150g yogur griego natural','100ml leche descremada','Esencia de vainilla'],
+    35:['1 taza té verde frío','Zumo de ½ limón','5 hojas de menta fresca','1 cdta miel de abejas'],
+    36:['1 cda semillas de chía','½ taza frutos rojos (fresas, arándanos)','200ml leche de avena','Hielo'],
+    37:['1 cdta té matcha en polvo','1 plátano maduro','1 taza espinacas','200ml leche de almendras'],
+    38:['1 pepino pelado y picado','8 hojas de menta fresca','Zumo de ½ limón','200ml agua de coco'],
+    39:['1 scoop proteína de arveja','250ml leche de soja sin azúcar','1 plátano','1 cda cacao puro sin azúcar'],
+    40:['½ taza puré de calabaza natural','3 cdas avena en hojuelas','200ml leche de almendras','Mezcla de canela, jengibre y nuez moscada'],
+    41:['3 higos secos o frescos','5 nueces picadas','150g yogur natural descremado','100ml leche descremada'],
+    42:['½ taza avena en hojuelas','1 cda cacao puro en polvo','250ml leche descremada o vegetal','Edulcorante al gusto']
   };
 
   function filtrarRecetas(cat, btn) {
@@ -136,12 +167,15 @@
         <div class="receta-body">
           <div class="receta-name">${r.nombre}</div>
           <div class="receta-desc">${r.desc}</div>
-          <div class="receta-macros">
+          <div class="receta-macros" style="margin-bottom: 10px;">
             <div class="macro-chip macro-p"><div class="m-val">${r.proteina}</div><div class="m-lbl">Proteína</div></div>
             <div class="macro-chip macro-c"><div class="m-val">${r.carbs}</div><div class="m-lbl">Carbos</div></div>
             <div class="macro-chip macro-g"><div class="m-val">${r.grasas}</div><div class="m-lbl">Grasas</div></div>
             <div class="macro-chip macro-k"><div class="m-val">${r.kcal}</div><div class="m-lbl">kcal</div></div>
           </div>
+          <button type="button" class="btn-primary" onclick="event.stopPropagation(); registrarConsumo(${r.id})" style="width:100%; padding:6px; font-size:11px; display:flex; align-items:center; justify-content:center; gap:4px; height: 30px;">
+            🥤 Consumir
+          </button>
         </div>
       </div>`).join('');
   }
@@ -164,8 +198,18 @@
       <h3 style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">🛒 Ingredientes</h3>
       <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:20px">
         ${ings.map(i=>`<li style="display:flex;align-items:center;gap:8px;font-size:13px;padding:8px 10px;background:var(--bg-surface);border-radius:var(--r-xs);border:1px solid var(--border)"><span style="color:var(--green);font-weight:700">✓</span> ${i}</li>`).join('')}
-      </ul>`;
+      </ul>
+      <button type="button" class="btn-primary" onclick="registrarConsumo(${r.id}); closeModal('modal-receta')" style="width:100%; padding:10px; display:flex; align-items:center; justify-content:center; gap:6px;">
+        🥤 Consumir este plato
+      </button>`;
     openModal('modal-receta');
+  }
+
+  function registrarConsumo(id) {
+    const r = RECETAS.find(x => x.id === id);
+    if (!r) return;
+    registrarConsumoReceta(r.kcal, r.proteina, r.carbs, r.grasas);
+    showToast(`🥤 Registrado: ${r.nombre} (+${r.kcal} kcal)`);
   }
 
   renderGrid(RECETAS);

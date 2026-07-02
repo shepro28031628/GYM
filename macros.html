@@ -371,7 +371,14 @@
     };
 
     saveDB();
-    showToast('💾 Plan nutricional guardado exitosamente');
+    
+    // Si el plan es del usuario activo actual, actualizar sus metas en localStorage
+    const activeUser = getActiveUser();
+    if (activeUser && activeUser.id === uid) {
+      actualizarMacrosUsuarioActivo(targetCal, protG, carbG, fatG);
+    } else {
+      showToast('💾 Plan nutricional guardado exitosamente');
+    }
   }
 </script>
 </body>

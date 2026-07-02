@@ -2036,22 +2036,29 @@ form { padding: 20px 24px; }
 
 .silhouette-wrapper {
   position: relative;
-  width: 200px;
-  height: 380px;
+  width: 260px;
+  height: 280px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
-.silhouette-svg {
+.silhouette-img {
   width: 100%;
   height: 100%;
-  color: var(--text-muted);
-  filter: drop-shadow(0 0 10px rgba(255,255,255,0.02));
+  object-fit: contain;
+  filter: invert(1) contrast(1.1) brightness(0.8) opacity(0.35);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  transition: filter 0.3s ease, opacity 0.3s ease;
 }
 
-.silhouette-box:hover .silhouette-svg {
-  color: var(--text-secondary);
+.silhouette-box:hover .silhouette-img {
+  filter: invert(1) contrast(1.1) brightness(1.0) opacity(0.65);
 }
 
 /* Silhouette Metrics Indicators */
@@ -2074,20 +2081,20 @@ form { padding: 20px 24px; }
 }
 
 .sil-indicator-badge {
-  background: #000;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #090909;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 3px 6px;
   border-radius: 4px;
   font-size: 10px;
   font-weight: 700;
   color: white;
   white-space: nowrap;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.75);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
   display: flex;
   flex-direction: column;
   align-items: center;
   line-height: 1.2;
-  width: 50px;
+  width: 46px;
   text-align: center;
 }
 
@@ -2104,14 +2111,14 @@ form { padding: 20px 24px; }
    - Para left-align (bolita a la derecha), anclamos usando 'right' para que quede fija en el cuerpo.
    - Para right-align (bolita a la izquierda), anclamos usando 'left' para que quede fija en el cuerpo.
 */
-.sil-pecho { top: 22%; left: 32%; color: var(--blue); }
-.sil-cintura { top: 42%; left: 68%; color: var(--pink); }
-.sil-cadera { top: 48%; right: 70%; color: var(--green); }
-.sil-brazo-der { top: 32%; left: 78%; color: var(--purple); }
-.sil-brazo-izq { top: 32%; right: 78%; color: var(--purple); }
-.sil-muslo-der { top: 64%; left: 68%; color: var(--orange); }
-.sil-muslo-izq { top: 64%; right: 68%; color: var(--orange); }
-.sil-pantorrilla { top: 80%; right: 66%; color: var(--yellow); }
+.sil-pecho { top: 23%; left: 28%; color: var(--blue); }
+.sil-cintura { top: 42%; left: 80%; color: var(--pink); }
+.sil-cadera { top: 50%; right: 82%; color: var(--green); }
+.sil-brazo-der { top: 35%; left: 86%; color: var(--purple); }
+.sil-brazo-izq { top: 35%; right: 86%; color: var(--purple); }
+.sil-muslo-der { top: 66%; left: 77%; color: var(--orange); }
+.sil-muslo-izq { top: 66%; right: 80%; color: var(--orange); }
+.sil-pantorrilla { top: 80%; right: 79%; color: var(--yellow); }
 
 .sil-indicator.right-align {
   flex-direction: row;
@@ -2605,4 +2612,190 @@ form { padding: 20px 24px; }
   border-color: var(--pink);
   color: var(--pink);
   background: rgba(255, 60, 172, 0.02);
+}
+
+/* ===================== DISPOSITIVOS MÓVILES Y TABLETAS (RESPONSIVE) ===================== */
+@media (max-width: 1024px) {
+  :root {
+    --sidebar-w: 240px;
+  }
+  
+  .sidebar {
+    transform: translateX(-100%);
+    box-shadow: 0 0 20px rgba(0,0,0,0.8);
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+  }
+  
+  .menu-toggle {
+    display: block !important;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  
+  .dashboard-grid-3 {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  
+  .routine-config {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .macro-input-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .matrix-table-container,
+  .table-responsive {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .routine-config {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .medidas-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .session-metrics-bar {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+  
+  .photo-upload-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  
+  .before-after-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  
+  .topbar {
+    padding: 0 16px !important;
+  }
+  
+  .page-body {
+    padding: 16px !important;
+  }
+}
+
+/* ===================== ESTILOS DE IMPRESIÓN (PDF) ===================== */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  
+  #sidebar-container,
+  #topbar-container,
+  .toolbar,
+  .btn-ghost,
+  .btn-primary,
+  .btn-secondary,
+  .modal-overlay,
+  .modal,
+  #toast-container,
+  .row-obs button,
+  .progreso-item-header button {
+    display: none !important;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+  
+  .page-body {
+    padding: 0 !important;
+  }
+  
+  .section-header {
+    margin-bottom: 20px !important;
+    border-bottom: 2px solid #333 !important;
+    padding-bottom: 10px !important;
+  }
+  
+  .section-header h1 {
+    color: #000000 !important;
+    font-size: 24px !important;
+  }
+  
+  .section-subtitle {
+    color: #555555 !important;
+  }
+  
+  /* Invertir colores del tema para la impresión en papel */
+  .card, .progreso-item, .matrix-table-container, .evolution-charts-grid .card {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid #dddddd !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+    margin-bottom: 20px !important;
+  }
+  
+  .matrix-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  
+  .matrix-table th, .matrix-table td {
+    border: 1px solid #dddddd !important;
+    color: #000000 !important;
+    padding: 6px !important;
+    font-size: 11px !important;
+  }
+  
+  .matrix-table th {
+    background: #f5f5f5 !important;
+    font-weight: 700 !important;
+  }
+  
+  /* Mantener silueta visible */
+  .silhouette-wrapper {
+    background: #ffffff !important;
+    border: 1px solid #dddddd !important;
+    page-break-inside: avoid;
+  }
+  
+  .silhouette-img {
+    filter: none !important; /* Quitar inversión en la impresión para que se vea la silueta negra original sobre papel blanco */
+    opacity: 0.8 !important;
+  }
+  
+  .sil-indicator span {
+    color: #000000 !important;
+    background: #f0f0f0 !important;
+    border: 1px solid #ccc !important;
+    text-shadow: none !important;
+  }
+  
+  .sil-indicator::before {
+    background: #000000 !important;
+  }
 }

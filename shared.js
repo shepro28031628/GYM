@@ -209,10 +209,40 @@ const RECETAS = [
   { id:10, nombre:'Pasta Integral con Pavo',        categoria:'carbohidratos', emoji:'🍝', desc:'Pasta integral con carne molida de pavo y salsa de tomate casera.',                  proteina:'32g', carbs:'60g', grasas:'10g', kcal:'460', tag:'Pre-Entreno' },
   { id:11, nombre:'Caldo de Res con Verduras',      categoria:'recuperacion',  emoji:'🍲', desc:'Caldo rico en colágeno. Ideal para articulaciones y músculos tras el entreno.',      proteina:'28g', carbs:'18g', grasas:'9g',  kcal:'270', tag:'Recuperación' },
   { id:12, nombre:'Manzana con Mantequilla de Maní',categoria:'snack',         emoji:'🍎', desc:'Manzana con mantequilla de maní natural. Energía sostenida entre comidas.',          proteina:'8g',  carbs:'30g', grasas:'14g', kcal:'270', tag:'Snack' },
+  { id:13, nombre:'Batido Proteico de Chocolate y Maní', categoria:'batidos',      emoji:'🥤', desc:'Proteína de chocolate, mantequilla de maní, banana y chía. Ideal para ganar masa.', proteina:'35g', carbs:'45g', grasas:'15g', kcal:'450', tag:'Batidos' },
+  { id:14, nombre:'Batido Verde Antioxidante',         categoria:'batidos',      emoji:'🥬', desc:'Espinaca, manzana verde, piña, jengibre y agua de coco. Depurativo y vitamínico.',  proteina:'3g',  carbs:'35g', grasas:'1g',  kcal:'160', tag:'Batidos' },
+  { id:15, nombre:'Batido Energético de Avena y Fresa', categoria:'batidos',      emoji:'🍓', desc:'Avena en hojuelas, fresas frescas, leche descremada y un toque de miel natural.',    proteina:'10g', carbs:'52g', grasas:'4g',  kcal:'280', tag:'Batidos' },
+  { id:16, nombre:'Batido de Arándanos y Yogur Griego', categoria:'batidos',      emoji:'🫐', desc:'Arándanos antioxidantes, yogur griego descremado y linaza para digestión óptima.', proteina:'18g', carbs:'26g', grasas:'5g',  kcal:'220', tag:'Batidos' },
+  { id:17, nombre:'Batido Keto de Aguacate y Coco',    categoria:'batidos',      emoji:'🥑', desc:'Aguacate, leche de coco, espinaca y stevia. Alto en grasas saludables y bajo en carbos.', proteina:'8g',  carbs:'12g', grasas:'28g', kcal:'330', tag:'Batidos' },
+  { id:18, nombre:'Batido Saciante de Manzana y Canela', categoria:'batidos',      emoji:'🍎', desc:'Manzana, avena, yogur griego, canela y nuez moscada. Controla la ansiedad.',        proteina:'6g',  carbs:'38g', grasas:'5g',  kcal:'210', tag:'Batidos' },
+  { id:19, nombre:'Batido Tropical de Piña y Mango',   categoria:'batidos',      emoji:'🍍', desc:'Piña, mango, jugo de naranja y yogur natural. Aporte de vitamina C y energía.',     proteina:'4g',  carbs:'48g', grasas:'1g',  kcal:'200', tag:'Batidos' },
+  { id:20, nombre:'Batido Quemagrasas de Toronja',     categoria:'batidos',      emoji:'🍊', desc:'Toronja, jengibre, apio y piña. Acelera el metabolismo y la quema calórica.',       proteina:'2g',  carbs:'28g', grasas:'0g',  kcal:'120', tag:'Batidos' },
+  { id:21, nombre:'Batido de Proteína Moca y Café',    categoria:'batidos',      emoji:'☕', desc:'Café expreso, scoop de proteína de chocolate y leche de almendras. Activador pre-entreno.', proteina:'28g', carbs:'30g', grasas:'6g',  kcal:'280', tag:'Batidos' },
+  { id:22, nombre:'Batido Recuperador de Sandía',      categoria:'batidos',      emoji:'🍉', desc:'Sandía, menta y agua de coco. Ideal para hidratación extrema post-entrenamiento.',  proteina:'3g',  carbs:'24g', grasas:'1g',  kcal:'110', tag:'Batidos' },
+  { id:23, nombre:'Batido de Avena, Almendras y Miel', categoria:'batidos',      emoji:'🌾', desc:'Avena, mantequilla de almendras, leche descremada y miel. Excelente snack saciante.', proteina:'9g',  carbs:'48g', grasas:'12g', kcal:'320', tag:'Batidos' },
+  { id:24, nombre:'Batido de Espinacas y Kiwi',        categoria:'batidos',      emoji:'🥝', desc:'Espinacas, kiwi, manzana verde y semillas de chía. Altamente depurativo.',          proteina:'4g',  carbs:'32g', grasas:'1g',  kcal:'150', tag:'Batidos' },
+  { id:25, nombre:'Batido Proteico de Vainilla y Nueces', categoria:'batidos',     emoji:'🥜', desc:'Proteína de vainilla, nueces picadas, plátano y leche descremada. Fuerza muscular.', proteina:'30g', carbs:'34g', grasas:'14g', kcal:'380', tag:'Batidos' },
+  { id:26, nombre:'Batido de Dátiles y Avena',         categoria:'batidos',      emoji:'🌴', desc:'Dátiles, avena en hojuelas, leche de almendras y canela. Dulzor natural energético.', proteina:'6g',  carbs:'58g', grasas:'4g',  kcal:'290', tag:'Batidos' },
+  { id:27, nombre:'Batido Detox de Apio y Pepino',     categoria:'batidos',      emoji:'🥒', desc:'Apio, pepino, limón, manzana y agua. Bajo en calorías y muy diurético.',             proteina:'2g',  carbs:'18g', grasas:'0g',  kcal:'80',  tag:'Batidos' },
+  { id:28, nombre:'Batido de Papaya y Linaza',         categoria:'batidos',      emoji:'🥭', desc:'Papaya, semillas de linaza y yogur natural. Excelente para la salud digestiva.',    proteina:'5g',  carbs:'36g', grasas:'6g',  kcal:'210', tag:'Batidos' },
+  { id:29, nombre:'Batido de Zanahoria y Naranja',     categoria:'batidos',      emoji:'🥕', desc:'Zanahoria, naranja, jengibre y agua de coco. Fortalece el sistema inmune.',          proteina:'3g',  carbs:'34g', grasas:'1g',  kcal:'150', tag:'Batidos' },
+  { id:30, nombre:'Batido de Melón y Limón',           categoria:'batidos',      emoji:'🍈', desc:'Melón dulce, zumo de limón y agua de coco. Altamente hidratante y refrescante.',     proteina:'2g',  carbs:'22g', grasas:'0g',  kcal:'90',  tag:'Batidos' },
+  { id:31, nombre:'Batido Proteico de Fresa y Requesón', categoria:'batidos',     emoji:'🍧', desc:'Fresas, requesón bajo en grasa, leche y stevia. Cremosidad alta en proteína.',       proteina:'26g', carbs:'28g', grasas:'5g',  kcal:'260', tag:'Batidos' },
+  { id:32, nombre:'Batido Superverde de Espirulina',   categoria:'batidos',      emoji:'🧪', desc:'Espirulina, espinaca, plátano y leche vegetal. Superalimento energizante.',          proteina:'8g',  carbs:'22g', grasas:'2g',  kcal:'130', tag:'Batidos' },
+  { id:33, nombre:'Batido de Coco y Almendras',        categoria:'batidos',      emoji:'🥥', desc:'Leche de coco, almendras enteras, proteína de vainilla y hielo. Delicia cremosa.',   proteina:'7g',  carbs:'24g', grasas:'16g', kcal:'270', tag:'Batidos' },
+  { id:34, nombre:'Batido de Melocotón y Yogur',       categoria:'batidos',      emoji:'🍑', desc:'Melocotón en rodajas, yogur griego natural, leche y un toque de vainilla.',         proteina:'12g', carbs:'38g', grasas:'3g',  kcal:'220', tag:'Batidos' },
+  { id:35, nombre:'Batido de Té Verde y Limón',        categoria:'batidos',      emoji:'🍵', desc:'Té verde frío, zumo de limón, menta y una cdta de miel. Antioxidante quemagrasa.',   proteina:'2g',  carbs:'16g', grasas:'0g',  kcal:'70',  tag:'Batidos' },
+  { id:36, nombre:'Batido de Chía y Frutos Rojos',     categoria:'batidos',      emoji:'🍒', desc:'Semillas de chía, frutos rojos variados, leche de avena y estevia.',                 proteina:'8g',  carbs:'32g', grasas:'8g',  kcal:'230', tag:'Batidos' },
+  { id:37, nombre:'Batido Termogénico de Té Matcha',   categoria:'batidos',      emoji:'🍵', desc:'Matcha, plátano, espinaca y leche de almendras. Energía sostenida y enfoque.',        proteina:'6g',  carbs:'20g', grasas:'3g',  kcal:'130', tag:'Batidos' },
+  { id:38, nombre:'Batido Hidratante de Pepino y Menta', categoria:'batidos',     emoji:'🥤', desc:'Pepino, menta fresca, limón y agua de coco. Refrescante e hidratante.',              proteina:'2g',  carbs:'14g', grasas:'0g',  kcal:'60',  tag:'Batidos' },
+  { id:39, nombre:'Batido Proteico Vegano de Arveja',  categoria:'batidos',      emoji:'🌱', desc:'Proteína de arveja aislada, leche de soja, plátano y cacao puro.',                  proteina:'25g', carbs:'22g', grasas:'4g',  kcal:'220', tag:'Batidos' },
+  { id:40, nombre:'Batido de Calabaza y Especias',     categoria:'batidos',      emoji:'🎃', desc:'Puré de calabaza, avena, leche de almendras, canela y nuez moscada.',                proteina:'8g',  carbs:'42g', grasas:'6g',  kcal:'250', tag:'Batidos' },
+  { id:41, nombre:'Batido Nutritivo de Higos y Nueces', categoria:'batidos',      emoji:'🍇', desc:'Higos frescos, nueces picadas, yogur natural y leche. Alto en fibra y potasio.',     proteina:'8g',  carbs:'48g', grasas:'12g', kcal:'310', tag:'Batidos' },
+  { id:42, nombre:'Batido de Avena y Cacao',           categoria:'batidos',      emoji:'🍫', desc:'Avena, cacao en polvo sin azúcar, leche descremada y edulcorante natural.',          proteina:'10g', carbs:'46g', grasas:'6g',  kcal:'270', tag:'Batidos' }
 ];
 
 function getCatGradient(cat) {
-  return { proteina:'linear-gradient(135deg,#FF3CAC,#784BA0)', carbohidratos:'linear-gradient(135deg,#FF7043,#FFD600)', recuperacion:'linear-gradient(135deg,#00E5A0,#00A8FF)', snack:'linear-gradient(135deg,#FF4E8A,#FF7043)' }[cat] || 'linear-gradient(135deg,#FF3CAC,#2B86C5)';
+  return { proteina:'linear-gradient(135deg,#FF3CAC,#784BA0)', carbohidratos:'linear-gradient(135deg,#FF7043,#FFD600)', recuperacion:'linear-gradient(135deg,#00E5A0,#00A8FF)', snack:'linear-gradient(135deg,#FF4E8A,#FF7043)', batidos:'linear-gradient(135deg,#784BA0,#2B86C5)' }[cat] || 'linear-gradient(135deg,#FF3CAC,#2B86C5)';
 }
 
 // ===================== MOTIVATIONAL QUOTES =====================
@@ -356,6 +386,65 @@ function closeWebcamModal() {
   }
   const modal = document.getElementById('webcam-modal-container');
   if (modal) modal.remove();
+}
+
+// ===================== REGISTRO DIARIO DE CONSUMO & METAS =====================
+function getHoyKey() {
+  const hoy = new Date();
+  const yyyy = hoy.getFullYear();
+  const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+  const dd = String(hoy.getDate()).padStart(2, '0');
+  return `gym_diario_consumo_${yyyy}-${mm}-${dd}`;
+}
+
+function getMacrosConsumidosHoy() {
+  const u = getActiveUser();
+  if (!u) return { kcal: 0, proteina: 0, carbs: 0, grasas: 0 };
+  const key = getHoyKey() + "_" + u.id;
+  const data = localStorage.getItem(key);
+  if (!data) return { kcal: 0, proteina: 0, carbs: 0, grasas: 0 };
+  try {
+    return JSON.parse(data);
+  } catch(e) {
+    return { kcal: 0, proteina: 0, carbs: 0, grasas: 0 };
+  }
+}
+
+function registrarConsumoReceta(kcal, proteina, carbs, grasas) {
+  const u = getActiveUser();
+  if (!u) return;
+  const key = getHoyKey() + "_" + u.id;
+  const actual = getMacrosConsumidosHoy();
+  
+  actual.kcal += parseInt(kcal) || 0;
+  actual.proteina += parseInt(proteina) || 0;
+  actual.carbs += parseInt(carbs) || 0;
+  actual.grasas += parseInt(grasas) || 0;
+  
+  localStorage.setItem(key, JSON.stringify(actual));
+  
+  // Disparar evento para actualizar componentes
+  window.dispatchEvent(new Event('gym_diario_actualizado'));
+}
+
+function actualizarMacrosUsuarioActivo(kcal, prot, carbs, grasas) {
+  const u = getActiveUser();
+  if (!u) return;
+  
+  u.macroKcal = parseInt(kcal) || 2000;
+  u.macroProt = parseInt(prot) || 150;
+  u.macroCarbs = parseInt(carbs) || 200;
+  u.macroGrasas = parseInt(grasas) || 70;
+  
+  // Guardar usuario en DB y actualizar localStorage
+  const db = getDB();
+  const idx = db.usuarios.findIndex(user => user.id === u.id);
+  if (idx !== -1) {
+    db.usuarios[idx] = u;
+    saveDB(db);
+  }
+  localStorage.setItem('gym_active_user', JSON.stringify(u));
+  showToast("Objetivo de macros guardado en tu perfil", "success");
 }
 
 // Init

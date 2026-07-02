@@ -161,9 +161,10 @@
       
       <!-- Grid explorer (right) -->
       <div style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
-          <h3 id="lib-current-category" style="font-size:16px; font-weight:800; color:var(--pink)">Pecho</h3>
-          <span style="font-size:11px; color:var(--text-muted)">Haz clic en un ejercicio para agregarlo directamente a tu rutina</span>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap: 16px; flex-shrink:0;">
+          <h3 id="lib-current-category" style="font-size:16px; font-weight:800; color:var(--pink); margin:0;">Pecho</h3>
+          <input type="text" id="lib-search-input" placeholder="🔍 Buscar ejercicio..." oninput="filtrarEjerciciosBiblioteca()" style="width:250px; padding:6px 12px; font-size:12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:white; outline:none;" />
+          <span style="font-size:11px; color:var(--text-muted); margin-left:auto;">Haz clic en un ejercicio para agregarlo directamente a tu rutina</span>
         </div>
         
         <div class="library-grid" id="lib-exercises-grid">
@@ -281,7 +282,13 @@
     cambiarCategoriaBiblioteca(categories[0]);
   }
 
+  let currentLibraryCategory = 'Pecho';
+
   function cambiarCategoriaBiblioteca(cat) {
+    currentLibraryCategory = cat;
+    const searchInput = document.getElementById('lib-search-input');
+    if (searchInput) searchInput.value = '';
+    
     // Set active tab
     document.querySelectorAll('.lib-tab-btn').forEach(btn => btn.classList.remove('active'));
     const activeBtn = document.getElementById('tab-' + cat);
@@ -290,31 +297,55 @@
     // Set header
     document.getElementById('lib-current-category').textContent = cat;
     
-    // Load exercises grid
+    renderBibliotecaGrid(BIBLIOTECA[cat] || []);
+  }
+
+  function renderBibliotecaGrid(exercises) {
     const grid = document.getElementById('lib-exercises-grid');
-    const exercises = BIBLIOTECA[cat] || [];
-    
     if (exercises.length === 0) {
-      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--text-muted); padding:40px;">No hay ejercicios en esta categoría.</div>`;
+      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--text-muted); padding:40px;">No hay ejercicios que coincidan.</div>`;
       return;
     }
     
     grid.innerHTML = exercises.map(ej => {
+      let grupo = currentLibraryCategory;
+      for (const [g, list] of Object.entries(BIBLIOTECA)) {
+        if (list.some(x => x.nombre === ej.nombre)) {
+          grupo = g;
+          break;
+        }
+      }
       const imgPath = ej.imagen ? `img/${ej.imagen}` : 'img/1.jpeg';
       return `
-        <div class="lib-card" onclick="seleccionarEjercicioBiblioteca('${cat}', '${ej.nombre}')">
+        <div class="lib-card" onclick="seleccionarEjercicioBiblioteca('${grupo}', '${ej.nombre}')">
           <div class="lib-img-container">
             <img class="lib-img" src="${imgPath}" alt="${ej.nombre}" />
           </div>
           <div class="lib-card-body">
             <div class="lib-card-name">${ej.nombre}</div>
             <div class="lib-card-reps">👉 Series y reps: ${ej.reps}</div>
-            <div class="lib-card-notes">${ej.notas || 'Sin notas especiales.'}</div>
+            <div class="lib-card-notes">${ej.notes || ej.notas || 'Sin notas especiales.'}</div>
             <button type="button" class="lib-card-btn">＋ Agregar a Rutina</button>
           </div>
         </div>
       `;
     }).join('');
+  }
+
+  function filtrarEjerciciosBiblioteca() {
+    const text = document.getElementById('lib-search-input').value.toLowerCase().trim();
+    if (!text) {
+      renderBibliotecaGrid(BIBLIOTECA[currentLibraryCategory] || []);
+      return;
+    }
+    
+    let allMatches = [];
+    Object.keys(BIBLIOTECA).forEach(cat => {
+      const filtered = BIBLIOTECA[cat].filter(ej => ej.nombre.toLowerCase().includes(text));
+      allMatches = allMatches.concat(filtered);
+    });
+    
+    renderBibliotecaGrid(allMatches);
   }
 
   function seleccionarEjercicioBiblioteca(grupo, nombre) {
@@ -356,7 +387,7 @@
     if (!rutinas.length) {
       container.innerHTML = `<div class="empty-state"><span class="empty-icon">📋</span><h3>Sin rutinas</h3><p>Este cliente aún no tiene rutinas asignadas.</p><button class="btn-primary" onclick="abrirEditor()">Crear Primera Rutina</button></div>`; return;
     }
-    container.innerHTML = `<div class="rutinas-timeline">` + rutinas.map(r => {
+    container.innerHTML = `<div class="rutinas-timeline">` + rutinas.map((r, index) => {
       const diff = (r.pesoFin && r.pesoIni) ? (r.pesoFin - r.pesoIni).toFixed(1) : null;
       const diffHtml = diff !== null ? `<span class="peso-diff ${parseFloat(diff)<0?'pos':'neg'}">${parseFloat(diff)>0?'+':''}${diff} kg</span>` : '';
       return `<div class="rutina-card">
@@ -373,10 +404,10 @@
           <div class="rutina-header-actions">
             <button class="btn-ghost" onclick="event.stopPropagation();abrirEditor('${r.id}')">✏️ Editar</button>
             <button class="btn-ghost btn-danger" onclick="event.stopPropagation();eliminarRutina('${r.id}')">🗑️</button>
-            <span class="rutina-chevron">▼</span>
+            <span class="rutina-chevron">${index === 0 ? '▲' : '▼'}</span>
           </div>
         </div>
-        <div class="rutina-card-body" id="b-${r.id}" style="display:none">
+        <div class="rutina-card-body" id="b-${r.id}" style="display:${index === 0 ? 'block' : 'none'}">
           ${r.ejercicios.length ? `
           <table class="ejercicios-table">
             <thead><tr><th>#</th><th>Ilustración</th><th>Ejercicio</th><th>Grupo Muscular</th><th>Series × Reps</th><th>Peso</th><th>Descanso</th><th>Notas</th></tr></thead>

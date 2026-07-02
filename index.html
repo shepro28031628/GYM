@@ -89,10 +89,41 @@
     </div>
 
     <div class="dashboard-grid-3" style="margin-top:14px">
-      <!-- Client Retention Donut -->
+      <!-- Macros Widget -->
       <div class="card">
-        <div class="card-header"><h2>🔄 Retención</h2></div>
-        <div class="chart-container" id="chart-retencion" style="display:flex;align-items:center;justify-content:center;padding:10px 0"></div>
+        <div class="card-header">
+          <h2>🥤 Macros de Hoy</h2>
+          <span class="badge badge-blue" id="macros-kcal-badge">0 / 2000 kcal</span>
+        </div>
+        <div class="macros-widget-body" style="padding: 10px 0;">
+          <div class="macro-bar-item" style="margin-bottom: 14px;">
+            <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
+              <span>💪 Proteínas</span>
+              <span id="macro-prot-txt" style="font-weight:700;">0g / 150g</span>
+            </div>
+            <div style="height:8px; background:rgba(255,255,255,0.06); border-radius:4px; overflow:hidden;">
+              <div id="macro-prot-bar" style="height:100%; width:0%; background:linear-gradient(90deg,#FF3CAC,#784BA0); border-radius:4px; transition:width 0.5s ease;"></div>
+            </div>
+          </div>
+          <div class="macro-bar-item" style="margin-bottom: 14px;">
+            <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
+              <span>⚡ Carbohidratos</span>
+              <span id="macro-carbs-txt" style="font-weight:700;">0g / 200g</span>
+            </div>
+            <div style="height:8px; background:rgba(255,255,255,0.06); border-radius:4px; overflow:hidden;">
+              <div id="macro-carbs-bar" style="height:100%; width:0%; background:linear-gradient(90deg,#FF7043,#FFD600); border-radius:4px; transition:width 0.5s ease;"></div>
+            </div>
+          </div>
+          <div class="macro-bar-item">
+            <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
+              <span>🥑 Grasas</span>
+              <span id="macro-grasas-txt" style="font-weight:700;">0g / 70g</span>
+            </div>
+            <div style="height:8px; background:rgba(255,255,255,0.06); border-radius:4px; overflow:hidden;">
+              <div id="macro-grasas-bar" style="height:100%; width:0%; background:linear-gradient(90deg,#00E5A0,#00A8FF); border-radius:4px; transition:width 0.5s ease;"></div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Quick Links -->
@@ -177,31 +208,38 @@
       ${semanas.some(s=>s.vol>0) ? bars : `<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="#555" font-size="13" font-family="Sora">Sin datos aún — agrega rutinas con pesos</text>`}
     </svg>`;
 
-  // ---- Retention Donut ----
-  const total = DB.usuarios.length;
-  const activos = DB.sesiones.filter(s => s.estado === 'completada').map(s => s.usuarioId);
-  const unicosActivos = [...new Set(activos)].length;
-  const pct = total > 0 ? Math.round((unicosActivos / total) * 100) : 75;
-  const r2 = 56, circ = 2 * Math.PI * r2;
-  const dash = (pct / 100) * circ;
-  document.getElementById('chart-retencion').innerHTML = `
-    <div style="position:relative;display:inline-flex;align-items:center;justify-content:center">
-      <svg width="140" height="140" viewBox="0 0 140 140">
-        <circle cx="70" cy="70" r="${r2}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="14"/>
-        <circle cx="70" cy="70" r="${r2}" fill="none" stroke="url(#dgrad)" stroke-width="14"
-          stroke-dasharray="${dash} ${circ}" stroke-dashoffset="${circ/4}" stroke-linecap="round"/>
-        <defs>
-          <linearGradient id="dgrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#FF3CAC"/>
-            <stop offset="100%" stop-color="#2B86C5"/>
-          </linearGradient>
-        </defs>
-      </svg>
-      <div style="position:absolute;text-align:center">
-        <div style="font-size:26px;font-weight:800;background:linear-gradient(135deg,#FF3CAC,#2B86C5);-webkit-background-clip:text;-webkit-text-fill-color:transparent">${total > 0 ? pct : '—'}${total > 0 ? '%' : ''}</div>
-        <div style="font-size:10px;color:#555;margin-top:2px;font-weight:600">RETENCIÓN</div>
-      </div>
-    </div>`;
+  // ---- Macros Widget Logic ----
+  function actualizarWidgetMacros() {
+    const u = getActiveUser();
+    if (!u) return;
+    
+    // Obtener metas
+    const kcalGoal = u.macroKcal || 2000;
+    const protGoal = u.macroProt || 150;
+    const carbsGoal = u.macroCarbs || 200;
+    const grasasGoal = u.macroGrasas || 70;
+    
+    // Obtener consumo actual
+    const actual = getMacrosConsumidosHoy();
+    
+    // Actualizar textos
+    document.getElementById('macros-kcal-badge').textContent = `${actual.kcal} / ${kcalGoal} kcal`;
+    document.getElementById('macro-prot-txt').textContent = `${actual.proteina}g / ${protGoal}g`;
+    document.getElementById('macro-carbs-txt').textContent = `${actual.carbs}g / ${carbsGoal}g`;
+    document.getElementById('macro-grasas-txt').textContent = `${actual.grasas}g / ${grasasGoal}g`;
+    
+    // Actualizar barras de progreso (máximo 100%)
+    const pProt = Math.min((actual.proteina / protGoal) * 100, 100);
+    const pCarbs = Math.min((actual.carbs / carbsGoal) * 100, 100);
+    const pGrasas = Math.min((actual.grasas / grasasGoal) * 100, 100);
+    
+    document.getElementById('macro-prot-bar').style.width = `${pProt}%`;
+    document.getElementById('macro-carbs-bar').style.width = `${pCarbs}%`;
+    document.getElementById('macro-grasas-bar').style.width = `${pGrasas}%`;
+  }
+  
+  actualizarWidgetMacros();
+  window.addEventListener('gym_diario_actualizado', actualizarWidgetMacros);
 
   // ---- Sessions Today ----
   const listEl = document.getElementById('sesiones-hoy-list');

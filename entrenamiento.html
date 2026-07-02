@@ -250,8 +250,13 @@
     if (globalTimerInterval) clearInterval(globalTimerInterval);
     globalTimerInterval = setInterval(() => {
       let updated = false;
+      const ahora = Date.now();
       for (let uid in activeSessions) {
-        activeSessions[uid].timerSec++;
+        const sesion = activeSessions[uid];
+        if (!sesion.inicioTime) {
+          sesion.inicioTime = ahora - (sesion.timerSec * 1000);
+        }
+        sesion.timerSec = Math.floor((ahora - sesion.inicioTime) / 1000);
         updated = true;
       }
       if (updated) {
@@ -397,6 +402,7 @@
     activeSessions[uid] = {
       usuarioId: uid,
       rutinaId: rid,
+      inicioTime: Date.now(),
       timerSec: 0,
       setsCompletados: 0,
       setsTotal: 0,

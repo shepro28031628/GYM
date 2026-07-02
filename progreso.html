@@ -32,6 +32,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Nueva Medición
       </button>
+      <button class="btn-secondary" id="btn-exportar-pdf" onclick="window.print()" style="display:flex; align-items:center; gap:8px;" disabled>
+        🖨️ Exportar PDF
+      </button>
     </div>
 
     <div id="progreso-container">
@@ -116,6 +119,7 @@
   function onUsuarioChange() {
     const uid = sel.value;
     document.getElementById('btn-medicion').disabled = !uid;
+    document.getElementById('btn-exportar-pdf').disabled = !uid;
     renderProgreso(uid);
   }
 
@@ -415,11 +419,6 @@
       }
     }
 
-    const isFemale = u.genero === 'Femenino';
-    const silhouettePath = isFemale ? 
-      'M50,16 C53,16 56,19 56,22 C56,25 53,28 50,28 C47,28 44,25 44,22 C44,19 47,16 50,16 Z M48,28 L52,28 L53,33 L47,33 Z M35,37 L45,33 L55,33 L65,37 C68,38 70,41 70,44 L67,82 C67,84 65,86 63,86 C61,86 59,84 59,82 L61,46 L57,46 C57,56 59,68 59,76 C59,86 55,94 55,102 L55,205 C55,208 53,210 50,210 C47,210 45,208 45,205 L45,135 L55,135 L45,135 L45,205 L45,102 C45,94 41,86 41,76 C41,68 43,56 43,46 L39,46 L41,82 C41,84 39,86 37,86 C35,86 33,84 33,82 L30,44 C30,41 32,38 35,37 Z' :
-      'M50,15 C54,15 57,18 57,22 C57,26 54,29 50,29 C46,29 43,26 43,22 C43,18 46,15 50,15 Z M47,29 L53,29 L54,34 L46,34 Z M32,38 L44,34 L56,34 L68,38 C72,39 74,42 74,45 L71,85 C71,87 69,89 67,89 C65,89 63,87 63,85 L65,48 L59,48 L60,95 C60,105 58,115 58,125 L58,205 C58,208 56,210 53,210 C50,210 49,207 49,205 L49,135 L51,135 L51,125 C51,115 40,115 40,125 L40,205 C40,208 38,210 35,210 C32,210 31,207 31,205 L31,125 C31,115 40,105 40,95 L41,48 L35,48 L37,85 C37,87 35,89 33,89 C31,89 29,87 29,85 L26,45 C26,42 28,39 32,38 Z';
-
     function getSilhouetteBadge(label, val) {
       return `<div class="sil-indicator-badge"><span>${label}</span>${val ? val + ' cm' : '—'}</div>`;
     }
@@ -428,7 +427,7 @@
       <div class="silhouette-box">
         <div class="silhouette-title-label inicial">Inicial (Antes)</div>
         <div class="silhouette-wrapper">
-          <svg class="silhouette-svg" viewBox="0 0 100 220"><path d="${silhouettePath}" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+          <img src="img/figuras.png" class="silhouette-img" alt="Silueta Física" />
           <div class="sil-indicator sil-pecho right-align">${getSilhouetteBadge('Pecho', u.pecho)}</div>
           <div class="sil-indicator sil-cintura right-align">${getSilhouetteBadge('Cintura', u.cintura)}</div>
           <div class="sil-indicator sil-cadera left-align">${getSilhouetteBadge('Cadera', u.cadera)}</div>
@@ -445,7 +444,7 @@
       <div class="silhouette-box">
         <div class="silhouette-title-label actual">Actual (Evolución)</div>
         <div class="silhouette-wrapper">
-          <svg class="silhouette-svg" viewBox="0 0 100 220"><path d="${silhouettePath}" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+          <img src="img/figuras.png" class="silhouette-img" alt="Silueta Física" />
           <div class="sil-indicator sil-pecho right-align">${getSilhouetteBadge('Pecho', latestMeasures.pecho)}</div>
           <div class="sil-indicator sil-cintura right-align">${getSilhouetteBadge('Cintura', latestMeasures.cintura)}</div>
           <div class="sil-indicator sil-cadera left-align">${getSilhouetteBadge('Cadera', latestMeasures.cadera)}</div>
