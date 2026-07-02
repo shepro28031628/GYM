@@ -2058,8 +2058,8 @@ form { padding: 20px 24px; }
 .sil-indicator {
   position: absolute;
   display: flex;
-  flex-direction: column;
   align-items: center;
+  gap: 6px;
   pointer-events: none;
 }
 
@@ -2069,49 +2069,55 @@ form { padding: 20px 24px; }
   height: 8px;
   border-radius: 50%;
   background: currentColor;
-  box-shadow: 0 0 8px currentColor;
-  margin-bottom: 4px;
+  box-shadow: 0 0 10px currentColor, 0 0 4px currentColor;
+  flex-shrink: 0;
 }
 
 .sil-indicator-badge {
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(4px);
-  border: 1px solid var(--border);
-  padding: 4px 6px;
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 3px 6px;
   border-radius: 4px;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   color: white;
   white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.75);
   display: flex;
   flex-direction: column;
   align-items: center;
-  line-height: 1.1;
+  line-height: 1.2;
+  width: 50px;
+  text-align: center;
 }
 
 .sil-indicator-badge span {
-  font-weight: 400;
+  font-weight: 600;
   color: var(--text-secondary);
-  font-size: 8px;
+  font-size: 7.5px;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-/* Position mapping on 200x380 container */
-.sil-pecho { top: 22%; left: 5%; color: var(--blue); }
-.sil-cintura { top: 35%; right: 5%; color: var(--pink); }
-.sil-cadera { top: 46%; left: 5%; color: var(--green); }
-.sil-brazo-der { top: 28%; right: -15%; color: var(--purple); }
-.sil-brazo-izq { top: 28%; left: -15%; color: var(--purple); }
-.sil-muslo-der { top: 62%; right: -10%; color: var(--orange); }
-.sil-muslo-izq { top: 62%; left: -10%; color: var(--orange); }
-.sil-pantorrilla { top: 82%; left: 5%; color: var(--yellow); }
+/* Position mapping on 200x380 container
+   Utilizando anclaje de bolita:
+   - Para left-align (bolita a la derecha), anclamos usando 'right' para que quede fija en el cuerpo.
+   - Para right-align (bolita a la izquierda), anclamos usando 'left' para que quede fija en el cuerpo.
+*/
+.sil-pecho { top: 22%; left: 32%; color: var(--blue); }
+.sil-cintura { top: 42%; left: 68%; color: var(--pink); }
+.sil-cadera { top: 48%; right: 70%; color: var(--green); }
+.sil-brazo-der { top: 32%; left: 78%; color: var(--purple); }
+.sil-brazo-izq { top: 32%; right: 78%; color: var(--purple); }
+.sil-muslo-der { top: 64%; left: 68%; color: var(--orange); }
+.sil-muslo-izq { top: 64%; right: 68%; color: var(--orange); }
+.sil-pantorrilla { top: 80%; right: 66%; color: var(--yellow); }
 
 .sil-indicator.right-align {
-  align-items: flex-end;
+  flex-direction: row;
 }
 .sil-indicator.left-align {
-  align-items: flex-start;
+  flex-direction: row-reverse;
 }
 
 /* Printable Page Styles */
