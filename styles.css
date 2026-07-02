@@ -84,12 +84,12 @@ body {
   padding: 16px 12px;
   border-bottom: 1px solid var(--border);
   background: #000;
-  min-height: 100px;
+  height: 90px;
 }
 
 .sidebar-logo-img {
-  width: 100%;
-  max-width: 190px;
+  max-width: 100%;
+  max-height: 60px;
   height: auto;
   object-fit: contain;
   display: block;
