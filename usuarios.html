@@ -29,13 +29,23 @@
       <div class="summary-item"><div class="summary-val" id="sum-rutinas">0</div><div class="summary-lbl">Rutinas Activas</div></div>
     </div>
 
-    <!-- Filter chips -->
-    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-      <button class="filter-btn active" onclick="setFiltroObjetivo('', this)">Todos</button>
-      <button class="filter-btn" onclick="setFiltroObjetivo('Perder peso', this)">💧 Perder Peso</button>
-      <button class="filter-btn" onclick="setFiltroObjetivo('Ganar músculo', this)">💪 Ganar Músculo</button>
-      <button class="filter-btn" onclick="setFiltroObjetivo('Mantenimiento', this)">⚖️ Mantenimiento</button>
-      <button class="filter-btn" onclick="setFiltroObjetivo('Mejorar resistencia', this)">🏃 Resistencia</button>
+    <!-- Status Filter chips -->
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+      <span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:0.5px;margin-right:8px;">Estado:</span>
+      <button class="filter-btn active filter-status-btn" onclick="setFiltroEstado('Activo', this)">🟢 Activos</button>
+      <button class="filter-btn filter-status-btn" onclick="setFiltroEstado('Pausado', this)">🟡 Pausados</button>
+      <button class="filter-btn filter-status-btn" onclick="setFiltroEstado('Inactivo', this)">🔴 Inactivos</button>
+      <button class="filter-btn filter-status-btn" onclick="setFiltroEstado('Todos', this)">📁 Todos</button>
+    </div>
+
+    <!-- Objective Filter chips -->
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center;">
+      <span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:0.5px;margin-right:8px;">Objetivo:</span>
+      <button class="filter-btn active filter-obj-btn" onclick="setFiltroObjetivo('', this)">Todos</button>
+      <button class="filter-btn filter-obj-btn" onclick="setFiltroObjetivo('Perder peso', this)">💧 Perder Peso</button>
+      <button class="filter-btn filter-obj-btn" onclick="setFiltroObjetivo('Ganar músculo', this)">💪 Ganar Músculo</button>
+      <button class="filter-btn filter-obj-btn" onclick="setFiltroObjetivo('Mantenimiento', this)">⚖️ Mantenimiento</button>
+      <button class="filter-btn filter-obj-btn" onclick="setFiltroObjetivo('Mejorar resistencia', this)">🏃 Resistencia</button>
     </div>
 
     <div class="toolbar">
@@ -89,6 +99,7 @@
       <div class="form-grid">
         <div class="form-group"><label>Objetivo Principal</label><select id="u-objetivo"><option>Perder peso</option><option>Ganar músculo</option><option>Mantenimiento</option><option>Mejorar resistencia</option><option>Rehabilitación</option></select></div>
         <div class="form-group"><label>Nivel de Experiencia</label><select id="u-nivel"><option>Principiante</option><option>Intermedio</option><option>Avanzado</option></select></div>
+        <div class="form-group"><label>Estado del Cliente</label><select id="u-estado"><option value="Activo">Activo</option><option value="Pausado">Pausado</option><option value="Inactivo">Inactivo</option></select></div>
         <div class="form-group full"><label>Observaciones / Lesiones</label><textarea id="u-obs" placeholder="Lesiones previas, restricciones, notas..." rows="3"></textarea></div>
       </div>
       
@@ -190,12 +201,20 @@
   document.getElementById('topbar-container').innerHTML = buildTopbar('Clientes', `<button class="btn-primary" onclick="abrirModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nuevo Cliente</button>`);
   document.getElementById('toast-container').innerHTML = buildToast();
 
+  let filtroEstado = 'Activo';
   let filtroObjetivo = '';
+
+  function setFiltroEstado(val, btn) {
+    filtroEstado = val;
+    document.querySelectorAll('.filter-status-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderUsuarios();
+  }
 
   function setFiltroObjetivo(val, btn) {
     filtroObjetivo = val;
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    document.querySelectorAll('.filter-obj-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
     renderUsuarios();
   }
 
@@ -213,9 +232,12 @@
     let lista = DB.usuarios;
     if (q) lista = lista.filter(u => u.nombre.toLowerCase().includes(q));
     if (filtroObjetivo) lista = lista.filter(u => u.objetivo === filtroObjetivo);
+    if (filtroEstado !== 'Todos') {
+      lista = lista.filter(u => (u.estado || 'Activo') === filtroEstado);
+    }
 
     if (lista.length === 0) {
-      grid.innerHTML = `<div class="empty-state"><span class="empty-icon">👤</span><h3>${q||filtroObjetivo?'Sin resultados':'Sin clientes registrados'}</h3><p>${q||filtroObjetivo?'Ajusta el filtro o búsqueda':'Comienza registrando tu primer cliente.'}</p>${!q&&!filtroObjetivo?'<button class="btn-primary" onclick="abrirModal()">Agregar Cliente</button>':''}</div>`;
+      grid.innerHTML = `<div class="empty-state"><span class="empty-icon">👤</span><h3>${q||filtroObjetivo||filtroEstado!=='Todos'?'Sin resultados':'Sin clientes registrados'}</h3><p>${q||filtroObjetivo||filtroEstado!=='Todos'?'Ajusta el filtro o búsqueda':'Comienza registrando tu primer cliente.'}</p>${!q&&!filtroObjetivo&&filtroEstado==='Activo'?'<button class="btn-primary" onclick="abrirModal()">Agregar Cliente</button>':''}</div>`;
       return;
     }
 
@@ -229,6 +251,9 @@
       const b = bmi(u.peso, u.estatura);
       const proximaSesion = DB.sesiones.filter(s => s.usuarioId === u.id && s.estado === 'pendiente' && s.fecha >= new Date().toISOString().split('T')[0]).sort((a,b2)=>a.fecha.localeCompare(b2.fecha))[0];
       const badgeCls = badgeClass(u.nivel);
+      
+      const warningColor = completitud < 50 ? 'var(--red)' : 'var(--pink)';
+      const warningLabel = completitud < 50 ? `<span style="font-size:10px;background:rgba(255,69,96,0.15);color:var(--red);padding:2px 6px;border-radius:4px;font-weight:700;display:inline-flex;align-items:center;gap:3px;vertical-align:middle;margin-left:4px;">⚠️ Baja</span>` : '';
 
       return `<div class="user-card">
         <div class="user-card-top">
@@ -239,6 +264,7 @@
             <div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap">
               <span class="badge ${badgeCls}">${u.nivel}</span>
               <span class="badge badge-purple">${OBJETIVO_ICONS[u.objetivo]||'🎯'} ${u.objetivo}</span>
+              ${u.estado && u.estado !== 'Activo' ? `<span class="badge" style="background:${u.estado === 'Pausado' ? 'rgba(255,193,7,0.15)' : 'rgba(255,69,96,0.15)'}; color:${u.estado === 'Pausado' ? 'var(--yellow)' : 'var(--red)'};">${u.estado}</span>` : ''}
             </div>
           </div>
           ${u.tarifa ? `<div style="text-align:right;flex-shrink:0"><div style="font-size:14px;font-weight:800;background:var(--grad-main);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">$${parseInt(u.tarifa).toLocaleString('es-CO')}</div><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">/ mes</div></div>` : ''}
@@ -251,12 +277,12 @@
         </div>
 
         <div class="user-progress-section">
-          <div class="user-progress-label">
-            <span>Completitud Semanal</span>
-            <span style="color:var(--pink);font-weight:700">${completitud}%</span>
+          <div class="user-progress-label" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+            <span>Completitud Semanal${warningLabel}</span>
+            <span style="color:${warningColor};font-weight:700">${completitud}%</span>
           </div>
           <div class="progress-bar-wrap">
-            <div class="progress-bar-fill" style="width:${completitud}%"></div>
+            <div class="progress-bar-fill" style="width:${completitud}%; background:${warningColor};"></div>
           </div>
         </div>
 
@@ -268,9 +294,12 @@
 
         <div class="user-card-actions">
           <button class="btn-ghost" style="flex:1" onclick="verPerfil('${u.id}')">👁 Perfil</button>
-          <button class="btn-ghost" onclick="programarSesion('${u.id}')">📅</button>
-          <button class="btn-ghost" onclick="abrirModal('${u.id}')">✏️</button>
-          <button class="btn-ghost btn-danger" onclick="eliminarUsuario('${u.id}')">🗑️</button>
+          <button class="btn-ghost" onclick="programarSesion('${u.id}')" title="Programar Sesión">📅</button>
+          <button class="btn-ghost" onclick="abrirWhatsAppCliente('${u.telefono}')" title="Enviar WhatsApp" style="color:#25D366; display:flex; align-items:center; justify-content:center;">
+            <svg viewBox="0 0 24 24" fill="currentColor" style="width: 14px; height: 14px;"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.5-5.739-1.453L0 24zm6.59-4.846c1.6.95 2.568 1.487 4.595 1.488 5.489 0 9.952-4.467 9.955-9.961.002-2.661-1.033-5.164-2.915-7.049C16.345 1.748 13.847.712 11.2.713c-5.492 0-9.957 4.468-9.96 9.961-.001 2.072.548 3.09 1.524 4.77l-.99 3.612 3.883-.989zM17.15 14.88c-.285-.143-1.687-.832-1.947-.927-.26-.096-.45-.143-.64.143-.19.285-.736.927-.9.1.118-.175-.157-.285-.327-.585-.17-.3-.024-.556.048-.7.072-.143.19-.285.285-.429.096-.143.12-.24.18-.383.06-.143.03-.285-.015-.429-.045-.143-.45-1.085-.615-1.485-.164-.393-.347-.323-.48-.328l-.408-.005c-.143 0-.38.053-.578.271-.198.219-.759.742-.759 1.808 0 1.066.775 2.094.883 2.238.109.143 1.524 2.327 3.69 3.262.515.222.917.355 1.23.455.518.165.989.141 1.362.085.415-.062 1.272-.52 1.45-.989.18-.469.18-.871.127-.954-.053-.083-.198-.129-.482-.272z"/></svg>
+          </button>
+          <button class="btn-ghost" onclick="abrirModal('${u.id}')" title="Editar Cliente">✏️</button>
+          <button class="btn-ghost btn-danger" onclick="eliminarUsuario('${u.id}')" title="Eliminar Cliente">🗑️</button>
         </div>
       </div>`;
     }).join('');
@@ -281,6 +310,7 @@
     document.getElementById('form-usuario').reset();
     document.getElementById('uid').value = '';
     document.getElementById('modal-title').textContent = 'Nuevo Cliente';
+    document.getElementById('u-estado').value = 'Activo';
     
     // Limpiar campos y previsualizaciones de fotos
     document.getElementById('u-fotoIniFrente').value = '';
@@ -315,6 +345,7 @@
       document.getElementById('u-grasa-pct').value = u.grasaPct || '';
       document.getElementById('u-objetivo').value = u.objetivo;
       document.getElementById('u-nivel').value = u.nivel;
+      document.getElementById('u-estado').value = u.estado || 'Activo';
       document.getElementById('u-obs').value = u.obs || '';
 
       // Cargar fotos existentes
@@ -343,6 +374,7 @@
       musloDer: parseFloat(document.getElementById('u-muslo-der').value) || null, pantorrilla: parseFloat(document.getElementById('u-pantorrilla').value) || null,
       grasaPct: parseFloat(document.getElementById('u-grasa-pct').value) || null,
       objetivo: document.getElementById('u-objetivo').value, nivel: document.getElementById('u-nivel').value,
+      estado: document.getElementById('u-estado').value || 'Activo',
       obs: document.getElementById('u-obs').value.trim(),
       fotoIniFrente: document.getElementById('u-fotoIniFrente').value || null,
       fotoIniPerfil: document.getElementById('u-fotoIniPerfil').value || null,
@@ -378,11 +410,18 @@
       <div class="perfil-hero">
         <div class="perfil-avatar ${avClass}">${ini}</div>
         <div style="flex:1">
-          <div class="perfil-name">${u.nombre}</div>
-          <div class="perfil-meta">${u.edad} años · ${u.genero} · ${u.nivel}</div>
+          <div class="perfil-name" style="display:flex; align-items:center; gap:8px;">
+            <span>${u.nombre}</span>
+            <span style="font-size:10px; background:${(u.estado || 'Activo') === 'Inactivo' ? 'rgba(255,69,96,0.15)' : (u.estado || 'Activo') === 'Pausado' ? 'rgba(255,193,7,0.15)' : 'rgba(0,229,160,0.15)'}; color:${(u.estado || 'Activo') === 'Inactivo' ? 'var(--red)' : (u.estado || 'Activo') === 'Pausado' ? 'var(--yellow)' : 'var(--green)'}; padding:2px 8px; border-radius:12px; font-weight:700;">${u.estado || 'Activo'}</span>
+          </div>
+          <div class="perfil-meta">
+            ${u.edad} años · ${u.genero} · ${u.nivel}
+            ${u.telefono ? ` · <a href="#" onclick="abrirWhatsAppCliente('${u.telefono}'); return false;" style="color:#25D366; text-decoration:none; font-weight:600; display:inline-flex; align-items:center; gap:3px; margin-left:4px;">💬 ${u.telefono}</a>` : ''}
+          </div>
           <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
             <span class="badge badge-pink">🎯 ${u.objetivo}</span>
             ${u.tarifa?`<span class="badge badge-purple">💰 $${parseInt(u.tarifa).toLocaleString('es-CO')}/mes</span>`:''}
+            <a href="progreso.html?usuario=${u.id}" class="badge badge-blue" style="text-decoration:none; display:inline-flex; align-items:center; gap:3px;">📈 Ver Progreso</a>
           </div>
         </div>
       </div>
@@ -747,6 +786,15 @@
         <div style="display: flex; flex-wrap: wrap;">${setsHtml}</div>
       </div>`;
     }).join('');
+  }
+
+  function abrirWhatsAppCliente(tel) {
+    if (!tel) {
+      showToast('Este cliente no tiene teléfono registrado', 'error');
+      return;
+    }
+    const clean = tel.replace(/[^\d+]/g, '');
+    window.open(`https://api.whatsapp.com/send?phone=${clean}`, '_blank');
   }
 
   renderUsuarios();
