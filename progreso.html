@@ -309,7 +309,7 @@
             ${monthGridLines}
             <polygon points="${areaPoints}" fill="url(#pag)"/>
             <polyline points="${pts}" fill="none" stroke="url(#pcg)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
-            ${dotElements}
+            ${dotElements}${u.pesoObjetivo ? `<line x1="${pad.l}" y1="${sy(u.pesoObjetivo)}" x2="${W - pad.r}" y2="${sy(u.pesoObjetivo)}" stroke="var(--accent)" stroke-dasharray="4,4" stroke-width="1"/>` : ''}
           </svg>
         </div>
       `;
@@ -396,11 +396,49 @@
       `;
     }
 
+    // Muscular % evolution chart
+    let muscularPoints = [];
+    if (u.muscularPct != null && u.muscularPct !== undefined) muscularPoints.push({ x: 0, y: parseFloat(u.muscularPct) });
+    for (let mm = 1; mm <= 12; mm++) {
+      if (mesMap[mm] && mesMap[mm].muscularPct != null) muscularPoints.push({ x: mm, y: parseFloat(mesMap[mm].muscularPct) });
+    }
+    let muscularSvgHtml = '';
+    if (muscularPoints.length >= 1) {
+      const MW = 600, MH = 200, Mpad = { t: 28, r: 22, b: 38, l: 50 };
+      const myVals = muscularPoints.map(p => p.y);
+      const mMinY = Math.min(...myVals) - 3;
+      const mMaxY = Math.max(...myVals) + 3;
+      const mRange = mMaxY - mMinY || 1;
+      const msx = idx => Mpad.l + (muscularPoints[idx].x / 12) * (MW - Mpad.l - Mpad.r);
+      const msy = val => MH - Mpad.b - ((val - mMinY) / mRange) * (MH - Mpad.t - Mpad.b);
+      const mPts = muscularPoints.map((p, i) => `${msx(i)},${msy(p.y)}`).join(' ');
+      const mArea = `${msx(0)},${MH - Mpad.b} ${mPts} ${msx(muscularPoints.length - 1)},${MH - Mpad.b}`;
+      const mGrid = [0,0.25,0.5,0.75,1].map(f => {
+        const y = Mpad.t + f*(MH-Mpad.t-Mpad.b); const v = (mMaxY - f*mRange).toFixed(1);
+        return `<line x1="${Mpad.l}" y1="${y}" x2="${MW-Mpad.r}" y2="${y}" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3,3"/><text x="${Mpad.l-5}" y="${y+4}" text-anchor="end" fill="#777" font-size="9" font-family="Sora">${v}%</text>`;
+      }).join('');
+      const mMGrid = Array.from({length:13},(_,i)=>{const x=Mpad.l+(i/12)*(MW-Mpad.l-Mpad.r);const lbl=i===0?'Ini':`M${i}`;return `<line x1="${x}" y1="${Mpad.t}" x2="${x}" y2="${MH-Mpad.b}" stroke="rgba(255,255,255,0.02)"/><text x="${x}" y="${MH-9}" text-anchor="middle" fill="#777" font-size="9" font-family="Sora">${lbl}</text>`;}).join('');
+      const mDots = muscularPoints.map((p,i)=>`<circle cx="${msx(i)}" cy="${msy(p.y)}" r="4.5" fill="url(#mu_g)" stroke="#1c1c1c" stroke-width="2"/><text x="${msx(i)}" y="${msy(p.y)-8}" text-anchor="middle" fill="#fff" font-size="9" font-family="Sora" font-weight="700">${p.y}</text>`).join('');
+      muscularSvgHtml = `<div class="card">
+        <div class="card-header"><h2>\u{1F4AA} % Masa Muscular</h2></div>
+        <svg viewBox="0 0 ${MW} ${MH}" style="width:100%;height:auto;padding:8px 0;">
+          <defs>
+            <linearGradient id="mu_g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF7043"/><stop offset="100%" stop-color="#FF3CAC"/></linearGradient>
+            <linearGradient id="mu_a" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF7043" stop-opacity=".15"/><stop offset="100%" stop-color="#FF7043" stop-opacity="0"/></linearGradient>
+          </defs>
+          ${mGrid}${mMGrid}<polygon points="${mArea}" fill="url(#mu_a)"/>
+          <polyline points="${mPts}" fill="none" stroke="url(#mu_g)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+          ${mDots}
+        </svg>
+      </div>`;
+    }
+
     html += `
       <div class="evolution-charts-grid">
         ${weightSvgHtml}
         ${measuresSvgHtml}
       </div>
+      ${muscularSvgHtml}
     `;
 
     // Silhouettes
@@ -607,30 +645,32 @@
       musloDer: parseFloat(document.getElementById('p-muslo-der').value) || null,
       pantorrilla: parseFloat(document.getElementById('p-pantorrilla').value) || null,
       grasaPct: parseFloat(document.getElementById('p-grasa-pct').value) || null,
+      muscularPct: parseFloat(document.getElementById('p-muscular-pct').value) || null,
       notas: document.getElementById('p-notas').value.trim()
     };
     DB.progresos.push(m);
     saveDB(); closeModal('modal-medicion'); renderProgreso(uid);
     showToast('✅ Medición guardada correctamente');
-  }  function eliminarMedicion(id) {
+  }
+  
+  function compartirProgresoWhatsapp() {
+    const uid = document.getElementById('sel-usuario').value;
+    if (!uid) { showToast('Selecciona un cliente para compartir', 'error'); return; }
+    const u = DB.usuarios.find(x => x.id === uid);
+    const progresos = DB.progresos.filter(p => p.usuarioId === uid).sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+    const latest = progresos[0] || {};
+    const pesoActual = latest.peso || u.peso || '';
+    const diff = u.peso ? (pesoActual - u.peso).toFixed(1) : '';
+    const grasa = latest.grasaPct !== undefined ? `${latest.grasaPct}%` : '—';
+    const mensaje = `*Progreso de ${u.nombre}*\nObjetivo: ${u.objetivo}\nPeso inicial: ${u.peso} kg\nPeso actual: ${pesoActual} kg (${diff > 0 ? '+'+diff : diff} kg)\n% Grasa corporal: ${grasa}\n`; 
+    const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, '_blank');
+  }
+
+  function eliminarMedicion(id) {
     if (!confirm('¿Eliminar esta medición?')) return;
     DB.progresos = DB.progresos.filter(p=>p.id!==id);
     saveDB(); renderProgreso(sel.value); showToast('🗑️ Medición eliminada', 'error');
-    // Compartir progreso por WhatsApp
-    function compartirProgresoWhatsapp() {
-      const uid = document.getElementById('sel-usuario').value;
-      if (!uid) { showToast('Selecciona un cliente para compartir', 'error'); return; }
-      const u = DB.usuarios.find(x => x.id === uid);
-      const progresos = DB.progresos.filter(p => p.usuarioId === uid).sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
-      const latest = progresos[0] || {};
-      const pesoActual = latest.peso || u.peso || '';
-      const diff = u.peso ? (pesoActual - u.peso).toFixed(1) : '';
-      const grasa = latest.grasaPct !== undefined ? `${latest.grasaPct}%` : '—';
-      const mensaje = `*Progreso de ${u.nombre}*\nObjetivo: ${u.objetivo}\nPeso inicial: ${u.peso} kg\nPeso actual: ${pesoActual} kg (${diff > 0 ? '+'+diff : diff} kg)\n% Grasa corporal: ${grasa}\n`; 
-      const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-      window.open(url, '_blank');
-    }
-    
   }
 
   // Métodos de ayuda para fotos
