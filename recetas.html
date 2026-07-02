@@ -98,12 +98,77 @@
   </div>
 </div>
 
+<!-- Floating Cart Button -->
+<div class="cart-floating-btn" id="cart-floating-trigger" onclick="abrirModalCarrito()">
+  <span class="cart-icon">🛒</span>
+  <span class="cart-badge" id="cart-count">0</span>
+</div>
+
+<!-- Modal Carrito -->
+<div class="modal-overlay" id="modal-carrito">
+  <div class="modal modal-lg" style="max-width: 600px;">
+    <div class="modal-header">
+      <h2>🛒 Recetas Seleccionadas</h2>
+      <button class="modal-close" onclick="closeModal('modal-carrito')">✕</button>
+    </div>
+    <div class="modal-body" style="padding: 20px 24px;">
+      <div id="cart-items-list" class="cart-items-list">
+        <!-- Populated dynamically -->
+      </div>
+      
+      <div class="cart-summary-section" id="cart-summary">
+        <!-- Populated dynamically -->
+      </div>
+      
+      <div style="margin-top: 20px;">
+        <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 8px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Enviar a Cliente:</label>
+        <div class="select-box" style="width: 100%; margin-bottom: 16px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; margin-left: 10px; z-index: 2; position: absolute; pointer-events: none;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          <select id="sel-cart-cliente" style="padding-left: 36px; width: 100%;">
+            <option value="">-- Compartir sin número (WhatsApp Web) --</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="modal-footer" style="padding: 10px 0 0 0; border-top: none; display: flex; gap: 10px;">
+        <button class="btn-secondary" onclick="closeModal('modal-carrito')" style="flex: 1; height: 42px;">Cerrar</button>
+        <button class="btn-primary" onclick="enviarPlanWhatsApp()" style="flex: 2; display: flex; align-items: center; justify-content: center; gap: 8px; height: 42px; background: #25D366; border-color: #25D366; color: white;">
+          <svg viewBox="0 0 24 24" fill="currentColor" style="width: 18px; height: 18px;"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.5-5.739-1.453L0 24zm6.59-4.846c1.6.95 2.568 1.487 4.595 1.488 5.489 0 9.952-4.467 9.955-9.961.002-2.661-1.033-5.164-2.915-7.049C16.345 1.748 13.847.712 11.2.713c-5.492 0-9.957 4.468-9.96 9.961-.001 2.072.548 3.09 1.524 4.77l-.99 3.612 3.883-.989zM17.15 14.88c-.285-.143-1.687-.832-1.947-.927-.26-.096-.45-.143-.64.143-.19.285-.736.927-.9.1.118-.175-.157-.285-.327-.585-.17-.3-.024-.556.048-.7.072-.143.19-.285.285-.429.096-.143.12-.24.18-.383.06-.143.03-.285-.015-.429-.045-.143-.45-1.085-.615-1.485-.164-.393-.347-.323-.48-.328l-.408-.005c-.143 0-.38.053-.578.271-.198.219-.759.742-.759 1.808 0 1.066.775 2.094.883 2.238.109.143 1.524 2.327 3.69 3.262.515.222.917.355 1.23.455.518.165.989.141 1.362.085.415-.062 1.272-.52 1.45-.989.18-.469.18-.871.127-.954-.053-.083-.198-.129-.482-.272z"/></svg>
+          Enviar por WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast-container"></div>
 <script src="shared.js"></script>
 <script>
   document.getElementById('sidebar-container').innerHTML = buildSidebar('recetas');
   document.getElementById('topbar-container').innerHTML = buildTopbar('Nutrición y Recetas');
   document.getElementById('toast-container').innerHTML = buildToast();
+
+  // Cart state initialization
+  let cart = [];
+  function loadCart() {
+    try {
+      const data = localStorage.getItem('romeo_cart');
+      if (data) cart = JSON.parse(data);
+    } catch(e) {}
+    updateCartBadge();
+  }
+  function saveCart() {
+    localStorage.setItem('romeo_cart', JSON.stringify(cart));
+    updateCartBadge();
+  }
+  function updateCartBadge() {
+    const el = document.getElementById('cart-count');
+    if (el) el.textContent = cart.length;
+    const trigger = document.getElementById('cart-floating-trigger');
+    if (trigger) {
+      trigger.style.display = cart.length > 0 ? 'flex' : 'none';
+    }
+  }
 
   const INGREDIENTES = {
     1:['150g arroz integral cocido','180g pechuga de pollo a la plancha','1 taza brócoli al vapor','½ aguacate','Sal, pimienta, limón al gusto'],
@@ -150,7 +215,9 @@
     42:['½ taza avena en hojuelas','1 cda cacao puro en polvo','250ml leche descremada o vegetal','Edulcorante al gusto']
   };
 
+  let activeCat = 'todas';
   function filtrarRecetas(cat, btn) {
+    activeCat = cat;
     document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
     if (btn) btn.classList.add('active');
     const lista = cat==='todas' ? RECETAS : RECETAS.filter(r=>r.categoria===cat);
@@ -158,7 +225,9 @@
   }
 
   function renderGrid(lista) {
-    document.getElementById('recetas-grid').innerHTML = lista.map(r=>`
+    document.getElementById('recetas-grid').innerHTML = lista.map(r=> {
+      const inCart = cart.includes(r.id);
+      return `
       <div class="receta-card" onclick="verReceta(${r.id})">
         <div class="receta-img" style="background:${getCatGradient(r.categoria)}">
           <span style="position:relative;z-index:1;font-size:56px">${r.emoji}</span>
@@ -173,17 +242,24 @@
             <div class="macro-chip macro-g"><div class="m-val">${r.grasas}</div><div class="m-lbl">Grasas</div></div>
             <div class="macro-chip macro-k"><div class="m-val">${r.kcal}</div><div class="m-lbl">kcal</div></div>
           </div>
-          <button type="button" class="btn-primary" onclick="event.stopPropagation(); registrarConsumo(${r.id})" style="width:100%; padding:6px; font-size:11px; display:flex; align-items:center; justify-content:center; gap:4px; height: 30px;">
-            🥤 Consumir
-          </button>
+          <div style="display:flex; gap:6px;">
+            <button type="button" class="btn-primary" onclick="event.stopPropagation(); registrarConsumo(${r.id})" style="flex:1; padding:6px; font-size:11px; display:flex; align-items:center; justify-content:center; gap:4px; height: 30px;">
+              🥤 Consumir
+            </button>
+            <button type="button" class="${inCart ? 'btn-primary' : 'btn-secondary'} btn-cart-toggle" onclick="event.stopPropagation(); toggleCart(${r.id})" style="padding:6px; width:36px; height: 30px; display:flex; align-items:center; justify-content:center; font-size:14px; background:${inCart ? 'var(--pink)' : 'rgba(255,255,255,0.05)'}; border:${inCart ? 'none' : '1px solid var(--border)'}; border-radius:var(--r-xs);" title="${inCart ? 'Quitar del carrito' : 'Agregar al carrito'}">
+              ${inCart ? '✅' : '🛒'}
+            </button>
+          </div>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 
   function verReceta(id) {
     const r = RECETAS.find(x=>x.id===id); if (!r) return;
     document.getElementById('modal-receta-title').textContent = r.emoji + ' ' + r.nombre;
     const ings = INGREDIENTES[id] || [];
+    const inCart = cart.includes(r.id);
     document.getElementById('modal-receta-content').innerHTML = `
       <div style="background:${getCatGradient(r.categoria)};border-radius:var(--r-sm);padding:20px;text-align:center;margin-bottom:20px">
         <div style="font-size:64px;margin-bottom:8px">${r.emoji}</div>
@@ -199,9 +275,14 @@
       <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:20px">
         ${ings.map(i=>`<li style="display:flex;align-items:center;gap:8px;font-size:13px;padding:8px 10px;background:var(--bg-surface);border-radius:var(--r-xs);border:1px solid var(--border)"><span style="color:var(--green);font-weight:700">✓</span> ${i}</li>`).join('')}
       </ul>
-      <button type="button" class="btn-primary" onclick="registrarConsumo(${r.id}); closeModal('modal-receta')" style="width:100%; padding:10px; display:flex; align-items:center; justify-content:center; gap:6px;">
-        🥤 Consumir este plato
-      </button>`;
+      <div style="display:flex; gap:10px;">
+        <button type="button" class="btn-primary" onclick="registrarConsumo(${r.id}); closeModal('modal-receta')" style="flex:1; padding:10px; display:flex; align-items:center; justify-content:center; gap:6px; height: 42px;">
+          🥤 Consumir plato
+        </button>
+        <button type="button" class="${inCart ? 'btn-primary' : 'btn-secondary'}" onclick="toggleCart(${r.id}); verReceta(${r.id}); event.stopPropagation();" style="width: 50px; display:flex; align-items:center; justify-content:center; font-size:18px; background:${inCart ? 'var(--pink)' : 'rgba(255,255,255,0.05)'}; border:${inCart ? 'none' : '1px solid var(--border)'}; border-radius:var(--r-sm); height: 42px;" title="${inCart ? 'Quitar del carrito' : 'Agregar al carrito'}">
+          ${inCart ? '✅' : '🛒'}
+        </button>
+      </div>`;
     openModal('modal-receta');
   }
 
@@ -212,6 +293,163 @@
     showToast(`🥤 Registrado: ${r.nombre} (+${r.kcal} kcal)`);
   }
 
+  function toggleCart(id) {
+    const idx = cart.indexOf(id);
+    if (idx === -1) {
+      cart.push(id);
+      showToast('🛒 Receta agregada al carrito');
+    } else {
+      cart.splice(idx, 1);
+      showToast('🗑️ Receta eliminada del carrito', 'error');
+    }
+    saveCart();
+    // Refresh active grid
+    const lista = activeCat==='todas' ? RECETAS : RECETAS.filter(r=>r.categoria===activeCat);
+    renderGrid(lista);
+    
+    // If the cart modal is active, refresh it
+    const modalCart = document.getElementById('modal-carrito');
+    if (modalCart && modalCart.classList.contains('active')) {
+      renderCarrito();
+    }
+  }
+
+  function abrirModalCarrito() {
+    renderCarrito();
+    
+    // Populate clients select
+    const sel = document.getElementById('sel-cart-cliente');
+    if (sel) {
+      sel.innerHTML = '<option value="">-- Compartir sin número (WhatsApp Web) --</option>';
+      if (window.DB && window.DB.usuarios) {
+        window.DB.usuarios.forEach(u => {
+          const opt = document.createElement('option');
+          opt.value = u.id;
+          opt.textContent = `${u.nombre} (${u.telefono || 'Sin teléfono'})`;
+          sel.appendChild(opt);
+        });
+      }
+    }
+    
+    openModal('modal-carrito');
+  }
+
+  function renderCarrito() {
+    const listContainer = document.getElementById('cart-items-list');
+    const summaryContainer = document.getElementById('cart-summary');
+    
+    if (cart.length === 0) {
+      listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-secondary); font-size:13px;">No has seleccionado recetas. Agrega algunas usando el icono 🛒.</div>`;
+      summaryContainer.style.display = 'none';
+      return;
+    }
+    
+    summaryContainer.style.display = 'block';
+    
+    let totalKcal = 0;
+    let totalP = 0;
+    let totalC = 0;
+    let totalG = 0;
+    
+    listContainer.innerHTML = cart.map(id => {
+      const r = RECETAS.find(x => x.id === id);
+      if (!r) return '';
+      
+      const kcalVal = parseInt(r.kcal) || 0;
+      const pVal = parseInt(r.proteina) || 0;
+      const cVal = parseInt(r.carbs) || 0;
+      const gVal = parseInt(r.grasas) || 0;
+      
+      totalKcal += kcalVal;
+      totalP += pVal;
+      totalC += cVal;
+      totalG += gVal;
+      
+      return `
+        <div class="cart-item">
+          <div class="cart-item-info">
+            <span class="cart-item-emoji">${r.emoji}</span>
+            <div>
+              <div class="cart-item-name">${r.nombre}</div>
+              <div class="cart-item-macros">${r.proteina} Proteína · ${r.carbs} Carbos · ${r.grasas} Grasas · ${r.kcal} kcal</div>
+            </div>
+          </div>
+          <button class="btn-remove-cart" onclick="toggleCart(${r.id})" title="Eliminar">🗑️</button>
+        </div>
+      `;
+    }).join('');
+    
+    summaryContainer.innerHTML = `
+      <div class="cart-summary-title">Resumen Nutricional Acumulado</div>
+      <div class="cart-summary-grid">
+        <div class="cart-summary-item" style="border-color:var(--purple);"><div class="cart-summary-val" style="color:var(--purple);">${totalKcal}</div><div class="cart-summary-lbl">kcal</div></div>
+        <div class="cart-summary-item" style="border-color:var(--pink);"><div class="cart-summary-val" style="color:var(--pink);">${totalP}g</div><div class="cart-summary-lbl">Proteína</div></div>
+        <div class="cart-summary-item" style="border-color:var(--orange);"><div class="cart-summary-val" style="color:var(--orange);">${totalC}g</div><div class="cart-summary-lbl">Carbos</div></div>
+        <div class="cart-summary-item" style="border-color:var(--green);"><div class="cart-summary-val" style="color:var(--green);">${totalG}g</div><div class="cart-summary-lbl">Grasas</div></div>
+      </div>
+    `;
+  }
+
+  function enviarPlanWhatsApp() {
+    if (cart.length === 0) {
+      showToast('Agrega al menos una receta al carrito', 'error');
+      return;
+    }
+    
+    const clientId = document.getElementById('sel-cart-cliente').value;
+    const client = clientId && window.DB ? window.DB.usuarios.find(x => x.id === clientId) : null;
+    
+    let totalKcal = 0;
+    let totalP = 0;
+    let totalC = 0;
+    let totalG = 0;
+    
+    let recipesText = '';
+    cart.forEach((id, i) => {
+      const r = RECETAS.find(x => x.id === id);
+      if (!r) return;
+      
+      totalKcal += parseInt(r.kcal) || 0;
+      totalP += parseInt(r.proteina) || 0;
+      totalC += parseInt(r.carbs) || 0;
+      totalG += parseInt(r.grasas) || 0;
+      
+      recipesText += `\n*${i + 1}. ${r.nombre}* ${r.emoji}\n`;
+      recipesText += `_${r.desc}_\n`;
+      recipesText += `- Proteínas: ${r.proteina} | Carbos: ${r.carbs} | Grasas: ${r.grasas}\n`;
+      recipesText += `- Calorías: ${r.kcal} kcal\n`;
+    });
+    
+    let msg = '';
+    if (client) {
+      msg += `Hola, *${client.nombre}*. `;
+    } else {
+      msg += `¡Hola! `;
+    }
+    msg += `Aquí tienes tu plan de recetas seleccionadas por tu entrenador *Romeo PT*: 💪🔥\n`;
+    msg += recipesText;
+    msg += `\n*RESUMEN DIARIO ACUMULADO:*`;
+    msg += `\n🔥 *Calorías Totales:* ${totalKcal} kcal`;
+    msg += `\n🍗 *Proteínas:* ${totalP}g`;
+    msg += `\n🥣 *Carbohidratos:* ${totalC}g`;
+    msg += `\n🥑 *Grasas:* ${totalG}g\n`;
+    msg += `\n¡A seguir con toda la disciplina! 🏋️‍♂️💯`;
+    
+    let phone = '';
+    if (client && client.telefono) {
+      phone = client.telefono.replace(/[^\d+]/g, '');
+    }
+    
+    const baseUrl = 'https://api.whatsapp.com/send';
+    const finalUrl = phone 
+      ? `${baseUrl}?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(msg)}`
+      : `${baseUrl}?text=${encodeURIComponent(msg)}`;
+      
+    window.open(finalUrl, '_blank');
+  }
+
+  // Load cart and render
+  loadCart();
   renderGrid(RECETAS);
 </script>
 </body>

@@ -115,7 +115,7 @@
       <div style="padding:0 24px 8px">
         <div class="form-section-title" style="margin-top:4px">Ejercicios de la Rutina</div>
         <!-- Column headers -->
-        <div style="display:grid;grid-template-columns:26px 2fr 1.2fr 1.2fr 1fr 1fr 1fr 1.5fr 28px;gap:8px;padding:0 0 6px;font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid var(--border);margin-bottom:4px">
+        <div class="block-header-grid">
           <span></span><span>Ejercicio</span><span>Grupo Musc.</span><span>Imagen</span><span>Series × Reps</span><span>Peso (kg)</span><span>Descanso (seg)</span><span>Notas</span><span></span>
         </div>
         <div id="blocks-container"></div>
@@ -494,13 +494,13 @@
     const imgDisplay = data?.imagen ? 'block' : 'none';
 
     div.innerHTML = `
-      <div class="block-grid" style="display:grid; grid-template-columns:26px 2fr 1.2fr 1.2fr 1fr 1fr 1fr 1.5fr 28px; gap:8px; align-items:center; margin-bottom: 8px;">
+      <div class="block-grid">
         <div class="block-num">${blockCount}</div>
         <input type="text" placeholder="Ej. Press de banca" class="blk-nombre" value="${data?.nombre||''}" oninput="buscarHistorialDeEjercicio(this)" onfocus="buscarHistorialDeEjercicio(this)" />
         <select class="blk-grupo">
           ${Object.keys(BIBLIOTECA).map(g=>`<option ${data?.grupo===g?'selected':''}>${g}</option>`).join('')}
         </select>
-        <div style="display:flex; align-items:center; gap:4px; overflow:hidden;">
+        <div class="blk-img-wrap" style="display:flex; align-items:center; gap:4px; overflow:hidden;">
           <select class="blk-imagen" onchange="updateRowImagePreview(this)" style="width:100%; min-width: 60px;">
             <option value="">Ninguna</option>
             <option value="1.jpeg" ${data?.imagen==='1.jpeg'?'selected':''}>Img 1</option>

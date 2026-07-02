@@ -121,7 +121,7 @@ function toggleSidebar() {
 document.addEventListener('click', function(e) {
   const sb = document.getElementById('sidebar');
   const btn = document.querySelector('.menu-toggle');
-  if (sb && window.innerWidth <= 768 && !sb.contains(e.target) && btn && !btn.contains(e.target)) {
+  if (sb && window.innerWidth <= 1024 && !sb.contains(e.target) && btn && !btn.contains(e.target)) {
     sb.classList.remove('open');
   }
 });

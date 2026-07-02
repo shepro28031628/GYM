@@ -232,7 +232,7 @@ function verPerfil(id) {
       </div>
       <div style="margin-bottom:16px">
         <div class="form-section-title" style="padding-top:0">Medidas Corporales Iniciales</div>
-        <div class="medidas-grid" style="grid-template-columns:repeat(5,1fr)">
+        <div class="medidas-grid grid-5">
           ${[
             ['Pecho', u.pecho],['Cintura', u.cintura],['Cadera', u.cadera],
             ['Brazo Izq', u.brazoIzq],['Brazo Der', u.brazoDer],
