@@ -119,7 +119,16 @@
   const sel = document.getElementById('sel-usuario');
   DB.usuarios.forEach(u => { const o = document.createElement('option'); o.value = u.id; o.textContent = u.nombre; sel.appendChild(o); });
   const param = new URLSearchParams(window.location.search).get('usuario');
-  if (param) { sel.value = param; onUsuarioChange(); }
+  if (param) {
+    sel.value = param;
+    onUsuarioChange();
+  } else {
+    const activeUser = getActiveUser();
+    if (activeUser) {
+      sel.value = activeUser.id;
+      onUsuarioChange();
+    }
+  }
 
   function onUsuarioChange() {
     const uid = sel.value;

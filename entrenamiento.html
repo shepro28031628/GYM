@@ -188,9 +188,18 @@
   const selU = document.getElementById('sel-usuario');
   DB.usuarios.forEach(u => { const o = document.createElement('option'); o.value = u.id; o.textContent = u.nombre; selU.appendChild(o); });
 
-  // Auto from URL
+  // Auto from URL or Active User
   const params = new URLSearchParams(window.location.search);
-  if (params.get('usuario')) { selU.value = params.get('usuario'); onUsuarioChange(); }
+  if (params.get('usuario')) {
+    selU.value = params.get('usuario');
+    onUsuarioChange();
+  } else {
+    const activeUser = getActiveUser();
+    if (activeUser) {
+      selU.value = activeUser.id;
+      onUsuarioChange();
+    }
+  }
   if (params.get('rutina')) {
     const selR = document.getElementById('sel-rutina');
     setTimeout(() => { selR.value = params.get('rutina'); previewRutina(); }, 50);

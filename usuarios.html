@@ -256,11 +256,17 @@
       const warningColor = completitud < 50 ? 'var(--red)' : 'var(--pink)';
       const warningLabel = completitud < 50 ? `<span style="font-size:10px;background:rgba(255,69,96,0.15);color:var(--red);padding:2px 6px;border-radius:4px;font-weight:700;display:inline-flex;align-items:center;gap:3px;vertical-align:middle;margin-left:4px;">⚠️ Baja</span>` : '';
 
+      const activeUser = getActiveUser();
+      const isActive = activeUser && activeUser.id === u.id;
+
       return `<div class="user-card">
         <div class="user-card-top">
           <div class="user-avatar-lg ${avClass}">${ini}</div>
           <div style="flex:1">
-            <div class="user-name">${u.nombre}</div>
+            <div class="user-name" style="display:flex; align-items:center; gap:6px;">
+              <span>${u.nombre}</span>
+              <button class="btn-star-active" onclick="event.stopPropagation(); handleGlobalClientChange('${u.id}')" style="background:none; border:none; cursor:pointer; font-size:14px; padding:2px; color:${isActive ? '#FFD600' : 'rgba(255,255,255,0.2)'}; line-height:1;" title="${isActive ? 'Cliente Activo' : 'Marcar como Activo'}">★</button>
+            </div>
             <div class="user-meta">${u.edad} años · ${u.genero}</div>
             <div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap">
               <span class="badge ${badgeCls}">${u.nivel}</span>
@@ -803,6 +809,7 @@
   }
 
   renderUsuarios();
+  window.addEventListener('gym_active_user_changed', renderUsuarios);
 
   // Auto-open perfil if ?perfil=id
   const perfilId = new URLSearchParams(window.location.search).get('perfil');

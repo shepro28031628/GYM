@@ -609,7 +609,16 @@
   // ── Macros Widget ──
   function actualizarWidgetMacros() {
     var u = getActiveUser();
-    if (!u) return;
+    if (!u) {
+      document.getElementById('macros-kcal-badge').textContent = '0 / 2000 kcal';
+      document.getElementById('macro-prot-txt').textContent = '0g / 150g';
+      document.getElementById('macro-carbs-txt').textContent = '0g / 200g';
+      document.getElementById('macro-grasas-txt').textContent = '0g / 70g';
+      document.getElementById('macro-prot-bar').style.width = '0%';
+      document.getElementById('macro-carbs-bar').style.width = '0%';
+      document.getElementById('macro-grasas-bar').style.width = '0%';
+      return;
+    }
     var kcalGoal = u.macroKcal || 2000;
     var protGoal = u.macroProt || 150;
     var carbsGoal = u.macroCarbs || 200;
@@ -625,6 +634,7 @@
   }
   actualizarWidgetMacros();
   window.addEventListener('gym_diario_actualizado', actualizarWidgetMacros);
+  window.addEventListener('gym_active_user_changed', actualizarWidgetMacros);
 </script>
 </body>
 </html>

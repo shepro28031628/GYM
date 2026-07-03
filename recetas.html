@@ -16,9 +16,15 @@
   <div id="topbar-container"></div>
   <div class="page-body">
 
-    <div class="section-header">
-      <h1>Nutrición y Recetas</h1>
-      <p class="section-subtitle">Planes alimenticios para maximizar resultados de tus clientes</p>
+    <div class="section-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+      <div>
+        <h1>Nutrición y Recetas</h1>
+        <p class="section-subtitle">Planes alimenticios para maximizar resultados de tus clientes</p>
+      </div>
+      <button class="btn-primary" id="btn-nueva-receta" onclick="abrirModalNuevaReceta()" style="white-space:nowrap; flex-shrink:0;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nueva Receta
+      </button>
     </div>
 
     <!-- Macro Guide -->
@@ -42,13 +48,13 @@
     </div>
 
     <!-- Filters -->
-    <div class="recetas-filter">
-      <button class="filter-btn active" onclick="filtrarRecetas('todas', this)">🍽️ Todas</button>
-      <button class="filter-btn" onclick="filtrarRecetas('proteina', this)">💪 Alta Proteína</button>
-      <button class="filter-btn" onclick="filtrarRecetas('carbohidratos', this)">⚡ Pre-Entreno</button>
-      <button class="filter-btn" onclick="filtrarRecetas('recuperacion', this)">🔄 Recuperación</button>
-      <button class="filter-btn" onclick="filtrarRecetas('snack', this)">🍎 Snacks</button>
-      <button class="filter-btn" onclick="filtrarRecetas('batidos', this)">🥤 Batidos</button>
+    <div class="recetas-filter" id="recetas-filter-bar">
+      <button class="filter-btn active" data-cat="todas" onclick="filtrarRecetas('todas', this)">🍽️ Todas</button>
+      <button class="filter-btn" data-cat="proteina" onclick="filtrarRecetas('proteina', this)">💪 Alta Proteína</button>
+      <button class="filter-btn" data-cat="carbohidratos" onclick="filtrarRecetas('carbohidratos', this)">⚡ Pre-Entreno</button>
+      <button class="filter-btn" data-cat="recuperacion" onclick="filtrarRecetas('recuperacion', this)">🔄 Recuperación</button>
+      <button class="filter-btn" data-cat="snack" onclick="filtrarRecetas('snack', this)">🍎 Snacks</button>
+      <button class="filter-btn" data-cat="batidos" onclick="filtrarRecetas('batidos', this)">🥤 Batidos</button>
     </div>
 
     <div class="recetas-grid" id="recetas-grid"></div>
@@ -141,12 +147,294 @@
   </div>
 </div>
 
+<!-- Modal Nueva Receta -->
+<div class="modal-overlay" id="modal-nueva-receta">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <h2>✨ Nueva Receta</h2>
+      <button class="modal-close" onclick="closeModal('modal-nueva-receta')">✕</button>
+    </div>
+    <div style="padding:20px 24px; overflow-y:auto; max-height:78vh;">
+
+      <!-- Nombre -->
+      <div class="form-group" style="margin-bottom:14px;">
+        <label class="form-label">Nombre de la Receta *</label>
+        <input type="text" id="nr-nombre" class="form-input" placeholder="Ej: Pollo a la plancha con quinoa" maxlength="60" />
+      </div>
+
+      <!-- Emoji + Descripción -->
+      <div style="display:grid; grid-template-columns:90px 1fr; gap:10px; margin-bottom:14px;">
+        <div class="form-group">
+          <label class="form-label">Emoji</label>
+          <input type="text" id="nr-emoji" class="form-input" placeholder="🍽️" maxlength="4" style="text-align:center; font-size:22px; padding:8px;"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descripción corta *</label>
+          <input type="text" id="nr-desc" class="form-input" placeholder="Descripción breve de la receta" maxlength="120" />
+        </div>
+      </div>
+
+      <!-- Categoría -->
+      <div class="form-group" style="margin-bottom:14px;">
+        <label class="form-label">Categoría *</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <div class="select-box" style="flex:1; min-width:0;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; flex-shrink:0;"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+            <select id="nr-categoria" style="width:100%;" onchange="handleCatChange()">
+              <option value="proteina">💪 Alta Proteína</option>
+              <option value="carbohidratos">⚡ Pre-Entreno</option>
+              <option value="recuperacion">🔄 Recuperación</option>
+              <option value="snack">🍎 Snacks</option>
+              <option value="batidos">🥤 Batidos</option>
+              <option value="__nueva__">➕ Crear nueva categoría…</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nueva Categoría (hidden by default) -->
+      <div id="nueva-cat-panel" style="display:none; margin-bottom:14px; background:rgba(255,60,172,0.06); border:1px solid rgba(255,60,172,0.2); border-radius:var(--r-sm); padding:14px;">
+        <label class="form-label" style="margin-bottom:6px;">Nombre de la nueva categoría *</label>
+        <div style="display:grid; grid-template-columns:60px 1fr; gap:8px;">
+          <input type="text" id="nr-cat-emoji" class="form-input" placeholder="🥦" maxlength="4" style="text-align:center; font-size:18px;"/>
+          <input type="text" id="nr-cat-nombre" class="form-input" placeholder="Ej: Vegano, Keto, Desayunos…" maxlength="30" />
+        </div>
+        <p style="font-size:11px; color:var(--text-muted); margin-top:8px;">💡 Esta categoría se guardará y podrás filtrar recetas por ella.</p>
+      </div>
+
+      <!-- Tag visible -->
+      <div class="form-group" style="margin-bottom:14px;">
+        <label class="form-label">Etiqueta visible en la tarjeta</label>
+        <input type="text" id="nr-tag" class="form-input" placeholder="Ej: Alta Proteína, Keto, etc." maxlength="25" />
+      </div>
+
+      <!-- Macros -->
+      <label class="form-label" style="margin-bottom:8px;">Macronutrientes</label>
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px;">
+        <div class="form-group">
+          <label class="form-label" style="font-size:10px;">Proteína (g)</label>
+          <input type="number" id="nr-proteina" class="form-input" placeholder="30" min="0" max="999" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="font-size:10px;">Carbos (g)</label>
+          <input type="number" id="nr-carbs" class="form-input" placeholder="45" min="0" max="999" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="font-size:10px;">Grasas (g)</label>
+          <input type="number" id="nr-grasas" class="form-input" placeholder="12" min="0" max="999" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="font-size:10px;">Calorías</label>
+          <input type="number" id="nr-kcal" class="form-input" placeholder="380" min="0" max="9999" />
+        </div>
+      </div>
+
+      <!-- Ingredientes -->
+      <div class="form-group" style="margin-bottom:6px;">
+        <label class="form-label">Ingredientes (uno por línea)</label>
+        <textarea id="nr-ingredientes" class="form-input" rows="4" placeholder="150g pechuga de pollo&#10;1 taza quinoa cocida&#10;Aceite de oliva, sal y pimienta" style="resize:vertical; font-size:13px; line-height:1.5;"></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex; gap:10px; margin-top:18px;">
+        <button class="btn-secondary" onclick="closeModal('modal-nueva-receta')" style="flex:1;">Cancelar</button>
+        <button class="btn-primary" onclick="guardarNuevaReceta()" style="flex:2; justify-content:center;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Guardar Receta
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast-container"></div>
 <script src="shared.js"></script>
 <script>
   document.getElementById('sidebar-container').innerHTML = buildSidebar('recetas');
   document.getElementById('topbar-container').innerHTML = buildTopbar('Nutrición y Recetas');
   document.getElementById('toast-container').innerHTML = buildToast();
+
+  // ===================== CUSTOM RECIPES (localStorage) =====================
+  let RECETAS_CUSTOM = [];
+  let CATS_CUSTOM = []; // [{id, nombre, emoji}]
+
+  // Merged array (built-in + custom)
+  let ALL_RECETAS = [];
+
+  function loadCustomRecetas() {
+    try {
+      const d = localStorage.getItem('romeo_recetas_custom');
+      if (d) RECETAS_CUSTOM = JSON.parse(d);
+    } catch(e) { RECETAS_CUSTOM = []; }
+    try {
+      const c = localStorage.getItem('romeo_cats_custom');
+      if (c) CATS_CUSTOM = JSON.parse(c);
+    } catch(e) { CATS_CUSTOM = []; }
+    // Merge
+    ALL_RECETAS = [...RECETAS, ...RECETAS_CUSTOM];
+    // Add custom category filter buttons
+    rebuildFilterBar();
+    // Populate category select in modal
+    populateCatSelect();
+  }
+
+  function saveCustomRecetas() {
+    localStorage.setItem('romeo_recetas_custom', JSON.stringify(RECETAS_CUSTOM));
+    localStorage.setItem('romeo_cats_custom', JSON.stringify(CATS_CUSTOM));
+    ALL_RECETAS = [...RECETAS, ...RECETAS_CUSTOM];
+  }
+
+  // ---- Filter bar rebuild ----
+  const BUILTIN_CATS = [
+    { id:'todas',        label:'🍽️ Todas' },
+    { id:'proteina',     label:'💪 Alta Proteína' },
+    { id:'carbohidratos',label:'⚡ Pre-Entreno' },
+    { id:'recuperacion', label:'🔄 Recuperación' },
+    { id:'snack',        label:'🍎 Snacks' },
+    { id:'batidos',      label:'🥤 Batidos' },
+  ];
+
+  function rebuildFilterBar() {
+    const bar = document.getElementById('recetas-filter-bar');
+    if (!bar) return;
+    // Keep built-in buttons
+    const builtinIds = BUILTIN_CATS.map(c => c.id);
+    // Remove old custom buttons
+    bar.querySelectorAll('[data-custom]').forEach(b => b.remove());
+    // Add custom category buttons if not already covered
+    CATS_CUSTOM.forEach(cat => {
+      if (!builtinIds.includes(cat.id)) {
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn';
+        btn.dataset.cat = cat.id;
+        btn.dataset.custom = '1';
+        btn.textContent = `${cat.emoji} ${cat.nombre}`;
+        btn.onclick = function() { filtrarRecetas(cat.id, btn); };
+        bar.appendChild(btn);
+      }
+    });
+    // Restore active state
+    bar.querySelectorAll('.filter-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.cat === activeCat);
+    });
+  }
+
+  // ---- Category select in modal ----
+  function populateCatSelect() {
+    const sel = document.getElementById('nr-categoria');
+    if (!sel) return;
+    // Remove old custom options (before the "nueva" option)
+    sel.querySelectorAll('[data-custom]').forEach(o => o.remove());
+    // Insert custom cats before last option (crear nueva)
+    const lastOpt = sel.querySelector('option[value="__nueva__"]');
+    CATS_CUSTOM.forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat.id;
+      opt.textContent = `${cat.emoji} ${cat.nombre}`;
+      opt.dataset.custom = '1';
+      sel.insertBefore(opt, lastOpt);
+    });
+  }
+
+  // ---- Modal nueva receta ----
+  function abrirModalNuevaReceta() {
+    // Reset fields
+    ['nr-nombre','nr-emoji','nr-desc','nr-tag','nr-proteina','nr-carbs','nr-grasas','nr-kcal','nr-ingredientes','nr-cat-emoji','nr-cat-nombre'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    document.getElementById('nr-emoji').value = '🍽️';
+    document.getElementById('nr-categoria').value = 'proteina';
+    document.getElementById('nueva-cat-panel').style.display = 'none';
+    populateCatSelect();
+    openModal('modal-nueva-receta');
+  }
+
+  function handleCatChange() {
+    const sel = document.getElementById('nr-categoria');
+    const panel = document.getElementById('nueva-cat-panel');
+    panel.style.display = sel.value === '__nueva__' ? 'block' : 'none';
+  }
+
+  function guardarNuevaReceta() {
+    const nombre = document.getElementById('nr-nombre').value.trim();
+    const emoji  = document.getElementById('nr-emoji').value.trim() || '🍽️';
+    const desc   = document.getElementById('nr-desc').value.trim();
+    const tag    = document.getElementById('nr-tag').value.trim();
+    const prot   = document.getElementById('nr-proteina').value.trim();
+    const carbs  = document.getElementById('nr-carbs').value.trim();
+    const grasas = document.getElementById('nr-grasas').value.trim();
+    const kcal   = document.getElementById('nr-kcal').value.trim();
+    const ings   = document.getElementById('nr-ingredientes').value.trim();
+
+    if (!nombre || !desc) {
+      showToast('El nombre y la descripción son obligatorios', 'error');
+      return;
+    }
+
+    let catId = document.getElementById('nr-categoria').value;
+    let catTag = tag;
+
+    // Handle new custom category
+    if (catId === '__nueva__') {
+      const catEmoji = document.getElementById('nr-cat-emoji').value.trim() || '📂';
+      const catNombre = document.getElementById('nr-cat-nombre').value.trim();
+      if (!catNombre) {
+        showToast('Escribe el nombre de la nueva categoría', 'error');
+        return;
+      }
+      catId = catNombre.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      if (!catId) catId = 'cat_' + Date.now();
+      // Check not duplicate
+      if (!CATS_CUSTOM.find(c => c.id === catId)) {
+        CATS_CUSTOM.push({ id: catId, nombre: catNombre, emoji: catEmoji });
+      }
+      if (!catTag) catTag = `${catEmoji} ${catNombre}`;
+    }
+
+    // Determine tag from built-in cat if not set
+    if (!catTag) {
+      const builtinLabels = { proteina:'Alta Proteína', carbohidratos:'Pre-Entreno', recuperacion:'Recuperación', snack:'Snack', batidos:'Batidos' };
+      catTag = builtinLabels[catId] || catId;
+    }
+
+    // Generate unique ID (above built-in range)
+    const maxId = ALL_RECETAS.reduce((m, r) => Math.max(m, r.id), 0);
+    const newId = maxId + 1;
+
+    const receta = {
+      id: newId,
+      nombre,
+      categoria: catId,
+      emoji,
+      desc,
+      proteina: prot ? `${prot}g` : '—',
+      carbs:    carbs ? `${carbs}g` : '—',
+      grasas:   grasas ? `${grasas}g` : '—',
+      kcal:     kcal || '—',
+      tag:      catTag,
+      custom:   true
+    };
+
+    // Save ingredients
+    if (ings) {
+      INGREDIENTES[newId] = ings.split('\n').map(l => l.trim()).filter(Boolean);
+    }
+
+    RECETAS_CUSTOM.push(receta);
+    saveCustomRecetas();
+    rebuildFilterBar();
+
+    // Switch to the new category filter
+    activeCat = catId;
+    const lista = ALL_RECETAS.filter(r => r.categoria === catId);
+    renderGrid(lista);
+    // Update filter active state
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === catId));
+
+    closeModal('modal-nueva-receta');
+    showToast(`✅ Receta "${nombre}" guardada con éxito`);
+  }
 
   // Cart state initialization
   let cart = [];
@@ -220,7 +508,7 @@
     activeCat = cat;
     document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
     if (btn) btn.classList.add('active');
-    const lista = cat==='todas' ? RECETAS : RECETAS.filter(r=>r.categoria===cat);
+    const lista = cat==='todas' ? ALL_RECETAS : ALL_RECETAS.filter(r=>r.categoria===cat);
     renderGrid(lista);
   }
 
@@ -256,7 +544,7 @@
   }
 
   function verReceta(id) {
-    const r = RECETAS.find(x=>x.id===id); if (!r) return;
+    const r = ALL_RECETAS.find(x=>x.id===id); if (!r) return;
     document.getElementById('modal-receta-title').textContent = r.emoji + ' ' + r.nombre;
     const ings = INGREDIENTES[id] || [];
     const inCart = cart.includes(r.id);
@@ -287,7 +575,7 @@
   }
 
   function registrarConsumo(id) {
-    const r = RECETAS.find(x => x.id === id);
+    const r = ALL_RECETAS.find(x => x.id === id);
     if (!r) return;
     registrarConsumoReceta(r.kcal, r.proteina, r.carbs, r.grasas);
     showToast(`🥤 Registrado: ${r.nombre} (+${r.kcal} kcal)`);
@@ -304,7 +592,7 @@
     }
     saveCart();
     // Refresh active grid
-    const lista = activeCat==='todas' ? RECETAS : RECETAS.filter(r=>r.categoria===activeCat);
+    const lista = activeCat==='todas' ? ALL_RECETAS : ALL_RECETAS.filter(r=>r.categoria===activeCat);
     renderGrid(lista);
     
     // If the cart modal is active, refresh it
@@ -329,6 +617,10 @@
           sel.appendChild(opt);
         });
       }
+      const activeUser = getActiveUser();
+      if (activeUser) {
+        sel.value = activeUser.id;
+      }
     }
     
     openModal('modal-carrito');
@@ -352,7 +644,7 @@
     let totalG = 0;
     
     listContainer.innerHTML = cart.map(id => {
-      const r = RECETAS.find(x => x.id === id);
+      const r = ALL_RECETAS.find(x => x.id === id);
       if (!r) return '';
       
       const kcalVal = parseInt(r.kcal) || 0;
@@ -406,7 +698,7 @@
     
     let recipesText = '';
     cart.forEach((id, i) => {
-      const r = RECETAS.find(x => x.id === id);
+      const r = ALL_RECETAS.find(x => x.id === id);
       if (!r) return;
       
       totalKcal += parseInt(r.kcal) || 0;
@@ -450,7 +742,8 @@
 
   // Load cart and render
   loadCart();
-  renderGrid(RECETAS);
+  loadCustomRecetas();
+  renderGrid(ALL_RECETAS);
 </script>
 </body>
 </html>

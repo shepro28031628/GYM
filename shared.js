@@ -25,6 +25,27 @@ function loadDB() {
 
 function saveDB() { localStorage.setItem('romeo_db', JSON.stringify(DB)); }
 
+function getDB() { return DB; }
+
+function getActiveUser() {
+  try {
+    const s = localStorage.getItem('gym_active_user');
+    if (s) {
+      const u = JSON.parse(s);
+      const dbUser = DB.usuarios.find(x => x.id === u.id);
+      if (dbUser) return dbUser;
+    }
+  } catch(e) {}
+  try {
+    const uid = localStorage.getItem('romeo_current_active_user_id');
+    if (uid) {
+      const dbUser = DB.usuarios.find(x => x.id === uid);
+      if (dbUser) return dbUser;
+    }
+  } catch(e) {}
+  return DB.usuarios[0] || null;
+}
+
 // ===================== UTILITIES =====================
 let _id = Date.now();
 function genId() { return (++_id).toString(36); }
@@ -183,14 +204,56 @@ function buildSidebar(activePage) {
 }
 
 function buildTopbar(title, actionsHtml = '') {
+  const activeUser = getActiveUser();
+  const optionsHtml = DB.usuarios.map(u => `
+    <option value="${u.id}" ${activeUser && activeUser.id === u.id ? 'selected' : ''}>
+      ${u.nombre}
+    </option>
+  `).join('');
+
+  const clientSelector = DB.usuarios.length > 0 ? `
+    <div class="topbar-client-selector">
+      <label for="global-client-select">👤 Cliente:</label>
+      <select id="global-client-select" onchange="handleGlobalClientChange(this.value)">
+        ${optionsHtml}
+      </select>
+    </div>
+  ` : '';
+
   return `
   <header class="topbar">
     <button class="menu-toggle" onclick="toggleSidebar()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <div class="topbar-title">${title}</div>
-    <div class="topbar-actions">${actionsHtml}</div>
+    <div style="display:flex; align-items:center; gap:12px; margin-left:auto;">
+      ${clientSelector}
+      <div class="topbar-actions">${actionsHtml}</div>
+    </div>
   </header>`;
+}
+
+function handleGlobalClientChange(uid) {
+  const u = DB.usuarios.find(x => x.id === uid);
+  if (u) {
+    localStorage.setItem('gym_active_user', JSON.stringify(u));
+    // Sincronizar selectores locales en páginas
+    const localSel = document.getElementById('sel-usuario');
+    if (localSel) {
+      localSel.value = uid;
+      if (typeof onUsuarioChange === 'function') {
+        onUsuarioChange();
+      }
+    }
+    // Disparar eventos
+    window.dispatchEvent(new Event('gym_active_user_changed'));
+    window.dispatchEvent(new Event('gym_diario_actualizado'));
+    showToast(`Cliente activo: ${u.nombre}`, 'info');
+    // Si no estamos en una página con selector local, recargar para actualizar widgets
+    if (!localSel) {
+      setTimeout(() => window.location.reload(), 400);
+    }
+  }
 }
 
 function buildToast() { return `<div class="toast" id="toast"></div>`; }
@@ -441,7 +504,7 @@ function actualizarMacrosUsuarioActivo(kcal, prot, carbs, grasas) {
   const idx = db.usuarios.findIndex(user => user.id === u.id);
   if (idx !== -1) {
     db.usuarios[idx] = u;
-    saveDB(db);
+    saveDB();
   }
   localStorage.setItem('gym_active_user', JSON.stringify(u));
   showToast("Objetivo de macros guardado en tu perfil", "success");

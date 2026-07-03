@@ -122,7 +122,16 @@
   });
 
   var param = new URLSearchParams(window.location.search).get('usuario');
-  if (param) { sel.value = param; onUsuarioChange(); }
+  if (param) {
+    sel.value = param;
+    onUsuarioChange();
+  } else {
+    var activeUser = getActiveUser();
+    if (activeUser) {
+      sel.value = activeUser.id;
+      onUsuarioChange();
+    }
+  }
 
   var currentClient = null;
 
