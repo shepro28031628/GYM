@@ -7,13 +7,21 @@ let DB = {
   usuarios:  [],
   rutinas:   [],
   progresos: [],
-  sesiones:  [],   // { id, usuarioId, rutinaId, fecha, hora, estado:'pendiente'|'completada'|'cancelada' }
+  sesiones:  [],
 };
 
+// ── Claves que se persisten en archivo ──
+const DB_KEYS = [
+  'romeo_db', 'gym_active_user', 'romeo_current_active_user_id',
+  'romeo_recetas_custom', 'romeo_cats_custom',
+  'romeo_custom_exercises', 'romeo_custom_groups'
+];
+
 function loadDB() {
+  // Carga sincrónica desde localStorage (copia espejo)
+  // La carga definitiva desde archivo se hace en initPersist()
   try { const s = localStorage.getItem('romeo_db'); if (s) DB = JSON.parse(s); }
   catch(e) {}
-  // Migrate old key
   try {
     if (!DB.usuarios.length) {
       const old = localStorage.getItem('gymproDB');
@@ -23,27 +31,27 @@ function loadDB() {
   if (!DB.sesiones) DB.sesiones = [];
 }
 
-function saveDB() { localStorage.setItem('romeo_db', JSON.stringify(DB)); }
+async function saveDB() {
+  await PersistDB.set('romeo_db', DB);
+}
 
 function getDB() { return DB; }
 
 function getActiveUser() {
   try {
     const s = localStorage.getItem('gym_active_user');
-    if (s) {
-      const u = JSON.parse(s);
-      const dbUser = DB.usuarios.find(x => x.id === u.id);
-      if (dbUser) return dbUser;
-    }
+    if (s) { const u = JSON.parse(s); const dbUser = DB.usuarios.find(x => x.id === u.id); if (dbUser) return dbUser; }
   } catch(e) {}
   try {
     const uid = localStorage.getItem('romeo_current_active_user_id');
-    if (uid) {
-      const dbUser = DB.usuarios.find(x => x.id === uid);
-      if (dbUser) return dbUser;
-    }
+    if (uid) { const dbUser = DB.usuarios.find(x => x.id === uid); if (dbUser) return dbUser; }
   } catch(e) {}
   return DB.usuarios[0] || null;
+}
+
+async function setActiveUser(u) {
+  localStorage.setItem('gym_active_user', JSON.stringify(u));
+  await PersistDB.set('gym_active_user', u);
 }
 
 // ===================== UTILITIES =====================
@@ -463,53 +471,116 @@ function getHoyKey() {
 function getMacrosConsumidosHoy() {
   const u = getActiveUser();
   if (!u) return { kcal: 0, proteina: 0, carbs: 0, grasas: 0 };
-  const key = getHoyKey() + "_" + u.id;
+  const key = getHoyKey() + '_' + u.id;
   const data = localStorage.getItem(key);
   if (!data) return { kcal: 0, proteina: 0, carbs: 0, grasas: 0 };
-  try {
-    return JSON.parse(data);
-  } catch(e) {
-    return { kcal: 0, proteina: 0, carbs: 0, grasas: 0 };
-  }
+  try { return JSON.parse(data); } catch(e) { return { kcal: 0, proteina: 0, carbs: 0, grasas: 0 }; }
 }
 
-function registrarConsumoReceta(kcal, proteina, carbs, grasas) {
+async function registrarConsumoReceta(kcal, proteina, carbs, grasas) {
   const u = getActiveUser();
   if (!u) return;
-  const key = getHoyKey() + "_" + u.id;
+  const key = getHoyKey() + '_' + u.id;
   const actual = getMacrosConsumidosHoy();
-  
-  actual.kcal += parseInt(kcal) || 0;
+  actual.kcal     += parseInt(kcal)     || 0;
   actual.proteina += parseInt(proteina) || 0;
-  actual.carbs += parseInt(carbs) || 0;
-  actual.grasas += parseInt(grasas) || 0;
-  
+  actual.carbs    += parseInt(carbs)    || 0;
+  actual.grasas   += parseInt(grasas)   || 0;
   localStorage.setItem(key, JSON.stringify(actual));
-  
-  // Disparar evento para actualizar componentes
+  await PersistDB.set(key, actual);
   window.dispatchEvent(new Event('gym_diario_actualizado'));
 }
 
-function actualizarMacrosUsuarioActivo(kcal, prot, carbs, grasas) {
+async function actualizarMacrosUsuarioActivo(kcal, prot, carbs, grasas) {
   const u = getActiveUser();
   if (!u) return;
-  
-  u.macroKcal = parseInt(kcal) || 2000;
-  u.macroProt = parseInt(prot) || 150;
-  u.macroCarbs = parseInt(carbs) || 200;
-  u.macroGrasas = parseInt(grasas) || 70;
-  
-  // Guardar usuario en DB y actualizar localStorage
+  u.macroKcal  = parseInt(kcal)   || 2000;
+  u.macroProt  = parseInt(prot)   || 150;
+  u.macroCarbs = parseInt(carbs)  || 200;
+  u.macroGrasas= parseInt(grasas) || 70;
   const db = getDB();
   const idx = db.usuarios.findIndex(user => user.id === u.id);
-  if (idx !== -1) {
-    db.usuarios[idx] = u;
-    saveDB();
-  }
+  if (idx !== -1) { db.usuarios[idx] = u; await saveDB(); }
   localStorage.setItem('gym_active_user', JSON.stringify(u));
-  showToast("Objetivo de macros guardado en tu perfil", "success");
+  await PersistDB.set('gym_active_user', u);
+  showToast('Objetivo de macros guardado en tu perfil', 'success');
 }
 
-// Init
+// ── Init ───────────────────────────────────────────────────
 loadDB();
 
+// Inicializar persistencia en archivos
+async function initPersist() {
+  await PersistDB.init(
+    async (usesFSA) => {
+      // Carpeta conectada: migrar datos y recargar DB desde archivo
+      hidePersistBanner();
+      if (usesFSA) {
+        await PersistDB.migrateFromLocalStorage(DB_KEYS);
+        const dbFromFile = await PersistDB.get('romeo_db');
+        if (dbFromFile && dbFromFile.usuarios && dbFromFile.usuarios.length >= DB.usuarios.length) {
+          DB = dbFromFile;
+          if (!DB.sesiones) DB.sesiones = [];
+          // Notificar a páginas que se recargó la DB
+          window.dispatchEvent(new Event('romeo_db_loaded'));
+        }
+        showPersistStatus(true);
+      }
+    },
+    () => {
+      // No hay carpeta elegida aún
+      showPersistBanner();
+    }
+  );
+}
+
+function showPersistBanner() {
+  if (document.getElementById('persist-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'persist-banner';
+  banner.innerHTML = `
+    <div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;
+      background:linear-gradient(135deg,#1c1c1c,#222);border:1px solid rgba(255,60,172,0.4);
+      border-radius:14px;padding:16px 22px;display:flex;align-items:center;gap:14px;
+      box-shadow:0 8px 32px rgba(0,0,0,0.6);max-width:92vw;">
+      <span style="font-size:28px;">💾</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:3px;">Conectar carpeta de datos</div>
+        <div style="font-size:11px;color:#9A9A9A;line-height:1.4;">Elige la carpeta del proyecto para que los datos se guarden aunque se borre el caché.</div>
+      </div>
+      <button id="persist-pick-btn" style="background:linear-gradient(135deg,#FF3CAC,#784BA0);
+        border:none;border-radius:10px;color:#fff;font-size:12px;font-weight:700;
+        padding:10px 16px;cursor:pointer;white-space:nowrap;font-family:inherit;">
+        📂 Elegir carpeta
+      </button>
+      <button id="persist-skip-btn" style="background:none;border:1px solid rgba(255,255,255,0.1);
+        border-radius:10px;color:#9A9A9A;font-size:11px;padding:10px 12px;
+        cursor:pointer;white-space:nowrap;font-family:inherit;">Ahora no</button>
+    </div>`;
+  document.body.appendChild(banner);
+  document.getElementById('persist-pick-btn').onclick = async () => {
+    const ok = await PersistDB.pickFolder();
+    if (!ok) showToast('No se eligió ninguna carpeta', 'error');
+  };
+  document.getElementById('persist-skip-btn').onclick = () => hidePersistBanner();
+}
+
+function hidePersistBanner() {
+  const b = document.getElementById('persist-banner');
+  if (b) b.remove();
+}
+
+function showPersistStatus(ok) {
+  // Pequeño indicador verde en la barra lateral
+  const el = document.querySelector('.sidebar-role');
+  if (el && ok) {
+    el.innerHTML = 'Personal Trainer &nbsp;<span title="Datos guardados en archivo" style="color:#00E5A0;font-size:10px;">● archivo</span>';
+  }
+}
+
+// Lanzar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initPersist);
+} else {
+  setTimeout(initPersist, 100);
+}
