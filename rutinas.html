@@ -1079,6 +1079,13 @@
     showToast(`✅ Se importaron ${r.ejercicios.length} ejercicios`);
     document.getElementById('r-importar-select').value = '';
   }
+
+  // Escuchar cambios de base de datos desde otras pestañas para actualizar la UI
+  window.addEventListener('romeo_db_loaded', () => {
+    if (selU.value) {
+      renderRutinas(selU.value);
+    }
+  });
 </script>
 </body>
 </html>

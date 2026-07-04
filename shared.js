@@ -584,3 +584,11 @@ if (document.readyState === 'loading') {
 } else {
   setTimeout(initPersist, 100);
 }
+
+// Sincronizar la base de datos en tiempo real entre pestañas abiertas
+window.addEventListener('storage', (e) => {
+  if (e.key === 'romeo_db') {
+    loadDB();
+    window.dispatchEvent(new Event('romeo_db_loaded'));
+  }
+});

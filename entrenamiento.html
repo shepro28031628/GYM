@@ -172,6 +172,9 @@
 <div id="toast-container"></div>
 <script src="persist.js"></script><script src="shared.js"></script>
 <script>
+  // Constante para ordenamiento cronológico de meses en la sesión
+  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
   document.getElementById('sidebar-container').innerHTML = buildSidebar('entrenamiento');
   document.getElementById('topbar-container').innerHTML = buildTopbar('Entrenamiento en Vivo');
   document.getElementById('toast-container').innerHTML = buildToast();
@@ -735,7 +738,7 @@
         rutinaId: rid || null,
         fecha: new Date().toISOString().split('T')[0],
         hora: new Date().toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit'}),
-        estado: pct === 100 ? 'completada' : 'pendiente',
+        estado: 'completada',
         duracionSeg: s.timerSec,
         volumenKg: Math.round(s.volumenKg),
         setsCompletados: s.setsCompletados,
@@ -807,6 +810,7 @@
             <div class="session-meta">📅 ${formatDate(s.fecha)} ${s.hora} &nbsp;·&nbsp; ⏱ ${durMin} &nbsp;·&nbsp; 🏋️ ${s.volumenKg||0}kg &nbsp;·&nbsp; ✅ ${s.setsCompletados||0}/${s.setsTotal||0} sets</div>
           </div>
           <span class="badge ${estadoBadge}">${s.estado}</span>
+          ${s.estado === 'pendiente' ? `<button class="btn-ghost" onclick="event.stopPropagation();reanudarSesion('${s.id}')" title="Reanudar entrenamiento" style="padding:5px 8px; margin-right:4px;">🔁</button>` : ''}
           <button class="btn-ghost btn-danger" onclick="event.stopPropagation();eliminarSesionHistorial('${s.id}')" title="Eliminar" style="padding:5px 8px">🗑️</button>
         </div>
         <div class="session-detail-expanded" id="sd-${s.id}" style="display:none;">
@@ -820,6 +824,59 @@
     if (!confirm('¿Eliminar esta sesión del historial?')) return;
     DB.sesiones = DB.sesiones.filter(s=>s.id!==id);
     saveDB(); renderHistorial(); showToast('🗑️ Sesión eliminada', 'error');
+  }
+
+  function reanudarSesion(sesionId) {
+    const sesion = DB.sesiones.find(x => x.id === sesionId);
+    if (!sesion) return;
+    
+    const uid = sesion.usuarioId;
+    if (activeSessions[uid]) {
+      if (!confirm('⚠️ Este cliente ya tiene una sesión activa en este momento. ¿Deseas descartar esa sesión activa y reanudar esta sesión del historial?')) {
+        return;
+      }
+    }
+    
+    // Reconstruir setsState a partir de los datos históricos
+    const setsState = {};
+    if (sesion.ejercicios) {
+      sesion.ejercicios.forEach((ej, ei) => {
+        if (ej.series) {
+          ej.series.forEach(set => {
+            const sid = `set-${ei}-${set.set}`;
+            setsState[sid] = {
+              done: set.completado,
+              reps: set.reps,
+              peso: set.peso
+            };
+          });
+        }
+      });
+    }
+    
+    // Reactivar la sesión cargando el progreso acumulado y el timer
+    activeSessions[uid] = {
+      usuarioId: uid,
+      rutinaId: sesion.rutinaId,
+      inicioTime: Date.now() - (sesion.duracionSeg * 1000),
+      timerSec: sesion.duracionSeg,
+      setsCompletados: sesion.setsCompletados,
+      setsTotal: sesion.setsTotal,
+      volumenKg: sesion.volumenKg,
+      setsState: setsState
+    };
+    
+    // Remover del historial para evitar duplicar el registro al finalizarla de nuevo
+    DB.sesiones = DB.sesiones.filter(x => x.id !== sesionId);
+    saveDB();
+    
+    currentActiveUserId = uid;
+    saveActiveSessions();
+    
+    renderActiveSessionsBar();
+    showCurrentActiveSessionView();
+    renderHistorial();
+    showToast('🏋️ Sesión reanudada. ¡Continúa entrenando!', 'info');
   }
 
   function obtenerUltimoPesoEjercicio(nombreEj, usuarioId) {
@@ -899,6 +956,13 @@
   initMultiSessionTimer();
   renderActiveSessionsBar();
   showCurrentActiveSessionView();
+
+  // Escuchar cambios de base de datos desde otras pestañas para actualizar la UI
+  window.addEventListener('romeo_db_loaded', () => {
+    renderHistorial();
+    renderActiveSessionsBar();
+    showCurrentActiveSessionView();
+  });
 </script>
 </body>
 </html>
