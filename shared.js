@@ -8,6 +8,7 @@ let DB = {
   rutinas:   [],
   progresos: [],
   sesiones:  [],
+  packs:     [],
 };
 
 // ── Claves que se persisten en archivo ──
@@ -29,6 +30,7 @@ function loadDB() {
     }
   } catch(e) {}
   if (!DB.sesiones) DB.sesiones = [];
+  if (!DB.packs) DB.packs = [];
 }
 
 async function saveDB() {

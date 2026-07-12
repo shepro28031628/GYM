@@ -13,10 +13,19 @@
   <div id="topbar-container"></div>
   <div class="page-body">
 
-    <div class="section-header">
-      <h1>Creador de Rutinas</h1>
-      <p class="section-subtitle">Diseña planes de entrenamiento mensuales por bloques de ejercicios</p>
+    <div class="section-header" style="display:flex; justify-content:space-between; align-items:flex-end;">
+      <div>
+        <h1>Creador de Rutinas</h1>
+        <p class="section-subtitle">Diseña planes de entrenamiento o crea Packs (plantillas)</p>
+      </div>
+      <div class="view-tabs" style="display:flex; gap:10px; background:rgba(255,255,255,0.05); padding:4px; border-radius:8px;">
+        <button id="tab-clientes" class="btn-primary" style="padding:6px 12px; font-size:13px; min-width:140px;" onclick="switchTab('clientes')">Rutinas de Cliente</button>
+        <button id="tab-packs" class="btn-secondary" style="padding:6px 12px; font-size:13px; min-width:140px;" onclick="switchTab('packs')">Packs (Plantillas)</button>
+      </div>
     </div>
+
+    <!-- VISTA CLIENTES -->
+    <div id="view-clientes">
 
     <!-- Selector de usuario -->
     <div class="toolbar">
@@ -68,9 +77,24 @@
         <p>Elige un cliente para ver o crear sus rutinas mensuales</p>
       </div>
     </div>
+    </div>
+    <!-- /VISTA CLIENTES -->
+
+    <!-- VISTA PACKS -->
+    <div id="view-packs" style="display:none;">
+      <div class="toolbar" style="justify-content:flex-end;">
+        <button class="btn-primary" onclick="crearNuevoPack()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nuevo Pack
+        </button>
+      </div>
+      <div id="packs-container" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:20px;">
+        <!-- Packs will be rendered here -->
+      </div>
+    </div>
+    <!-- /VISTA PACKS -->
   </div>
 </main>
-
 <!-- =================== EDITOR MODAL =================== -->
 <div class="modal-overlay" id="modal-editor">
   <div class="modal modal-lg" style="max-width:900px">
@@ -1110,6 +1134,275 @@
       renderRutinas(selU.value);
     }
   });
+  // --- PACKS LOGIC ---
+  let currentEditingPackId = null;
+
+  function switchTab(tab) {
+    document.getElementById('view-clientes').style.display = tab === 'clientes' ? 'block' : 'none';
+    document.getElementById('view-packs').style.display = tab === 'packs' ? 'block' : 'none';
+    
+    document.getElementById('tab-clientes').className = tab === 'clientes' ? 'btn-primary active-tab' : 'btn-secondary';
+    document.getElementById('tab-packs').className = tab === 'packs' ? 'btn-primary active-tab' : 'btn-secondary';
+
+    if (tab === 'packs') {
+      renderPacks();
+    } else {
+      onUsuarioChange();
+    }
+  }
+
+  // Override abrirEditor
+  const _oldAbrirEditor = abrirEditor;
+  abrirEditor = function(rid = null, isClone = false, packId = null) {
+    currentEditingPackId = packId;
+    
+    if (!packId) {
+      const uid = document.getElementById('select-usuario').value; 
+      if (!uid) { showToast('Selecciona un cliente primero', 'error'); return; }
+    }
+
+    document.getElementById('form-rutina').reset();
+    document.getElementById('r-id').value = '';
+    document.getElementById('blocks-container').innerHTML = '';
+    document.getElementById('editor-title').textContent = packId ? (rid && !isClone ? 'Editar Rutina de Pack' : 'Nueva Rutina en Pack') : 'Nueva Rutina';
+    
+    if (typeof populateImportSelect === 'function') populateImportSelect();
+
+    const now = new Date();
+    document.getElementById('r-mes').value = MESES[now.getMonth()];
+    document.getElementById('r-anio').value = now.getFullYear();
+
+    let r = null;
+    if (packId && rid) {
+      const p = DB.packs.find(x => x.id === packId);
+      if (p) r = p.rutinas.find(x => x.id === rid);
+    } else if (rid) {
+      r = DB.rutinas.find(x => x.id === rid);
+    }
+
+    if (rid && !r) return;
+
+    if (r) {
+      document.getElementById('editor-title').textContent = packId ? 'Editar Rutina de Pack' : (isClone ? 'Clonar Rutina' : 'Editar Rutina');
+      document.getElementById('r-id').value = isClone ? '' : r.id;
+      document.getElementById('r-nombre').value = isClone ? (r.nombre ? r.nombre + ' - Copia' : '') : (r.nombre || '');
+      document.getElementById('r-mes').value = isClone ? MESES[now.getMonth()] : r.mes;
+      document.getElementById('r-anio').value = isClone ? now.getFullYear() : r.anio;
+      document.getElementById('r-tipo').value = r.tipo;
+      document.getElementById('r-grupo').value = r.grupo || 'Cuerpo Completo';
+      document.getElementById('r-dias').value = r.dias;
+      document.getElementById('r-notas').value = r.notes || r.notas || '';
+      if (!packId) {
+        document.getElementById('r-peso-ini').value = r.pesoIni || '';
+        document.getElementById('r-peso-fin').value = r.pesoFin || '';
+      }
+      
+      r.ejercicios.forEach(ej => agregarBloque(ej));
+    } else if (!packId) {
+      const uid = document.getElementById('select-usuario').value; 
+      const u = DB.usuarios.find(x=>x.id===uid);
+      const lastR = DB.rutinas.filter(rt=>rt.usuarioId===uid).slice(-1)[0];
+      document.getElementById('r-peso-ini').value = lastR?.pesoFin || u?.peso || '';
+    }
+    
+    document.getElementById('modal-editor').style.display = 'flex';
+  };
+
+  // Override guardarRutina
+  const _oldGuardarRutina = guardarRutina;
+  guardarRutina = async function(e) {
+    e.preventDefault();
+    
+    const id = document.getElementById('r-id').value;
+    const ejercicios = [];
+    document.querySelectorAll('#blocks-container .exercise-block').forEach(row => {
+      const nombre = row.querySelector('.blk-nombre').value.trim(); if (!nombre) return;
+      ejercicios.push({ 
+        nombre, 
+        grupo: row.querySelector('.blk-grupo').value, 
+        imagen: row.querySelector('.blk-imagen').dataset.base64 || null,
+        series: row.querySelector('.blk-series').value.trim(), 
+        peso: row.querySelector('.blk-peso').value.trim(), 
+        descanso: row.querySelector('.blk-descanso').value.trim(), 
+        notas: row.querySelector('.blk-notas').value.trim() 
+      });
+    });
+
+    const rutina = {
+      id: id || genId(),
+      nombre: document.getElementById('r-nombre').value.trim(),
+      mes: document.getElementById('r-mes').value,
+      anio: parseInt(document.getElementById('r-anio').value),
+      tipo: document.getElementById('r-tipo').value,
+      grupo: document.getElementById('r-grupo').value,
+      dias: parseInt(document.getElementById('r-dias').value),
+      ejercicios,
+      notas: document.getElementById('r-notas').value.trim()
+    };
+
+    if (currentEditingPackId) {
+      // Save to pack
+      const p = DB.packs.find(x => x.id === currentEditingPackId);
+      if (!p) return;
+      if (id) {
+        const idx = p.rutinas.findIndex(x => x.id === id);
+        if (idx >= 0) p.rutinas[idx] = rutina;
+        else p.rutinas.push(rutina);
+      } else {
+        p.rutinas.push(rutina);
+      }
+      await saveDB();
+      cerrarEditor();
+      renderPacks();
+      showToast('Rutina guardada en el pack');
+    } else {
+      const uid = document.getElementById('select-usuario').value; 
+      rutina.usuarioId = uid;
+      rutina.pesoIni = parseFloat(document.getElementById('r-peso-ini').value) || null;
+      rutina.pesoFin = parseFloat(document.getElementById('r-peso-fin').value) || null;
+
+      if (id) {
+        const idx = DB.rutinas.findIndex(x => x.id === id);
+        if (idx >= 0) DB.rutinas[idx] = rutina;
+        else DB.rutinas.push(rutina);
+      } else {
+        rutina.creado = new Date().toISOString();
+        DB.rutinas.push(rutina);
+      }
+      await saveDB();
+      cerrarEditor();
+      renderRutinas(uid);
+      showToast('Rutina guardada');
+    }
+  };
+
+  function renderPacks() {
+    const container = document.getElementById('packs-container');
+    if (!DB.packs || DB.packs.length === 0) {
+      container.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;"><span class="empty-icon">📦</span><h3>Sin Packs</h3><p>Crea tu primer pack o plantilla de rutinas.</p></div>`;
+      return;
+    }
+    
+    container.innerHTML = DB.packs.map(p => `
+      <div class="rutina-card" style="padding:15px; display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <h3 style="margin:0; font-size:18px; color:var(--pink);">${p.nombre}</h3>
+          <div>
+            <button class="btn-ghost" style="padding:4px;" onclick="editarNombrePack('${p.id}')">✏️</button>
+            <button class="btn-ghost btn-danger" style="padding:4px;" onclick="eliminarPack('${p.id}')">🗑️</button>
+          </div>
+        </div>
+        <p style="margin:0; font-size:13px; color:var(--text-secondary);">${p.rutinas.length} rutinas en este pack.</p>
+        
+        <div style="display:flex; flex-direction:column; gap:5px; margin-top:10px;">
+          ${p.rutinas.map(r => `
+            <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:13px; font-weight:600;">${r.nombre || 'Rutina sin nombre'}</span>
+              <div>
+                <button class="btn-ghost" style="padding:4px;" onclick="abrirEditor('${r.id}', false, '${p.id}')">✏️</button>
+                <button class="btn-ghost btn-danger" style="padding:4px;" onclick="eliminarRutinaPack('${p.id}', '${r.id}')">🗑️</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div style="margin-top:10px; display:flex; gap:10px;">
+          <button class="btn-secondary" style="flex:1; font-size:12px; padding:6px;" onclick="abrirEditor(null, false, '${p.id}')">+ Añadir Rutina</button>
+          <button class="btn-primary" style="flex:1; font-size:12px; padding:6px;" onclick="asignarPackModal('${p.id}')">Asignar a Cliente</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function crearNuevoPack() {
+    const nombre = prompt('Nombre del nuevo Pack:');
+    if (!nombre) return;
+    if (!DB.packs) DB.packs = [];
+    DB.packs.push({ id: genId(), nombre, rutinas: [] });
+    await saveDB();
+    renderPacks();
+  }
+
+  async function editarNombrePack(packId) {
+    const p = DB.packs.find(x => x.id === packId);
+    if (!p) return;
+    const nombre = prompt('Nuevo nombre del Pack:', p.nombre);
+    if (!nombre || nombre === p.nombre) return;
+    p.nombre = nombre;
+    await saveDB();
+    renderPacks();
+  }
+
+  async function eliminarPack(packId) {
+    if (!confirm('¿Eliminar este pack por completo?')) return;
+    DB.packs = DB.packs.filter(p => p.id !== packId);
+    await saveDB();
+    renderPacks();
+  }
+
+  async function eliminarRutinaPack(packId, rid) {
+    if (!confirm('¿Quitar esta rutina del pack?')) return;
+    const p = DB.packs.find(x => x.id === packId);
+    if (p) {
+      p.rutinas = p.rutinas.filter(x => x.id !== rid);
+      await saveDB();
+      renderPacks();
+    }
+  }
+
+  function asignarPackModal(packId) {
+    const p = DB.packs.find(x => x.id === packId);
+    if (!p || p.rutinas.length === 0) {
+      alert('Este pack no tiene rutinas para asignar.'); return;
+    }
+    
+    if (DB.usuarios.length === 0) {
+      alert('No hay clientes registrados.'); return;
+    }
+
+    const modalHtml = \`
+      <div class="modal-overlay" id="modal-asignar-pack" style="display:flex; z-index:9999;">
+        <div class="modal" style="max-width:400px; width:100%;">
+          <h2>Asignar Pack: \${p.nombre}</h2>
+          <p style="font-size:13px; color:var(--text-secondary);">Selecciona el cliente al que se le copiarán las \${p.rutinas.length} rutinas de este pack.</p>
+          <select id="select-asignar-pack-usuario" style="width:100%; margin:15px 0; padding:10px; border-radius:8px; background:var(--bg); color:var(--text); border:1px solid var(--border);">
+            \${DB.usuarios.map(u => \`<option value="\${u.id}">\${u.nombre}</option>\`).join('')}
+          </select>
+          <div style="display:flex; gap:10px; justify-content:flex-end;">
+            <button class="btn-ghost" onclick="document.getElementById('modal-asignar-pack').remove()">Cancelar</button>
+            <button class="btn-primary" onclick="confirmarAsignacionPack('\${packId}')">Asignar</button>
+          </div>
+        </div>
+      </div>
+    \`;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+  }
+
+  async function confirmarAsignacionPack(packId) {
+    const p = DB.packs.find(x => x.id === packId);
+    const uid = document.getElementById('select-asignar-pack-usuario').value;
+    if (!p || !uid) return;
+    
+    const now = new Date().toISOString();
+    
+    p.rutinas.forEach(rt => {
+      const newRt = JSON.parse(JSON.stringify(rt));
+      newRt.id = genId();
+      newRt.usuarioId = uid;
+      newRt.creado = now;
+      DB.rutinas.push(newRt);
+    });
+    
+    await saveDB();
+    document.getElementById('modal-asignar-pack').remove();
+    showToast('Pack asignado correctamente al cliente');
+    
+    // Switch to clients view and select that client
+    document.getElementById('select-usuario').value = uid;
+    switchTab('clientes');
+  }
+
+  // --- FIN PACKS LOGIC ---
 </script>
 </body>
 </html>
