@@ -60,6 +60,8 @@
 ### 🏋️ Creador de Rutinas
 - ✅ Editor de bloques: ejercicio, grupo muscular, series × reps, peso (kg), descanso (s)
 - ✅ Biblioteca integrada con +45 ejercicios organizados por grupo muscular
+- ✅ **Edición total de la biblioteca** (modificar nombres, subir imágenes propias, series y notas de cualquier ejercicio)
+- ✅ **Packs (Plantillas)** de rutinas para agrupar programas y asignarlos rápidamente a cualquier cliente
 - ✅ Seguimiento de peso inicial y final del mes
 - ✅ Tipo de rutina: Fuerza, Hipertrofia, Pérdida de Peso, Resistencia, Funcional
 - ✅ Recomendaciones del entrenador por rutina
@@ -186,12 +188,16 @@ Gestión completa del roster de clientes.
 ---
 
 ### 🏋️ Rutinas (`rutinas.html`)
-Creador de planes de entrenamiento mensual.
+Creador de planes de entrenamiento mensual y plantillas globales.
 
 **Configuración de la Rutina:**
 - Nombre · Mes · Año · Tipo · Grupo Muscular · Días/Semana
 - Peso Inicial y Final del mes
-- Biblioteca de ejercicios integrada (+45 ejercicios)
+- Biblioteca de ejercicios integrada (+45 ejercicios editables y personalizables con fotos propias)
+
+**Packs (Plantillas):**
+- Creación de programas base agrupados e independientes de los clientes
+- Clonación automática y asignación mágica de un pack completo a cualquier cliente con un solo clic
 
 **Editor de Bloques:**
 ```
@@ -485,7 +491,7 @@ La aplicación es completamente responsive con breakpoints en:
 - [ ] **Modo offline** — PWA con Service Worker para instalación en móvil
 - [ ] **Sincronización en la nube** — Firebase o Supabase para backup
 - [x] **Calculadora de macros** — Personalizada por peso y objetivo
-- [ ] **Plantillas de rutinas** — Banco de rutinas prediseñadas
+- [x] **Plantillas de rutinas** — Banco de rutinas prediseñadas (Packs de Rutinas y Edición de Biblioteca)
 - [ ] **Estadísticas avanzadas** — Récords personales, PR tracking
 - [ ] **Multi-usuario** — Acceso diferenciado para cliente y entrenador
 
