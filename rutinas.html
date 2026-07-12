@@ -1360,21 +1360,21 @@
       alert('No hay clientes registrados.'); return;
     }
 
-    const modalHtml = \`
+    const modalHtml = `
       <div class="modal-overlay" id="modal-asignar-pack" style="display:flex; z-index:9999;">
         <div class="modal" style="max-width:400px; width:100%;">
-          <h2>Asignar Pack: \${p.nombre}</h2>
-          <p style="font-size:13px; color:var(--text-secondary);">Selecciona el cliente al que se le copiarán las \${p.rutinas.length} rutinas de este pack.</p>
+          <h2>Asignar Pack: ${p.nombre}</h2>
+          <p style="font-size:13px; color:var(--text-secondary);">Selecciona el cliente al que se le copiarán las ${p.rutinas.length} rutinas de este pack.</p>
           <select id="select-asignar-pack-usuario" style="width:100%; margin:15px 0; padding:10px; border-radius:8px; background:var(--bg); color:var(--text); border:1px solid var(--border);">
-            \${DB.usuarios.map(u => \`<option value="\${u.id}">\${u.nombre}</option>\`).join('')}
+            ${DB.usuarios.map(u => `<option value="${u.id}">${u.nombre}</option>`).join('')}
           </select>
           <div style="display:flex; gap:10px; justify-content:flex-end;">
             <button class="btn-ghost" onclick="document.getElementById('modal-asignar-pack').remove()">Cancelar</button>
-            <button class="btn-primary" onclick="confirmarAsignacionPack('\${packId}')">Asignar</button>
+            <button class="btn-primary" onclick="confirmarAsignacionPack('${packId}')">Asignar</button>
           </div>
         </div>
       </div>
-    \`;
+    `;
     document.body.insertAdjacentHTML('beforeend', modalHtml);
   }
 
