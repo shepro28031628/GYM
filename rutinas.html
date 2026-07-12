@@ -1403,6 +1403,157 @@
   }
 
   // --- FIN PACKS LOGIC ---
+  
+  // --- LIBRARY EDIT LOGIC ---
+  const customStr = localStorage.getItem('romeo_custom_exercises');
+  if (customStr) {
+    const parsed = JSON.parse(customStr);
+    parsed.forEach(ej => {
+      if (!BIBLIOTECA[ej.grupo]) BIBLIOTECA[ej.grupo] = [];
+      const existingIdx = BIBLIOTECA[ej.grupo].findIndex(x => x.nombre.toLowerCase() === ej.nombre.toLowerCase());
+      const newEjData = {
+          nombre: ej.nombre,
+          imagen: ej.imagen || '1.jpeg',
+          reps: ej.reps || '4 × 10',
+          notas: ej.notas || ''
+      };
+      if (existingIdx >= 0) BIBLIOTECA[ej.grupo][existingIdx] = newEjData;
+      else BIBLIOTECA[ej.grupo].push(newEjData);
+    });
+  }
+
+  let editingExerciseOriginalName = null;
+  let editingExerciseOriginalGroup = null;
+
+  // Override renderBibliotecaGrid to add edit button
+  const _oldRenderBibliotecaGrid = renderBibliotecaGrid;
+  renderBibliotecaGrid = function(exercises) {
+    const grid = document.getElementById('lib-exercises-grid');
+    if (exercises.length === 0) {
+      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--text-muted); padding:40px;">No hay ejercicios que coincidan.</div>`;
+      return;
+    }
+    
+    grid.innerHTML = exercises.map(ej => {
+      let grupo = document.getElementById('lib-current-category') ? document.getElementById('lib-current-category').textContent : '';
+      for (const [g, list] of Object.entries(BIBLIOTECA)) {
+        if (list.some(x => x.nombre === ej.nombre)) {
+          grupo = g; break;
+        }
+      }
+      const imgPath = ej.imagen ? (ej.imagen.startsWith('data:image') ? ej.imagen : `img/${ej.imagen}`) : 'img/1.jpeg';
+      return `
+        <div class="lib-card" onclick="seleccionarEjercicioBiblioteca('${grupo}', '${ej.nombre}')">
+          <div class="lib-img-container">
+            <img class="lib-img" src="${imgPath}" alt="${ej.nombre}" />
+          </div>
+          <div class="lib-card-body">
+            <div class="lib-card-name">${ej.nombre}</div>
+            <div class="lib-card-reps">👉 Series y reps: ${ej.reps}</div>
+            <div class="lib-card-notes">${ej.notas || ej.notes || 'Sin notas especiales.'}</div>
+            <div style="display:flex; gap:8px; margin-top:10px;">
+              <button type="button" class="lib-card-btn" style="flex:1;">＋ Agregar</button>
+              <button type="button" class="btn-ghost" style="padding:6px; background:rgba(255,255,255,0.05);" onclick="event.stopPropagation(); editarEjercicioBiblioteca('${grupo}', '${ej.nombre}')">✏️</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  };
+
+  function editarEjercicioBiblioteca(grupo, nombre) {
+    editingExerciseOriginalName = nombre;
+    editingExerciseOriginalGroup = grupo;
+    
+    const ej = BIBLIOTECA[grupo].find(x => x.nombre === nombre);
+    if (!ej) return;
+
+    if (typeof populateNewExerciseGroups === 'function') populateNewExerciseGroups();
+
+    document.getElementById('new-ej-grupo').value = grupo;
+    document.getElementById('new-ej-nombre').value = ej.nombre;
+    document.getElementById('new-ej-reps').value = ej.reps || '4 × 10';
+    document.getElementById('new-ej-notas').value = ej.notas || '';
+    
+    document.querySelector('#modal-nuevo-ejercicio h2').textContent = 'Editar Ejercicio';
+    
+    openModal('modal-nuevo-ejercicio');
+  }
+
+  // Hook into original modal open to reset state
+  const _oldAbrirModalNuevoEjercicio = abrirModalNuevoEjercicio;
+  abrirModalNuevoEjercicio = function() {
+    editingExerciseOriginalName = null;
+    editingExerciseOriginalGroup = null;
+    document.querySelector('#modal-nuevo-ejercicio h2').textContent = 'Crear Nuevo Ejercicio';
+    _oldAbrirModalNuevoEjercicio();
+  };
+
+  // Override guardarNuevoEjercicio
+  guardarNuevoEjercicio = async function() {
+    const grupo = document.getElementById('new-ej-grupo').value;
+    const nombre = document.getElementById('new-ej-nombre').value.trim();
+    const imgInput = document.getElementById('new-ej-imagen');
+    
+    if (!nombre) {
+      showToast('Por favor, ingresa el nombre del ejercicio', 'error');
+      return;
+    }
+
+    let imagen = '';
+    if (imgInput.files && imgInput.files.length > 0) {
+      imagen = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsDataURL(imgInput.files[0]);
+      });
+    } else if (editingExerciseOriginalName) {
+       const orig = BIBLIOTECA[editingExerciseOriginalGroup].find(x => x.nombre === editingExerciseOriginalName);
+       if (orig) imagen = orig.imagen;
+    }
+
+    const reps = document.getElementById('new-ej-reps').value.trim();
+    const notas = document.getElementById('new-ej-notas').value.trim();
+    
+    const nuevoEj = { grupo, nombre, imagen, reps, notas };
+    
+    let customs = [];
+    try {
+      const saved = localStorage.getItem('romeo_custom_exercises');
+      if (saved) customs = JSON.parse(saved);
+    } catch(e) {}
+    
+    if (editingExerciseOriginalName) {
+      // Edit mode: remove original from customs
+      customs = customs.filter(x => !(x.nombre === editingExerciseOriginalName && x.grupo === editingExerciseOriginalGroup));
+      if (BIBLIOTECA[editingExerciseOriginalGroup]) {
+         const idx = BIBLIOTECA[editingExerciseOriginalGroup].findIndex(x => x.nombre === editingExerciseOriginalName);
+         if (idx >= 0) BIBLIOTECA[editingExerciseOriginalGroup].splice(idx, 1);
+      }
+    } else {
+      const existsInMain = BIBLIOTECA[grupo] && BIBLIOTECA[grupo].some(x => x.nombre.toLowerCase() === nombre.toLowerCase());
+      if (existsInMain) {
+        showToast('El ejercicio ya existe en la biblioteca', 'error');
+        return;
+      }
+    }
+    
+    customs.push(nuevoEj);
+    localStorage.setItem('romeo_custom_exercises', JSON.stringify(customs));
+    
+    if (!BIBLIOTECA[grupo]) BIBLIOTECA[grupo] = [];
+    BIBLIOTECA[grupo].push(nuevoEj);
+    
+    showToast(`✅ Ejercicio guardado: ${nombre}`);
+    closeModal('modal-nuevo-ejercicio');
+    
+    if (typeof filtrarEjerciciosBiblioteca === 'function') {
+      filtrarEjerciciosBiblioteca();
+    } else {
+      renderBibliotecaGrid(BIBLIOTECA[grupo] || []);
+    }
+  };
+  // --- FIN LIBRARY EDIT LOGIC ---
 </script>
 </body>
 </html>
