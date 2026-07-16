@@ -19,18 +19,35 @@ const DB_KEYS = [
 ];
 
 function loadDB() {
-  // Carga sincrónica desde localStorage (copia espejo)
-  // La carga definitiva desde archivo se hace en initPersist()
-  try { const s = localStorage.getItem('romeo_db'); if (s) DB = JSON.parse(s); }
-  catch(e) {}
-  try {
-    if (!DB.usuarios.length) {
-      const old = localStorage.getItem('gymproDB');
-      if (old) { const o = JSON.parse(old); DB.usuarios = o.usuarios||[]; DB.rutinas = o.rutinas||[]; DB.progresos = o.progresos||[]; }
-    }
+  try { 
+    const s = localStorage.getItem('romeo_db'); 
+    if (s) {
+      const parsed = JSON.parse(s);
+      if (parsed && typeof parsed === 'object') {
+        DB = Object.assign(DB, parsed);
+      }
+    } 
   } catch(e) {}
+  
+  if (!DB.usuarios) DB.usuarios = [];
+  if (!DB.rutinas) DB.rutinas = [];
+  if (!DB.progresos) DB.progresos = [];
   if (!DB.sesiones) DB.sesiones = [];
   if (!DB.packs) DB.packs = [];
+
+  try {
+    if (DB.usuarios.length === 0) {
+      const old = localStorage.getItem('gymproDB');
+      if (old) { 
+        const o = JSON.parse(old); 
+        if (o) {
+          if (o.usuarios) DB.usuarios = o.usuarios;
+          if (o.rutinas) DB.rutinas = o.rutinas;
+          if (o.progresos) DB.progresos = o.progresos;
+        }
+      }
+    }
+  } catch(e) {}
 }
 
 async function saveDB() {
@@ -152,7 +169,7 @@ function toggleSidebar() {
 document.addEventListener('click', function(e) {
   const sb = document.getElementById('sidebar');
   const btn = document.querySelector('.menu-toggle');
-  if (sb && window.innerWidth <= 1024 && !sb.contains(e.target) && btn && !btn.contains(e.target)) {
+  if (sb && window.innerWidth <= 1200 && !sb.contains(e.target) && btn && !btn.contains(e.target)) {
     sb.classList.remove('open');
   }
 });
@@ -521,8 +538,12 @@ async function initPersist() {
         await PersistDB.migrateFromLocalStorage(DB_KEYS);
         const dbFromFile = await PersistDB.get('romeo_db');
         if (dbFromFile && dbFromFile.usuarios && dbFromFile.usuarios.length >= DB.usuarios.length) {
-          DB = dbFromFile;
+          DB = Object.assign({}, DB, dbFromFile);
+          if (!DB.usuarios) DB.usuarios = [];
+          if (!DB.rutinas) DB.rutinas = [];
+          if (!DB.progresos) DB.progresos = [];
           if (!DB.sesiones) DB.sesiones = [];
+          if (!DB.packs) DB.packs = [];
           // Notificar a páginas que se recargó la DB
           window.dispatchEvent(new Event('romeo_db_loaded'));
         }
