@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Romeo Personal Trainer — Nutrición y Recetas</title>
+  <title>EDI Personal Trainer — Nutrición y Recetas</title>
   <meta name="description" content="Catálogo de recetas fitness con desglose de macronutrientes, calorías e ingredientes." />  <link rel="stylesheet" href="styles.css" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#00E5A0" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Romeo PT" />
+  <meta name="apple-mobile-web-app-title" content="EDI PT" />
   <link rel="apple-touch-icon" href="1.jpeg" />
 </head>
 <body>
@@ -266,11 +266,11 @@
 
   function loadCustomRecetas() {
     try {
-      const d = localStorage.getItem('romeo_recetas_custom');
+      const d = localStorage.getItem('edi_recetas_custom');
       if (d) RECETAS_CUSTOM = JSON.parse(d);
     } catch(e) { RECETAS_CUSTOM = []; }
     try {
-      const c = localStorage.getItem('romeo_cats_custom');
+      const c = localStorage.getItem('edi_cats_custom');
       if (c) CATS_CUSTOM = JSON.parse(c);
     } catch(e) { CATS_CUSTOM = []; }
     // Merge
@@ -282,8 +282,8 @@
   }
 
   function saveCustomRecetas() {
-    localStorage.setItem('romeo_recetas_custom', JSON.stringify(RECETAS_CUSTOM));
-    localStorage.setItem('romeo_cats_custom', JSON.stringify(CATS_CUSTOM));
+    localStorage.setItem('edi_recetas_custom', JSON.stringify(RECETAS_CUSTOM));
+    localStorage.setItem('edi_cats_custom', JSON.stringify(CATS_CUSTOM));
     ALL_RECETAS = [...RECETAS, ...RECETAS_CUSTOM];
   }
 
@@ -443,13 +443,13 @@
   let cart = [];
   function loadCart() {
     try {
-      const data = localStorage.getItem('romeo_cart');
+      const data = localStorage.getItem('edi_cart');
       if (data) cart = JSON.parse(data);
     } catch(e) {}
     updateCartBadge();
   }
   function saveCart() {
-    localStorage.setItem('romeo_cart', JSON.stringify(cart));
+    localStorage.setItem('edi_cart', JSON.stringify(cart));
     updateCartBadge();
   }
   function updateCartBadge() {
@@ -721,7 +721,7 @@
     } else {
       msg += `¡Hola! `;
     }
-    msg += `Aquí tienes tu plan de recetas seleccionadas por tu entrenador *Romeo PT*: 💪🔥\n`;
+    msg += `Aquí tienes tu plan de recetas seleccionadas por tu entrenador *EDI PT*: 💪🔥\n`;
     msg += recipesText;
     msg += `\n*RESUMEN DIARIO ACUMULADO:*`;
     msg += `\n🔥 *Calorías Totales:* ${totalKcal} kcal`;

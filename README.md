@@ -1,8 +1,8 @@
-# 🏋️ Romeo Personal Trainer
+# 🏋️ EDI Personal Trainer
 
 <div align="center">
 
-![Romeo Personal Trainer](1.jpeg)
+![EDI Personal Trainer](1.jpeg)
 
 **Plataforma web de gestión para entrenadores personales**  
 *Controla clientes, rutinas, sesiones en vivo y progreso corporal desde un solo lugar.*
@@ -33,7 +33,7 @@
 
 ## 📖 Descripción
 
-**Romeo Personal Trainer** es una aplicación web de alto rendimiento diseñada específicamente para entrenadores personales. Permite gestionar de forma centralizada todos los aspectos del entrenamiento:
+**EDI Personal Trainer** es una aplicación web de alto rendimiento diseñada específicamente para entrenadores personales. Permite gestionar de forma centralizada todos los aspectos del entrenamiento:
 
 - 👤 **Registro completo de clientes** con medidas corporales y métricas de ingresos
 - 🏋️ **Creación de rutinas mensuales** con editor de ejercicios por bloques
@@ -117,7 +117,7 @@ GYM/
 ├── ⚙️  shared.js            # Lógica compartida, base de datos LocalStorage y utilidades
 │
 ├── 📁 img/                 # Carpeta de ilustraciones de ejercicios (1.jpeg a 6.jpeg)
-├── 🖼️  1.jpeg              # Logo principal de Romeo PT
+├── 🖼️  1.jpeg              # Logo principal de EDI PT
 └── 🖼️  2.jpeg              # Logo alternativo
 ```
 
@@ -133,7 +133,7 @@ GYM/
 
 1. **Descarga o clona el repositorio:**
    ```bash
-   git clone https://github.com/tu-usuario/romeo-personal-trainer.git
+    git clone https://github.com/tu-usuario/edi-personal-trainer.git
    ```
    — o —
    Descarga el ZIP y extrae en una carpeta.
@@ -271,7 +271,7 @@ Calculadora de macronutrientes interactiva personalizada para cada cliente:
 
 ## 🗄️ Modelos de Datos
 
-Todos los datos se guardan en `localStorage` bajo la clave `romeo_db`.
+Todos los datos se guardan en `localStorage` bajo la clave `edi_db`.
 
 ### Usuario
 ```json
@@ -377,7 +377,7 @@ Todos los datos se guardan en `localStorage` bajo la clave `romeo_db`.
 
 ## 🎨 Design System
 
-Basado en el PRD de **Romeo Personal Trainer / Vanguard Fitness**.
+Basado en el PRD de **EDI Personal Trainer / Vanguard Fitness**.
 
 ### Paleta de Colores
 | Variable | Color | Uso |
@@ -409,10 +409,10 @@ font-family: 'Sora', sans-serif;
 ### Persistencia de Datos
 ```javascript
 // Guardar
-localStorage.setItem('romeo_db', JSON.stringify(DB));
+localStorage.setItem('edi_db', JSON.stringify(DB));
 
 // Cargar (con migración automática desde 'gymproDB')
-const s = localStorage.getItem('romeo_db');
+const s = localStorage.getItem('edi_db');
 if (s) DB = JSON.parse(s);
 ```
 
@@ -499,7 +499,7 @@ La aplicación es completamente responsive con breakpoints en:
 
 ## 👤 Autor
 
-**Romeo Personal Trainer**  
+**EDI Personal Trainer**  
 *Plataforma desarrollada para la gestión profesional del entrenamiento personalizado.*
 
 ---

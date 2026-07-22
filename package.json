@@ -1,7 +1,7 @@
 {
-  "name": "romeo-personal-trainer",
+  "name": "edi-personal-trainer",
   "version": "1.0.0",
-  "description": "App para control de rutinas y progreso - Romeo Personal Trainer",
+  "description": "App para control de rutinas y progreso - EDI Personal Trainer",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Romeo Personal Trainer — Clientes</title>
+  <title>EDI Personal Trainer — Clientes</title>
   <meta name="description" content="Roster de clientes: métricas de ingresos, tasa de completitud, perfil completo y barra de progreso semanal." />  <link rel="stylesheet" href="styles.css" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#00E5A0" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Romeo PT" />
+  <meta name="apple-mobile-web-app-title" content="EDI PT" />
   <link rel="apple-touch-icon" href="1.jpeg" />
 </head>
 <body>
@@ -420,7 +420,7 @@
     const active = getActiveUser();
     if (!active || active.id === id || DB.usuarios.length === 0) {
       localStorage.removeItem('gym_active_user');
-      localStorage.removeItem('romeo_current_active_user_id');
+      localStorage.removeItem('edi_current_active_user_id');
       window.dispatchEvent(new Event('gym_active_user_changed'));
     }
     await saveDB(); renderUsuarios(); showToast('🗑️ Cliente eliminado', 'error');

@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Romeo Personal Trainer — Macronutrientes</title>
+  <title>EDI Personal Trainer — Macronutrientes</title>
   <meta name="description" content="Calculadora de macronutrientes y déficit o superávit calórico personalizado." />  <link rel="stylesheet" href="styles.css" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#00E5A0" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Romeo PT" />
+  <meta name="apple-mobile-web-app-title" content="EDI PT" />
   <link rel="apple-touch-icon" href="1.jpeg" />
   <style>
     /* ── Donut Chart ── */
@@ -150,7 +150,7 @@
 
   populateUsuarioSelect();
 
-  window.addEventListener('romeo_db_loaded', function() {
+  window.addEventListener('edi_db_loaded', function() {
     populateUsuarioSelect();
   });
 
@@ -579,7 +579,7 @@
       '  😴 Días descanso: ' + (lc.cycRest > 0 ? lc.cycRest : lc.targetCal) + ' kcal\n\n' +
       '💧 Agua diaria: *' + lc.agua + ' L*\n' +
       '━━━━━━━━━━━━━━\n' +
-      '👨‍🏫 Romeo Personal Trainer';
+      '👨‍🏫 EDI Personal Trainer';
     window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
   }
 </script>

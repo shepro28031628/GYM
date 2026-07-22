@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Romeo Personal Trainer — Entrenamiento en Vivo</title>
+  <title>EDI Personal Trainer — Entrenamiento en Vivo</title>
   <meta name="description" content="Modo entrenamiento activo: temporizador de descanso, registro de series y sonido de fin de descanso." />
   <link rel="stylesheet" href="styles.css" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#00E5A0" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Romeo PT" />
+  <meta name="apple-mobile-web-app-title" content="EDI PT" />
   <link rel="apple-touch-icon" href="1.jpeg" />
   <style>
     .timer-display { font-size: 52px; font-weight: 800; letter-spacing: -2px; line-height: 1; font-variant-numeric: tabular-nums; }
@@ -270,9 +270,9 @@
 
   function loadActiveSessions() {
     try {
-      const s = localStorage.getItem('romeo_active_sessions');
+      const s = localStorage.getItem('edi_active_sessions');
       if (s) activeSessions = JSON.parse(s);
-      currentActiveUserId = localStorage.getItem('romeo_current_active_user_id') || null;
+      currentActiveUserId = localStorage.getItem('edi_current_active_user_id') || null;
     } catch(e) {
       activeSessions = {};
       currentActiveUserId = null;
@@ -280,11 +280,11 @@
   }
 
   function saveActiveSessions() {
-    localStorage.setItem('romeo_active_sessions', JSON.stringify(activeSessions));
+    localStorage.setItem('edi_active_sessions', JSON.stringify(activeSessions));
     if (currentActiveUserId) {
-      localStorage.setItem('romeo_current_active_user_id', currentActiveUserId);
+      localStorage.setItem('edi_current_active_user_id', currentActiveUserId);
     } else {
-      localStorage.removeItem('romeo_current_active_user_id');
+      localStorage.removeItem('edi_current_active_user_id');
     }
   }
 
@@ -978,7 +978,7 @@
   showCurrentActiveSessionView();
 
   // Escuchar cambios de base de datos desde otras pestañas para actualizar la UI
-  window.addEventListener('romeo_db_loaded', () => {
+  window.addEventListener('edi_db_loaded', () => {
     renderHistorial();
     renderActiveSessionsBar();
     showCurrentActiveSessionView();

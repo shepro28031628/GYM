@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Romeo Personal Trainer — Creador de Rutinas</title>
+  <title>EDI Personal Trainer — Creador de Rutinas</title>
   <meta name="description" content="Diseña rutinas de entrenamiento por bloques: series, repeticiones, peso y tiempo de descanso." />  <link rel="stylesheet" href="styles.css" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#00E5A0" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Romeo PT" />
+  <meta name="apple-mobile-web-app-title" content="EDI PT" />
   <link rel="apple-touch-icon" href="1.jpeg" />
 </head>
 <body>
@@ -436,7 +436,7 @@
   function cargarEjerciciosCustom() {
     try {
       // First, load custom muscle groups
-      const customGroups = localStorage.getItem('romeo_custom_groups');
+      const customGroups = localStorage.getItem('edi_custom_groups');
       if (customGroups) {
         const parsedGroups = JSON.parse(customGroups);
         parsedGroups.forEach(g => {
@@ -447,7 +447,7 @@
       }
 
       // Then, load custom exercises
-      const custom = localStorage.getItem('romeo_custom_exercises');
+      const custom = localStorage.getItem('edi_custom_exercises');
       if (custom) {
         const parsed = JSON.parse(custom);
         parsed.forEach(ej => {
@@ -613,7 +613,7 @@
   }
 
   populateUsuarioSelect();
-  window.addEventListener('romeo_db_loaded', () => {
+  window.addEventListener('edi_db_loaded', () => {
     populateUsuarioSelect();
   });
 
@@ -1089,12 +1089,12 @@
         drawRoundRectCanvas(ctx, pad, pad, 32, 32, 8, '#00E5A0');
         ctx.fillStyle = '#0B0F19';
         ctx.font = '900 16px sans-serif';
-        ctx.fillText('R', pad + 10, pad + 22);
+        ctx.fillText('E', pad + 10, pad + 22);
 
         // Header - Title
         ctx.fillStyle = '#00E5A0';
         ctx.font = '900 18px sans-serif';
-        ctx.fillText('ROMEO PERSONAL TRAINER', pad + 44, pad + 20);
+        ctx.fillText('EDI PERSONAL TRAINER', pad + 44, pad + 20);
 
         ctx.fillStyle = '#94A3B8';
         ctx.font = '600 11px sans-serif';
@@ -1294,7 +1294,7 @@
 
         ctx.fillStyle = '#64748B';
         ctx.font = '600 10px sans-serif';
-        ctx.fillText('🔥 Romeo Personal Trainer System', pad, curY + 22);
+        ctx.fillText('🔥 EDI Personal Trainer System', pad, curY + 22);
 
         ctx.fillStyle = '#00E5A0';
         ctx.font = '700 10px sans-serif';
@@ -1359,7 +1359,7 @@
       cleanPhone = input.replace(/\D/g, '');
     }
     
-    let msg = `*ROMEO PERSONAL TRAINER* 🏋️\n\n`;
+    let msg = `*EDI PERSONAL TRAINER* 🏋️\n\n`;
     msg += `¡Hola, *${nombreCliente}*! 💪 Aquí tienes tu rutina para *${r.mes} ${r.anio}*:\n`;
     msg += `📌 *Plan:* ${r.nombre || `${r.tipo} - ${r.grupo}`}\n`;
     msg += `⏱️ *Frecuencia:* ${r.dias} días por semana\n\n`;
@@ -1468,7 +1468,7 @@
     }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = filename || 'Rutina_RomeoPT.png';
+    a.download = filename || 'Rutina_EdiPT.png';
     a.click();
     showToast('📥 Imagen descargada', 'success');
   }
@@ -1479,7 +1479,7 @@
 
     // Tarjeta principal de resumen
     if (blob) {
-      filesToShare.push(new File([blob], filename || 'Rutina_RomeoPT.png', { type: 'image/png' }));
+      filesToShare.push(new File([blob], filename || 'Rutina_EdiPT.png', { type: 'image/png' }));
     }
 
     // Adjuntar todas las imágenes/infografías individuales de los ejercicios en un solo álbum multitrama de WhatsApp
@@ -1491,7 +1491,7 @@
       try {
         if (navigator.canShare({ files: filesToShare })) {
           await navigator.share({
-            title: 'Rutina Romeo PT',
+            title: 'Rutina EDI PT',
             text: msg,
             files: filesToShare
           });
@@ -1569,7 +1569,7 @@
     // Load existing customs
     let customs = [];
     try {
-      const saved = localStorage.getItem('romeo_custom_exercises');
+      const saved = localStorage.getItem('edi_custom_exercises');
       if (saved) customs = JSON.parse(saved);
     } catch(e) {}
     
@@ -1582,7 +1582,7 @@
     
     // Add to customs list
     customs.push(nuevoEj);
-    localStorage.setItem('romeo_custom_exercises', JSON.stringify(customs));
+    localStorage.setItem('edi_custom_exercises', JSON.stringify(customs));
     
     // Dynamically push to BIBLIOTECA
     if (!BIBLIOTECA[grupo]) BIBLIOTECA[grupo] = [];
@@ -1616,13 +1616,13 @@
     // Save to localStorage customs list
     let customs = [];
     try {
-      const saved = localStorage.getItem('romeo_custom_groups');
+      const saved = localStorage.getItem('edi_custom_groups');
       if (saved) customs = JSON.parse(saved);
     } catch(e) {}
     
     if (!customs.includes(capitalized)) {
       customs.push(capitalized);
-      localStorage.setItem('romeo_custom_groups', JSON.stringify(customs));
+      localStorage.setItem('edi_custom_groups', JSON.stringify(customs));
     }
     
     // Add to in-memory BIBLIOTECA
@@ -1713,7 +1713,7 @@
   }
 
   // Escuchar cambios de base de datos desde otras pestañas o al cargar IndexedDB
-  window.addEventListener('romeo_db_loaded', () => {
+  window.addEventListener('edi_db_loaded', () => {
     populateUsuarioSelect();
   });
   // --- PACKS LOGIC ---
@@ -2023,7 +2023,7 @@
   // --- FIN PACKS LOGIC ---
   
   // --- LIBRARY EDIT LOGIC ---
-  const customStr = localStorage.getItem('romeo_custom_exercises');
+  const customStr = localStorage.getItem('edi_custom_exercises');
   if (customStr) {
     const parsed = JSON.parse(customStr);
     parsed.forEach(ej => {
@@ -2137,7 +2137,7 @@
     
     let customs = [];
     try {
-      const saved = localStorage.getItem('romeo_custom_exercises');
+      const saved = localStorage.getItem('edi_custom_exercises');
       if (saved) customs = JSON.parse(saved);
     } catch(e) {}
     
@@ -2157,7 +2157,7 @@
     }
     
     customs.push(nuevoEj);
-    localStorage.setItem('romeo_custom_exercises', JSON.stringify(customs));
+    localStorage.setItem('edi_custom_exercises', JSON.stringify(customs));
     
     if (!BIBLIOTECA[grupo]) BIBLIOTECA[grupo] = [];
     BIBLIOTECA[grupo].push(nuevoEj);

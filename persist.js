@@ -1,12 +1,12 @@
 /* ============================================================
-   ROMEO PT — Persistencia en Archivos Locales v1.0
+   EDI PT — Persistencia en Archivos Locales v1.0
    Usa File System Access API para guardar datos como archivos
    .json reales en la carpeta del proyecto. Sin instalación,
    sin internet. Los datos sobreviven borrado de caché.
    ============================================================ */
 
 const PersistDB = (() => {
-  const IDB_NAME    = 'romeo_pt_fsh';
+  const IDB_NAME    = 'edi_pt_fsh';
   const IDB_STORE   = 'handles';
   const HANDLE_KEY  = 'data_dir';
   const DATA_FOLDER = 'data';
@@ -128,7 +128,7 @@ const PersistDB = (() => {
   async function pickFolder() {
     if (!_useFSA) return false;
     try {
-      const root = await window.showDirectoryPicker({ id: 'romeo-pt-data', mode: 'readwrite', startIn: 'documents' });
+      const root = await window.showDirectoryPicker({ id: 'edi-pt-data', mode: 'readwrite', startIn: 'documents' });
       const ok   = await verifyPermission(root);
       if (!ok) return false;
       _rootHandle = root;

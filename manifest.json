@@ -1,6 +1,6 @@
 {
-  "name": "Romeo Personal Trainer",
-  "short_name": "Romeo PT",
+  "name": "EDI Personal Trainer",
+  "short_name": "EDI PT",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#121212",

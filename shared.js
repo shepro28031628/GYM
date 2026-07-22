@@ -1,5 +1,5 @@
 /* ============================================================
-   ROMEO PERSONAL TRAINER — Shared JS v2.0
+   EDI PERSONAL TRAINER — Shared JS v2.0
    ============================================================ */
 
 // ===================== DATABASE =====================
@@ -13,15 +13,15 @@ let DB = {
 
 // ── Claves que se persisten en archivo ──
 const DB_KEYS = [
-  'romeo_db', 'gym_active_user', 'romeo_current_active_user_id',
-  'romeo_recetas_custom', 'romeo_cats_custom',
-  'romeo_custom_exercises', 'romeo_custom_groups'
+  'edi_db', 'gym_active_user', 'edi_current_active_user_id',
+  'edi_recetas_custom', 'edi_cats_custom',
+  'edi_custom_exercises', 'edi_custom_groups'
 ];
 
 function loadDB() {
   // Carga sincrónica desde localStorage (copia espejo)
   // La carga definitiva desde archivo se hace en initPersist()
-  try { const s = localStorage.getItem('romeo_db'); if (s) DB = JSON.parse(s); }
+  try { const s = localStorage.getItem('edi_db'); if (s) DB = JSON.parse(s); }
   catch(e) {}
   try {
     if (!DB.usuarios.length) {
@@ -35,7 +35,7 @@ function loadDB() {
 loadDB();
 
 async function saveDB() {
-  await PersistDB.set('romeo_db', DB);
+  await PersistDB.set('edi_db', DB);
 }
 
 function getDB() { return DB; }
@@ -46,7 +46,7 @@ function getActiveUser() {
     if (s) { const u = JSON.parse(s); const dbUser = DB.usuarios.find(x => x.id === u.id); if (dbUser) return dbUser; }
   } catch(e) {}
   try {
-    const uid = localStorage.getItem('romeo_current_active_user_id');
+    const uid = localStorage.getItem('edi_current_active_user_id');
     if (uid) { const dbUser = DB.usuarios.find(x => x.id === uid); if (dbUser) return dbUser; }
   } catch(e) {}
   return DB.usuarios[0] || null;
@@ -242,7 +242,7 @@ function buildSidebar(activePage) {
   return `
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-      <img src="1.jpeg" alt="Romeo Personal Trainer" class="sidebar-logo-img" />
+      <img src="1.jpeg" alt="EDI Personal Trainer" class="sidebar-logo-img" />
     </div>
     <nav class="sidebar-nav">
       ${pages.map(p => `
@@ -254,9 +254,9 @@ function buildSidebar(activePage) {
     </nav>
     <div class="sidebar-footer">
       <div class="sidebar-user">
-        <div class="avatar-sm">R</div>
+        <div class="avatar-sm">E</div>
         <div>
-          <div class="sidebar-username">Romeo</div>
+          <div class="sidebar-username">EDI</div>
           <div class="sidebar-role">Personal Trainer</div>
         </div>
       </div>
@@ -376,9 +376,9 @@ const QUOTES = [
   { text: "Tu cuerpo puede hacerlo. Es tu mente la que tienes que convencer.", author: "Desconocido" },
   { text: "El dolor que sientes hoy es la fuerza que sentirás mañana.", author: "Arnold Schwarzenegger" },
   { text: "La disciplina es el puente entre metas y logros.", author: "Jim Rohn" },
-  { text: "Cada rep te hace más fuerte. Cada sesión te cambia.", author: "Romeo PT" },
+  { text: "Cada rep te hace más fuerte. Cada sesión te cambia.", author: "EDI PT" },
   { text: "El éxito empieza antes de entrar al gimnasio.", author: "Desconocido" },
-  { text: "Entrena duro, come limpio, descansa bien. Repite.", author: "Romeo PT" },
+  { text: "Entrena duro, come limpio, descansa bien. Repite.", author: "EDI PT" },
 ];
 
 function getQuoteOfDay() {
@@ -570,12 +570,12 @@ async function initPersist() {
       hidePersistBanner();
       if (usesFSA) {
         await PersistDB.migrateFromLocalStorage(DB_KEYS);
-        const dbFromFile = await PersistDB.get('romeo_db');
+        const dbFromFile = await PersistDB.get('edi_db');
         if (dbFromFile && dbFromFile.usuarios && dbFromFile.usuarios.length >= DB.usuarios.length) {
           DB = dbFromFile;
           if (!DB.sesiones) DB.sesiones = [];
           // Notificar a páginas que se recargó la DB
-          window.dispatchEvent(new Event('romeo_db_loaded'));
+          window.dispatchEvent(new Event('edi_db_loaded'));
         }
         showPersistStatus(true);
       }
@@ -661,9 +661,9 @@ if (document.readyState === 'loading') {
 
 // Sincronizar la base de datos en tiempo real entre pestañas abiertas
 window.addEventListener('storage', (e) => {
-  if (e.key === 'romeo_db') {
+  if (e.key === 'edi_db') {
     loadDB();
-    window.dispatchEvent(new Event('romeo_db_loaded'));
+    window.dispatchEvent(new Event('edi_db_loaded'));
   }
 });
 
@@ -671,7 +671,7 @@ function descargarBackup() {
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(DB));
   const downloadAnchorNode = document.createElement('a');
   downloadAnchorNode.setAttribute("href", dataStr);
-  downloadAnchorNode.setAttribute("download", "romeo_backup_" + new Date().toISOString().split('T')[0] + ".json");
+  downloadAnchorNode.setAttribute("download", "edi_backup_" + new Date().toISOString().split('T')[0] + ".json");
   document.body.appendChild(downloadAnchorNode);
   downloadAnchorNode.click();
   downloadAnchorNode.remove();

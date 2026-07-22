@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Romeo Personal Trainer — Progreso Corporal</title>
+  <title>EDI Personal Trainer — Progreso Corporal</title>
   <meta name="description" content="Seguimiento de métricas corporales, registro de peso y galería de fotos de evolución." />  <link rel="stylesheet" href="styles.css" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#00E5A0" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Romeo PT" />
+  <meta name="apple-mobile-web-app-title" content="EDI PT" />
   <link rel="apple-touch-icon" href="1.jpeg" />
 </head>
 <body>
@@ -148,7 +148,7 @@
 
   populateUsuarioSelect();
 
-  window.addEventListener('romeo_db_loaded', () => {
+  window.addEventListener('edi_db_loaded', () => {
     populateUsuarioSelect();
   });
 
@@ -204,7 +204,7 @@
       <div class="print-only-header">
         <div class="print-header-grid">
           <div>
-            <div class="print-title">ROMEO PERSONAL TRAINER</div>
+            <div class="print-title">EDI PERSONAL TRAINER</div>
             <div style="font-size:12px;color:#999">High Performance Fitness · Ficha de Evolución</div>
           </div>
           <div style="text-align:right">
@@ -218,7 +218,7 @@
           <div><strong>Nivel:</strong> ${u.nivel}</div>
           <div><strong>Edad:</strong> ${u.edad} años</div>
           <div><strong>Estatura:</strong> ${u.estatura} cm</div>
-          <div><strong>Entrenador:</strong> Romeo PT</div>
+          <div><strong>Entrenador:</strong> EDI PT</div>
         </div>
       </div>
     `;
