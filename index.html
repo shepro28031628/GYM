@@ -138,7 +138,17 @@
       </div>
     </div>
 
-    <!-- ROW 1: Alerts + Weekly Calendar -->
+    <!-- ROW 1: Leaderboard Top Clientes -->
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-header">
+        <h2>🥇 Leaderboard de Clientes — Ranking del Mes</h2>
+        <span class="badge badge-yellow">🏆 Puntos & Asistencia</span>
+      </div>
+      <div id="leaderboard-container" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-top:8px;">
+      </div>
+    </div>
+
+    <!-- ROW 2: Alerts + Weekly Calendar -->
     <div class="dashboard-grid" style="margin-bottom:14px">
 
       <!-- Alerts Panel -->
@@ -635,6 +645,35 @@
     document.getElementById('macro-carbs-bar').style.width = Math.min((actual.carbs/carbsGoal)*100,100) + '%';
     document.getElementById('macro-grasas-bar').style.width = Math.min((actual.grasas/grasasGoal)*100,100) + '%';
   }
+
+  function renderLeaderboard() {
+    const container = document.getElementById('leaderboard-container');
+    if (!container) return;
+
+    let usuariosRanked = [...DB.usuarios];
+    usuariosRanked.sort((a, b) => (b.puntos || 0) - (a.puntos || 0));
+    
+    const top3 = usuariosRanked.slice(0, 3);
+    const TROFEOS = ['🥇 Oro', '🥈 Plata', '🥉 Bronce'];
+    const BORDER_COLORS = ['#FFD600', '#C0C0C0', '#CD7F32'];
+
+    if (top3.length === 0) {
+      container.innerHTML = `<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:16px;">Sin clientes registrados aun.</div>`;
+      return;
+    }
+
+    container.innerHTML = top3.map((u, i) => `
+      <div style="background:rgba(255,255,255,0.03); border:1px solid ${BORDER_COLORS[i] || 'rgba(255,255,255,0.1)'}; border-radius:12px; padding:12px; display:flex; align-items:center; gap:10px;">
+        <span style="font-size:24px;">${TROFEOS[i] || '🏅'}</span>
+        <div style="flex:1; min-width:0;">
+          <div style="font-weight:800; color:#fff; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${u.nombre}</div>
+          <div style="font-size:11px; color:var(--yellow); font-weight:700;">🏆 ${u.puntos || 0} pts EDI</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  renderLeaderboard();
   actualizarWidgetMacros();
   window.addEventListener('gym_diario_actualizado', actualizarWidgetMacros);
   window.addEventListener('gym_active_user_changed', actualizarWidgetMacros);
