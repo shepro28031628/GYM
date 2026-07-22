@@ -31,8 +31,47 @@ function loadDB() {
   } catch(e) {}
   if (!DB.sesiones) DB.sesiones = [];
   if (!DB.packs) DB.packs = [];
+  
+  // Asegurar campos de gamificación en usuarios
+  DB.usuarios.forEach(u => {
+    if (!u.puntos) u.puntos = 0;
+    if (!u.logros) u.logros = [];
+  });
 }
 loadDB();
+
+// ===================== SISTEMA DE GAMIFICACIÓN & LOGROS EDI =====================
+const CATALOGO_LOGROS = {
+  'primera_sesion': { id: 'primera_sesion', titulo: 'Primera Sesión IA', icono: '🚀', desc: 'Completaste tu primera sesión de entrenamiento' },
+  'racha_7': { id: 'racha_7', titulo: 'Guerrero 7 Días', icono: '🔥', desc: 'Entrenaste 7 días consecutivos' },
+  'volumen_1000': { id: 'volumen_1000', titulo: 'Club de los 1,000 kg', icono: '🏋️‍♂️', desc: 'Moviste más de 1,000 kg en acumulado' },
+  'postura_master': { id: 'postura_master', titulo: 'Técnica Maestra IA', icono: '🎯', desc: 'Realizaste repeticiones con validación de Cámara IA' }
+};
+
+function otorgarPuntosYLogros(usuarioId, puntos = 50, logroClave = null) {
+  if (!usuarioId) return;
+  const u = DB.usuarios.find(x => x.id === usuarioId);
+  if (!u) return;
+
+  if (!u.puntos) u.puntos = 0;
+  if (!u.logros) u.logros = [];
+
+  u.puntos += puntos;
+  let nuevoDesbloqueo = null;
+
+  if (logroClave && CATALOGO_LOGROS[logroClave]) {
+    if (!u.logros.includes(logroClave)) {
+      u.logros.push(logroClave);
+      nuevoDesbloqueo = CATALOGO_LOGROS[logroClave];
+    }
+  }
+
+  saveDB();
+
+  if (nuevoDesbloqueo && typeof showToast === 'function') {
+    showToast(`🏆 ¡Logro Desbloqueado! ${nuevoDesbloqueo.icono} ${nuevoDesbloqueo.titulo} (+${puntos} pts)`, 'info', 4000);
+  }
+}
 
 async function saveDB() {
   await PersistDB.set('edi_db', DB);
