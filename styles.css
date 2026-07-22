@@ -6,42 +6,43 @@
 
 @import url('fonts/sora.css');
 
-/* ---- CSS Variables ---- */
+/* ---- Light Theme System (Apple & Stripe Clean Style) ---- */
 :root {
-  --bg:           #131313;
-  --bg-card:      #1c1c1c;
-  --bg-surface:   #222222;
-  --bg-input:     #181818;
-  --bg-hover:     #252525;
+  --bg:           #f8fafc;
+  --bg-card:      #ffffff;
+  --bg-surface:   #f1f5f9;
+  --bg-input:     #ffffff;
+  --bg-hover:     #e2e8f0;
 
-  --pink:         #FF3CAC;
-  --blue:         #2B86C5;
-  --purple:       #784BA0;
-  --green:        #00E5A0;
-  --orange:       #FF7043;
-  --yellow:       #FFD600;
-  --red:          #FF4560;
+  --pink:         #0284c7;
+  --blue:         #0284c7;
+  --purple:       #6366f1;
+  --green:        #16a34a;
+  --orange:       #ea580c;
+  --yellow:       #d97706;
+  --red:          #dc2626;
 
-  --grad-main:    linear-gradient(135deg, #FF3CAC 0%, #784BA0 50%, #2B86C5 100%);
-  --grad-pink:    linear-gradient(135deg, #FF3CAC, #FF7E5F);
-  --grad-blue:    linear-gradient(135deg, #2B86C5, #00D4FF);
-  --grad-green:   linear-gradient(135deg, #00E5A0, #00A8FF);
-  --grad-purple:  linear-gradient(135deg, #784BA0, #FF3CAC);
-  --grad-dark:    linear-gradient(135deg, #1c1c1c, #222222);
+  --grad-main:    linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+  --grad-pink:    linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+  --grad-blue:    linear-gradient(135deg, #0284c7 0%, #6366f1 100%);
+  --grad-green:   linear-gradient(135deg, #16a34a 0%, #0284c7 100%);
+  --grad-purple:  linear-gradient(135deg, #6366f1 0%, #0284c7 100%);
+  --grad-gold:    linear-gradient(135deg, #d97706 0%, #ea580c 100%);
+  --grad-dark:    linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
 
-  --text-primary:   #FFFFFF;
-  --text-secondary: #9A9A9A;
-  --text-muted:     #8e8e93;
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #64748b;
 
-  --border:       rgba(255,255,255,0.07);
-  --border-glow:  rgba(255,60,172,0.35);
+  --border:       #e2e8f0;
+  --border-glow:  rgba(2, 132, 199, 0.3);
 
   --sidebar-w:    260px;
   --topbar-h:     64px;
 
-  --shadow-card:  0 8px 32px rgba(0,0,0,0.5);
-  --shadow-glow:  0 0 40px rgba(255,60,172,0.15);
-  --shadow-blue:  0 0 40px rgba(43,134,197,0.15);
+  --shadow-card:  0 4px 16px rgba(15, 23, 42, 0.05);
+  --shadow-glow:  0 0 20px rgba(2, 132, 199, 0.12);
+  --shadow-blue:  0 0 20px rgba(37, 99, 235, 0.12);
 
   --r:    16px;
   --r-sm: 10px;
@@ -65,7 +66,11 @@ input[type=number] {
 }
 body {
   font-family: 'Sora', sans-serif;
-  background: var(--bg);
+  background: radial-gradient(circle at 10% 10%, rgba(2, 132, 199, 0.12) 0%, transparent 50%),
+              radial-gradient(circle at 90% 90%, rgba(99, 102, 241, 0.10) 0%, transparent 50%),
+              radial-gradient(circle at 50% 50%, rgba(22, 163, 74, 0.08) 0%, transparent 60%),
+              #f8fafc;
+  background-attachment: fixed;
   color: var(--text-primary);
   display: flex;
   min-height: 100vh;
@@ -79,11 +84,14 @@ body {
   position: fixed;
   top: 0; left: 0; bottom: 0;
   width: var(--sidebar-w);
-  background: #0e0e0e;
-  border-right: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-right: 1px solid rgba(255, 255, 255, 0.8);
   display: flex;
   flex-direction: column;
   z-index: 100;
+  box-shadow: 4px 0 24px rgba(15, 23, 42, 0.04);
   transition: transform 0.3s ease;
 }
 
@@ -313,14 +321,20 @@ body {
    CARDS
    ============================================================ */
 .card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.06);
   border-radius: var(--r);
   padding: 22px;
   transition: var(--ease);
 }
 
-.card:hover { border-color: rgba(255,255,255,0.1); }
+.card:hover {
+  border-color: rgba(2, 132, 199, 0.4);
+  box-shadow: 0 12px 36px 0 rgba(2, 132, 199, 0.12);
+}
 
 .card-header {
   display: flex;

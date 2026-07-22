@@ -593,6 +593,19 @@
       item.querySelectorAll('.btn-input-adj').forEach(btn => btn.disabled = true);
       
       showToast(`✅ Set completado!`, 'success');
+
+      // Verificar y registrar Marca Personal (PR)
+      const parts = sid.split('-');
+      const ei = parseInt(parts[1]);
+      const r = DB.rutinas.find(x => x.id === s.rutinaId);
+      if (r && r.ejercicios[ei] && peso > 0 && reps > 0) {
+        const ejNombre = r.ejercicios[ei].nombre;
+        const esNuevoPR = registrarPR(currentActiveUserId, ejNombre, peso, reps);
+        if (esNuevoPR) {
+          const rm = calcular1RM(peso, reps);
+          showToast(`🏆 ¡NUEVO RÉCORD PERSONAL (PR)! 1RM Estimado: ${rm} kg`, 'info', 5000);
+        }
+      }
       
       if (descanso > 0) iniciarDescanso(descanso);
     } else {

@@ -42,6 +42,14 @@
         <svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.5-5.739-1.453L0 24zm6.59-4.846c1.6.95 2.568 1.487 4.595 1.488 5.489 0 9.952-4.467 9.955-9.961.002-2.661-1.033-5.164-2.915-7.049C16.345 1.748 13.847.712 11.2.713c-5.492 0-9.957 4.468-9.96 9.961-.001 2.072.548 3.09 1.524 4.77l-.99 3.612 3.883-.989zM17.15 14.88c-.285-.143-1.687-.832-1.947-.927-.26-.096-.45-.143-.64.143-.19.285-.736.927-.9.1.118-.175-.157-.285-.327-.585-.17-.3-.024-.556.048-.7.072-.143.19-.285.285-.429.096-.143.12-.24.18-.383.06-.143.03-.285-.015-.429-.045-.143-.45-1.085-.615-1.485-.164-.393-.347-.323-.48-.328l-.408-.005c-.143 0-.38.053-.578.271-.198.219-.759.742-.759 1.808 0 1.066.775 2.094.883 2.238.109.143 1.524 2.327 3.69 3.262.515.222.917.355 1.23.455.518.165.989.141 1.362.085.415-.062 1.272-.52 1.45-.989.18-.469.18-.871.127-.954-.053-.083-.198-.129-.482-.272z"/></svg>
         WhatsApp
       </button>
+    <!-- Sección de Marcas Personales (PRs & 1RM) -->
+    <div class="card" style="margin-top:16px; margin-bottom:16px;">
+      <div class="card-header">
+        <h2>🏆 Marcas Personales & Récords (1RM Máximo)</h2>
+        <span class="badge badge-yellow" id="prs-count-badge">0 Récords</span>
+      </div>
+      <div id="prs-container" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-top:8px;">
+      </div>
     </div>
 
     <div id="progreso-container">
@@ -158,6 +166,38 @@
     document.getElementById('btn-exportar-pdf').disabled = !uid;
     document.getElementById('btn-compartir-whatsapp').disabled = !uid;
     renderProgreso(uid);
+    renderPRs();
+  }
+
+  function renderPRs() {
+    const container = document.getElementById('prs-container');
+    const badge = document.getElementById('prs-count-badge');
+    if (!container) return;
+
+    const uid = sel.value;
+    if (!uid) {
+      container.innerHTML = `<div style="color:var(--text-muted); font-size:12px; padding:12px;">Selecciona un cliente para ver sus marcas personales.</div>`;
+      return;
+    }
+
+    const u = DB.usuarios.find(x => x.id === uid);
+    const prs = (u && u.prs) ? Object.values(u.prs) : [];
+
+    if (badge) badge.textContent = `${prs.length} Récords`;
+
+    if (prs.length === 0) {
+      container.innerHTML = `<div style="color:var(--text-muted); font-size:12px; padding:12px;">El cliente no tiene Récords de 1RM registrados aún. Al entrenar con cargas máximas se registrarán automáticamente.</div>`;
+      return;
+    }
+
+    container.innerHTML = prs.map(pr => `
+      <div style="background:rgba(255,255,255,0.03); border:1px solid var(--yellow); border-radius:12px; padding:12px;">
+        <div style="font-size:11px; font-weight:800; color:var(--pink); text-transform:uppercase;">${pr.nombre}</div>
+        <div style="font-size:22px; font-weight:800; color:#fff; margin:4px 0;">${pr.rm} kg <span style="font-size:11px; font-weight:700; color:var(--yellow);">(1RM)</span></div>
+        <div style="font-size:10px; color:var(--text-secondary);">Levantamiento: ${pr.peso} kg × ${pr.reps} reps</div>
+        <div style="font-size:9px; color:var(--text-muted); margin-top:4px;">📅 ${pr.fecha || 'Reciente'}</div>
+      </div>
+    `).join('');
   }
 
   function renderProgreso(uid) {

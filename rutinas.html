@@ -1041,7 +1041,10 @@
           <img class="row-img-preview" src="${imgPath}" style="width:24px; height:24px; object-fit:cover; border-radius:4px; border:1px solid var(--border); display:${imgDisplay}; flex-shrink:0;" />
         </div>
         <input type="text" placeholder="4 × 12" class="blk-series" value="${data?.series||''}" />
-        <input type="number" placeholder="60" class="blk-peso" value="${data?.peso||''}" step="0.5" />
+        <div style="display:flex; align-items:center; gap:2px;">
+          <input type="number" placeholder="60" class="blk-peso" value="${data?.peso||''}" step="0.5" style="width:48px;" />
+          <button type="button" class="btn-ghost" onclick="abrirCalc1RMModal(this)" style="padding:2px 4px; font-size:9px; border-radius:3px; color:var(--yellow);" title="Calculadora de 1RM e Intensidad %">🎯 %RM</button>
+        </div>
         <input type="number" placeholder="60" class="blk-descanso" value="${data?.descanso||''}" min="15" />
         <input type="text" placeholder="Agarre neutro..." class="blk-notas" value="${data?.notes||data?.notas||''}" />
         <button type="button" class="btn-remove-block" onclick="document.getElementById('${id}').remove();reNumerarBloques()" title="Eliminar">✕</button>
@@ -2464,7 +2467,73 @@
       renderBibliotecaGrid(BIBLIOTECA[grupo] || []);
     }
   };
-  // --- FIN LIBRARY EDIT LOGIC ---
+  // ===================== CALCULADORA DE 1RM & INTENSIDAD =====================
+  let targetPesoInput1RM = null;
+
+  function abrirCalc1RMModal(btn) {
+    const row = btn.closest('.exercise-block');
+    if (!row) return;
+    targetPesoInput1RM = row.querySelector('.blk-peso');
+
+    const uid = document.getElementById('sel-usuario').value;
+    const u = DB.usuarios.find(x => x.id === uid);
+    let defaultRM = 100;
+    
+    const exNameInput = row.querySelector('.blk-nombre');
+    const exName = exNameInput ? exNameInput.value.trim().toLowerCase() : '';
+    
+    if (u && u.prs && exName && u.prs[exName]) {
+      defaultRM = u.prs[exName].rm || 100;
+    }
+
+    document.getElementById('calc-rm-input').value = defaultRM;
+    aplicarPct1RM(70);
+    document.getElementById('modal-calc-1rm').style.display = 'flex';
+  }
+
+  function aplicarPct1RM(pct) {
+    const rm = parseFloat(document.getElementById('calc-rm-input').value) || 100;
+    const pesoCalculado = Math.round((rm * pct) / 100);
+    document.getElementById('calc-rm-result').textContent = `Intensidad ${pct}% (${pct>=85?'Fuerza':pct>=70?'Hipertrofia':'Resistencia'}) = ${pesoCalculado} kg`;
+    
+    if (targetPesoInput1RM) {
+      targetPesoInput1RM.value = pesoCalculado;
+    }
+  }
 </script>
+
+<!-- =================== MODAL CALCULADORA 1RM E INTENSIDAD =================== -->
+<div class="modal-overlay" id="modal-calc-1rm" style="display:none; z-index:3500;">
+  <div class="modal" style="max-width:380px; width:90vw; background:#0d111a; border:1px solid rgba(255,255,255,0.15); border-radius:16px; padding:20px; text-align:center;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="margin:0; font-size:15px; color:#fff; font-weight:800;">🎯 Calculadora 1RM % Intensidad</h3>
+      <button type="button" onclick="document.getElementById('modal-calc-1rm').style.display='none'" style="background:none; border:none; color:#fff; font-size:16px; cursor:pointer;">✕</button>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:12px; text-align:left;">
+      <div>
+        <label style="font-size:11px; color:var(--text-muted);">1RM Máximo del Cliente (kg):</label>
+        <input type="number" id="calc-rm-input" value="100" oninput="aplicarPct1RM(70)" style="width:100%; padding:8px; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff; font-weight:800; margin-top:4px;" />
+      </div>
+
+      <div style="font-size:11px; color:var(--text-muted);">Selecciona la intensidad deseada (% 1RM):</div>
+      
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <button type="button" class="btn-ghost" onclick="aplicarPct1RM(60)" style="font-size:11px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;">⚡ 60% (Calentamiento)</button>
+        <button type="button" class="btn-ghost" onclick="aplicarPct1RM(70)" style="font-size:11px; border:1px solid var(--pink); color:var(--pink); cursor:pointer;">💪 70% (Hipertrofia)</button>
+        <button type="button" class="btn-ghost" onclick="aplicarPct1RM(80)" style="font-size:11px; border:1px solid var(--yellow); color:var(--yellow); cursor:pointer;">🔥 80% (Fuerza)</button>
+        <button type="button" class="btn-ghost" onclick="aplicarPct1RM(90)" style="font-size:11px; border:1px solid var(--red); color:var(--red); cursor:pointer;">🚀 90% (Máxima)</button>
+      </div>
+
+      <div id="calc-rm-result" style="text-align:center; font-size:14px; font-weight:800; color:#00e676; margin-top:8px; background:rgba(0,230,118,0.1); padding:8px; border-radius:8px; border:1px solid rgba(0,230,118,0.3);">
+        Peso Sugerido: 70 kg
+      </div>
+
+      <button type="button" class="btn-primary" onclick="document.getElementById('modal-calc-1rm').style.display='none'; showToast('✅ Carga aplicada a la rutina');" style="margin-top:4px; padding:8px; border-radius:8px; font-weight:800; cursor:pointer;">
+        ✓ Aplicar Peso a la Rutina
+      </button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

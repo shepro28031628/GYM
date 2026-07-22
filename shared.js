@@ -745,6 +745,53 @@ function cargarBackup(event) {
   reader.readAsText(file);
 }
 
+// ===================== CALCULADORA DE 1RM & GESTIÓN DE PRS =====================
+function calcular1RM(peso, reps) {
+  const p = parseFloat(peso) || 0;
+  const r = parseInt(reps) || 1;
+  if (p <= 0) return 0;
+  if (r === 1) return Math.round(p);
+  // Fórmula de Epley: 1RM = Peso * (1 + reps/30)
+  return Math.round(p * (1 + (r / 30)));
+}
+
+function obtenerPesoPorPorcentaje(rm, pct) {
+  const r = parseFloat(rm) || 0;
+  const p = parseFloat(pct) || 100;
+  return Math.round((r * p) / 100);
+}
+
+function registrarPR(usuarioId, ejercicioNombre, peso, reps) {
+  if (!usuarioId || !ejercicioNombre || !peso) return false;
+  const u = DB.usuarios.find(x => x.id === usuarioId);
+  if (!u) return false;
+
+  if (!u.prs) u.prs = {};
+  const rmCalculado = calcular1RM(peso, reps);
+  const normKey = ejercicioNombre.trim().toLowerCase();
+
+  const prActual = u.prs[normKey] || { rm: 0, peso: 0, reps: 0 };
+  let esNuevoRecord = false;
+
+  if (rmCalculado > prActual.rm) {
+    u.prs[normKey] = {
+      nombre: ejercicioNombre,
+      rm: rmCalculado,
+      peso: parseFloat(peso),
+      reps: parseInt(reps),
+      fecha: new Date().toISOString().split('T')[0]
+    };
+    esNuevoRecord = true;
+    saveDB();
+
+    if (typeof otorgarPuntosYLogros === 'function') {
+      otorgarPuntosYLogros(usuarioId, 100, 'volumen_1000');
+    }
+  }
+
+  return esNuevoRecord;
+}
+
 // ============================================================
 // PWA: Registro de Service Worker, Auto-Update & Modo Offline
 // ============================================================
