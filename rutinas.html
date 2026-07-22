@@ -384,33 +384,55 @@
     'weighted': 'Con Peso'
   };
 
-  const BIBLIOTECA = {};
-
-  // Cargar el dataset de ejercicios
-  async function cargarEjercicios() {
-    try {
-      const respuesta = await fetch('./assets/exercises-dataset/data/exercises.json');
-      if (!respuesta.ok) throw new Error('HTTP status ' + respuesta.status);
-      const ejercicios = await respuesta.json();
-      RAW_EXERCISES_DATASET = ejercicios;
-
-      procesarDatasetEnBiblioteca(ejercicios);
-      renderizarEjercicios(ejercicios);
-    } catch (error) {
-      console.error('Error al cargar los ejercicios:', error);
-    }
-  }
+  // Base inicial garantizada para evitar pantalla vacía mientras carga el dataset
+  const BIBLIOTECA = {
+    'Pecho': [
+      { nombre: 'Press de Banca', imagen: 'img/1.jpeg', reps: '4 × 10', notas: 'Mantener espalda apoyada' },
+      { nombre: 'Press Inclinado', imagen: 'img/1.jpeg', reps: '4 × 10', notas: 'Enfocar haz clavicular' },
+      { nombre: 'Aperturas con Mancuernas', imagen: 'img/1.jpeg', reps: '4 × 10', notas: 'Controlar bajada' },
+      { nombre: 'Fondos en Paralelas', imagen: 'img/1.jpeg', reps: '3 × 10', notas: 'Inclinación hacia adelante' }
+    ],
+    'Espalda': [
+      { nombre: 'Jalón al Pecho', imagen: 'img/3.jpeg', reps: '4 × 10', notas: 'Llevar barra al pecho alto' },
+      { nombre: 'Remo con Barra', imagen: 'img/3.jpeg', reps: '4 × 10', notas: 'Espalda recta, inclinación 45°' },
+      { nombre: 'Dominadas', imagen: 'img/3.jpeg', reps: '4 × 10', notas: 'Subir superando la barbilla' }
+    ],
+    'Hombros': [
+      { nombre: 'Press Militar', imagen: 'img/1.jpeg', reps: '4 × 10', notas: 'Core firme, empuje vertical' },
+      { nombre: 'Elevaciones Laterales', imagen: 'img/4.jpeg', reps: '4 × 12', notas: 'Subir mancuernas hasta hombros' }
+    ],
+    'Brazos': [
+      { nombre: 'Curl de Bíceps', imagen: 'img/4.jpeg', reps: '4 × 10', notas: 'Evitar balanceos del cuerpo' },
+      { nombre: 'Extensión de Tríceps Polea', imagen: 'img/4.jpeg', reps: '4 × 10', notas: 'Codos fijos a los lados' }
+    ],
+    'Pierna': [
+      { nombre: 'Sentadilla Libre', imagen: 'img/2.jpeg', reps: '4 × 10', notas: 'Espalda neutra, bajar profundo' },
+      { nombre: 'Prensa 45°', imagen: 'img/2.jpeg', reps: '4 × 12', notas: 'No bloquear rodillas al subir' },
+      { nombre: 'Peso Muerto Rumano', imagen: 'img/2.jpeg', reps: '4 × 10', notas: 'Empuje con femoral y glúteos' }
+    ],
+    'Core / Abdomen': [
+      { nombre: 'Crunches', imagen: 'img/5.jpeg', reps: '4 × 15', notas: 'Contracción abdominal constante' },
+      { nombre: 'Plancha Isométrica', imagen: 'img/5.jpeg', reps: '4 × 45s', notas: 'Mantener alineación corporal' }
+    ],
+    'Cardio': [
+      { nombre: 'Escaladores', imagen: 'img/6.jpeg', reps: '3 × 1m', notas: 'Ritmo continuo' },
+      { nombre: 'Burpees', imagen: 'img/6.jpeg', reps: '3 × 12', notas: 'Salto explosivo al subir' }
+    ]
+  };
 
   function getExerciseMediaPaths(ej) {
     let imgPath = '';
     let gifPath = '';
 
-    if (ej.image) {
-      imgPath = `./assets/exercises-dataset/${ej.image}`;
-      gifPath = `./assets/exercises-dataset/${ej.image.replace('images/', 'gifs/').replace('.jpg', '.gif')}`;
+    if (ej.imagen) {
+      imgPath = ej.imagen;
+      gifPath = ej.gif || ej.imagen;
+    } else if (ej.image) {
+      imgPath = `assets/exercises-dataset/${ej.image}`;
+      gifPath = `assets/exercises-dataset/${ej.image.replace('images/', 'gifs/').replace('.jpg', '.gif')}`;
     } else if (ej.id) {
-      imgPath = `./assets/exercises-dataset/images/${ej.id}.jpg`;
-      gifPath = `./assets/exercises-dataset/gifs/${ej.id}.gif`;
+      imgPath = `assets/exercises-dataset/images/${ej.id}.jpg`;
+      gifPath = `assets/exercises-dataset/gifs/${ej.id}.gif`;
     } else {
       imgPath = 'img/1.jpeg';
       gifPath = 'img/1.jpeg';
@@ -420,7 +442,7 @@
   }
 
   function procesarDatasetEnBiblioteca(ejercicios) {
-    if (!Array.isArray(ejercicios)) return;
+    if (!Array.isArray(ejercicios) || ejercicios.length === 0) return;
 
     Object.keys(BIBLIOTECA).forEach(k => delete BIBLIOTECA[k]);
 
@@ -454,6 +476,26 @@
     });
 
     cargarEjerciciosCustom();
+
+    if (typeof refreshBibliotecaVisualTabs === 'function') {
+      refreshBibliotecaVisualTabs();
+    }
+  }
+
+  // Cargar el dataset de ejercicios
+  async function cargarEjercicios() {
+    try {
+      const respuesta = await fetch('assets/exercises-dataset/data/exercises.json');
+      if (!respuesta.ok) throw new Error('HTTP status ' + respuesta.status);
+      const ejercicios = await respuesta.json();
+      RAW_EXERCISES_DATASET = ejercicios;
+
+      procesarDatasetEnBiblioteca(ejercicios);
+      renderizarEjercicios(ejercicios);
+    } catch (error) {
+      console.warn('Dataset no cargado dinámicamente vía fetch, usando biblioteca base:', error);
+      cargarEjerciciosCustom();
+    }
   }
 
   function renderizarEjercicios(lista) {
@@ -587,36 +629,47 @@
   cargarEjerciciosCustom();
 
   function abrirBibliotecaVisual() {
-    const uid = selU.value; if (!uid) { showToast('Selecciona un cliente primero', 'error'); return; }
     openModal('modal-biblioteca-visual');
-    
-    // Build tabs list
+    refreshBibliotecaVisualTabs();
+  }
+
+  function refreshBibliotecaVisualTabs() {
     const tabsContainer = document.getElementById('lib-groups');
+    if (!tabsContainer) return;
+
     const categories = Object.keys(BIBLIOTECA);
-    tabsContainer.innerHTML = categories.map(cat => 
-      `<button type="button" class="lib-tab-btn" id="tab-${cat}" onclick="cambiarCategoriaBiblioteca('${cat}')">${cat}</button>`
-    ).join('');
-    
-    // Set default category to the first one
-    cambiarCategoriaBiblioteca(categories[0]);
+    if (categories.length === 0) {
+      tabsContainer.innerHTML = '<div style="color:var(--text-muted); font-size:11px; padding:10px;">Sin categorías</div>';
+      return;
+    }
+
+    tabsContainer.innerHTML = categories.map(cat => {
+      const isAct = currentLibraryCategory === cat;
+      return `<button type="button" class="lib-tab-btn ${isAct ? 'active' : ''}" id="tab-${cat.replace(/\s+/g, '_')}" onclick="cambiarCategoriaBiblioteca('${cat.replace(/'/g, "\\'")}')">${cat}</button>`;
+    }).join('');
+
+    if (!currentLibraryCategory || !categories.includes(currentLibraryCategory)) {
+      currentLibraryCategory = categories[0];
+    }
+
+    cambiarCategoriaBiblioteca(currentLibraryCategory);
   }
 
   let currentLibraryCategory = 'Pecho';
 
   function cambiarCategoriaBiblioteca(cat) {
-    currentLibraryCategory = cat;
+    currentLibraryCategory = cat || 'Pecho';
     const searchInput = document.getElementById('lib-search-input');
     if (searchInput) searchInput.value = '';
-    
-    // Set active tab
+
     document.querySelectorAll('.lib-tab-btn').forEach(btn => btn.classList.remove('active'));
-    const activeBtn = document.getElementById('tab-' + cat);
+    const activeBtn = document.getElementById('tab-' + currentLibraryCategory.replace(/\s+/g, '_'));
     if (activeBtn) activeBtn.classList.add('active');
-    
-    // Set header
-    document.getElementById('lib-current-category').textContent = cat;
-    
-    renderBibliotecaGrid(BIBLIOTECA[cat] || []);
+
+    const header = document.getElementById('lib-current-category');
+    if (header) header.textContent = currentLibraryCategory;
+
+    renderBibliotecaGrid(BIBLIOTECA[currentLibraryCategory] || []);
   }
 
   function renderBibliotecaGrid(exercises) {
