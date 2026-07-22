@@ -5,7 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EDI Personal Trainer — Creador de Rutinas</title>
   <meta name="description" content="Diseña rutinas de entrenamiento por bloques: series, repeticiones, peso y tiempo de descanso." />  <link rel="stylesheet" href="styles.css" />
-  <link rel="manifest" href="manifest.json" />
+  <script>
+    if (window.location.protocol.startsWith('http')) {
+      const l = document.createElement('link'); l.rel = 'manifest'; l.href = 'manifest.json';
+      document.head.appendChild(l);
+    }
+  </script>
   <meta name="theme-color" content="#00E5A0" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -231,11 +236,18 @@
       
       <!-- Grid explorer (right) -->
       <div style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; gap: 16px; flex-shrink:0;">
-          <h3 id="lib-current-category" style="font-size:16px; font-weight:800; color:var(--pink); margin:0;">Pecho</h3>
-          <input type="text" id="lib-search-input" placeholder="🔍 Buscar ejercicio..." oninput="filtrarEjerciciosBiblioteca()" style="width:250px; padding:6px 12px; font-size:12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:white; outline:none;" />
+        <div style="display:flex; justify-content:space-between; align-items:center; gap: 12px; flex-shrink:0; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <h3 id="lib-current-category" style="font-size:16px; font-weight:800; color:var(--pink); margin:0;">Pecho</h3>
+            <span id="lib-count-badge" style="font-size:11px; background:rgba(255,255,255,0.08); padding:4px 8px; border-radius:6px; color:var(--text-secondary);">Cargando ejercicios...</span>
+          </div>
+          <input type="text" id="lib-search-input" placeholder="🔍 Buscar por nombre, músculo o equipo..." oninput="filtrarEjerciciosBiblioteca()" style="width:240px; padding:6px 12px; font-size:12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:white; outline:none;" />
           <button type="button" class="btn-primary" onclick="abrirModalNuevoEjercicio()" style="padding:6px 12px; font-size:12px; display:flex; align-items:center; gap:6px; background:var(--grad-main); border:none; height: 32px;"><span style="font-size:14px; font-weight:700;">+</span> Nuevo Ejercicio</button>
-          <span style="font-size:11px; color:var(--text-muted); margin-left:auto;">Haz clic en un ejercicio para agregarlo directamente a tu rutina</span>
+          
+          <input type="file" id="input-json-dataset" accept=".json" style="display:none;" onchange="cargarDatasetDesdeArchivo(event)" />
+          <button type="button" class="btn-secondary" onclick="document.getElementById('input-json-dataset').click()" style="padding:6px 12px; font-size:12px; display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.08); border:1px solid var(--border); height:32px;" title="Cargar archivo exercises.json con los 1,400 ejercicios completos de hasaneyldrm/exercises-dataset">
+            📁 Sincronizar Dataset (1,400)
+          </button>
         </div>
         
         <div class="library-grid" id="lib-exercises-grid">
@@ -345,6 +357,7 @@
 </div>
 
 <div id="toast-container"></div>
+<script src="assets/exercises-dataset/data/exercises-data.js"></script>
 <script src="persist.js"></script><script src="shared.js"></script>
 <script>
   document.getElementById('sidebar-container').innerHTML = buildSidebar('rutinas');
@@ -424,12 +437,19 @@
     let imgPath = '';
     let gifPath = '';
 
-    if (ej.imagen) {
-      imgPath = ej.imagen;
-      gifPath = ej.gif || ej.imagen;
-    } else if (ej.image) {
-      imgPath = `assets/exercises-dataset/${ej.image}`;
-      gifPath = `assets/exercises-dataset/${ej.image.replace('images/', 'gifs/').replace('.jpg', '.gif')}`;
+    const src = typeof ej === 'string' ? ej : (ej.imagen || ej.image || '');
+    if (src) {
+      if (src.startsWith('data:') || src.startsWith('http')) {
+        imgPath = src;
+        gifPath = ej.gif || src;
+      } else {
+        let clean = src.replace(/^img\//, '').replace(/^assets\/exercises-dataset\//, '');
+        if (!clean.startsWith('images/') && !clean.startsWith('gifs/') && !clean.startsWith('img/')) {
+          clean = 'images/' + clean;
+        }
+        imgPath = clean.startsWith('img/') ? clean : `assets/exercises-dataset/${clean}`;
+        gifPath = clean.startsWith('img/') ? clean : `assets/exercises-dataset/${clean.replace('images/', 'gifs/').replace('.jpg', '.gif')}`;
+      }
     } else if (ej.id) {
       imgPath = `assets/exercises-dataset/images/${ej.id}.jpg`;
       gifPath = `assets/exercises-dataset/gifs/${ej.id}.gif`;
@@ -452,7 +472,7 @@
         BIBLIOTECA[grupo] = [];
       }
 
-      const nameEs = (ej.name_translations && ej.name_translations.es) || ej.name;
+      const nameEs = (ej.name_translations && ej.name_translations.es) || ej.name_es || ej.name;
       const nombreFormateado = nameEs ? (nameEs.charAt(0).toUpperCase() + nameEs.slice(1)) : 'Ejercicio';
 
       const { imgPath, gifPath } = getExerciseMediaPaths(ej);
@@ -477,25 +497,75 @@
 
     cargarEjerciciosCustom();
 
+    const badge = document.getElementById('lib-count-badge');
+    if (badge) badge.textContent = `${ejercicios.length} Ejercicios`;
+
     if (typeof refreshBibliotecaVisualTabs === 'function') {
       refreshBibliotecaVisualTabs();
     }
   }
 
-  // Cargar el dataset de ejercicios
+  function cargarDatasetDesdeArchivo(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      try {
+        const json = JSON.parse(evt.target.result);
+        if (Array.isArray(json) && json.length > 0) {
+          RAW_EXERCISES_DATASET = json;
+          procesarDatasetEnBiblioteca(json);
+          renderizarEjercicios(json);
+          try {
+            localStorage.setItem('edi_dataset_cache', JSON.stringify(json));
+          } catch(e) {}
+          showToast(`✅ ${json.length} ejercicios de hasaneyldrm/exercises-dataset cargados`);
+        } else {
+          showToast('El archivo JSON no tiene un formato de lista válido', 'error');
+        }
+      } catch (err) {
+        showToast('Error al leer el archivo JSON', 'error');
+      }
+    };
+    reader.readAsText(file);
+  }
+
   async function cargarEjercicios() {
+    const saved = localStorage.getItem('edi_dataset_cache');
+    if (saved) {
+      try {
+        const cached = JSON.parse(saved);
+        if (Array.isArray(cached) && cached.length > 0) {
+          RAW_EXERCISES_DATASET = cached;
+          procesarDatasetEnBiblioteca(cached);
+          renderizarEjercicios(cached);
+          return;
+        }
+      } catch(e) {}
+    }
+
+    if (window.EXERCISES_DATASET && Array.isArray(window.EXERCISES_DATASET) && window.EXERCISES_DATASET.length > 0) {
+      RAW_EXERCISES_DATASET = window.EXERCISES_DATASET;
+      procesarDatasetEnBiblioteca(RAW_EXERCISES_DATASET);
+      renderizarEjercicios(RAW_EXERCISES_DATASET);
+      return;
+    }
+
     try {
       const respuesta = await fetch('assets/exercises-dataset/data/exercises.json');
-      if (!respuesta.ok) throw new Error('HTTP status ' + respuesta.status);
-      const ejercicios = await respuesta.json();
-      RAW_EXERCISES_DATASET = ejercicios;
+      if (respuesta.ok) {
+        const ejercicios = await respuesta.json();
+        if (Array.isArray(ejercicios) && ejercicios.length > 0) {
+          RAW_EXERCISES_DATASET = ejercicios;
+          procesarDatasetEnBiblioteca(ejercicios);
+          renderizarEjercicios(ejercicios);
+          return;
+        }
+      }
+    } catch (e) {}
 
-      procesarDatasetEnBiblioteca(ejercicios);
-      renderizarEjercicios(ejercicios);
-    } catch (error) {
-      console.warn('Dataset no cargado dinámicamente vía fetch, usando biblioteca base:', error);
-      cargarEjerciciosCustom();
-    }
+    cargarEjerciciosCustom();
   }
 
   function renderizarEjercicios(lista) {
@@ -508,7 +578,7 @@
 
     itemsToRender.forEach(ejercicio => {
       const { imgPath, gifPath } = getExerciseMediaPaths(ejercicio);
-      const nameEs = (ejercicio.name_translations && ejercicio.name_translations.es) || ejercicio.name;
+      const nameEs = (ejercicio.name_translations && ejercicio.name_translations.es) || ejercicio.name_es || ejercicio.name;
       const nombreFormateado = nameEs ? (nameEs.charAt(0).toUpperCase() + nameEs.slice(1)) : 'Ejercicio';
       const equip = EQUIPMENT_MAP[ejercicio.equipment] || ejercicio.equipment || 'General';
 
@@ -517,7 +587,7 @@
       tarjeta.style.cssText = 'background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:10px; transition:transform .2s, border-color .2s;';
       tarjeta.innerHTML = `
         <div class="imagen-box" style="position:relative; border-radius:8px; overflow:hidden; background:#080c14; height:150px; display:flex; align-items:center; justify-content:center;">
-          <img src="${imgPath}" alt="${nombreFormateado}" class="thumb-img" style="max-height:100%; max-width:100%; object-fit:contain;" onerror="this.src='${gifPath}'" onmouseenter="if('${gifPath}') this.src='${gifPath}'" onmouseleave="this.src='${imgPath}'">
+          <img src="${imgPath}" alt="${nombreFormateado}" class="thumb-img" style="max-height:100%; max-width:100%; object-fit:contain;" onerror="if(this.src!=='${gifPath}') this.src='${gifPath}'" onmouseenter="if('${gifPath}') this.src='${gifPath}'" onmouseleave="this.src='${imgPath}'">
         </div>
         <div class="info-box" style="display:flex; flex-direction:column; gap:4px; flex:1;">
           <h3 style="margin:0; font-size:14px; color:#fff; font-weight:700;">${nombreFormateado}</h3>
@@ -548,7 +618,7 @@
       const raw = RAW_EXERCISES_DATASET.find(x => x.id === ejId || x.name === ejId);
       if (raw) {
         const { imgPath } = getExerciseMediaPaths(raw);
-        const nameEs = (raw.name_translations && raw.name_translations.es) || raw.name;
+        const nameEs = (raw.name_translations && raw.name_translations.es) || raw.name_es || raw.name;
         ejEncontrado = {
           nombre: nameEs ? (nameEs.charAt(0).toUpperCase() + nameEs.slice(1)) : raw.name,
           imagen: imgPath,
@@ -582,10 +652,8 @@
     showToast(`✅ ${ejEncontrado.nombre} agregado a tu rutina`);
   }
 
-  // Load custom exercises from localStorage and merge into BIBLIOTECA
   function cargarEjerciciosCustom() {
     try {
-      // First, load custom muscle groups
       const customGroups = localStorage.getItem('edi_custom_groups');
       if (customGroups) {
         const parsedGroups = JSON.parse(customGroups);
@@ -623,6 +691,11 @@
     } catch(e) {
       console.error("Error al cargar ejercicios/grupos custom:", e);
     }
+
+    // Actualizar inmediatamente el contador en la interfaz
+    const totalEj = Object.values(BIBLIOTECA).flat().length;
+    const badge = document.getElementById('lib-count-badge');
+    if (badge) badge.textContent = `${totalEj} Ejercicios`;
   }
 
   // Load custom exercises immediately
@@ -691,8 +764,7 @@
         }
       }
 
-      const imgPath = ej.imagen ? (ej.imagen.startsWith('data:') || ej.imagen.startsWith('.') || ej.imagen.startsWith('assets/') ? ej.imagen : `img/${ej.imagen}`) : 'img/1.jpeg';
-      const gifPath = ej.gif || imgPath;
+      const { imgPath, gifPath } = getExerciseMediaPaths(ej);
       const safeId = ej.id || ej.nombre.replace(/'/g, "\\'");
 
       return `
@@ -863,7 +935,7 @@
               ${r.ejercicios.map((ej,i)=>`<tr>
                 <td style="color:var(--text-muted);font-size:11px">${i+1}</td>
                 <td>
-                  ${ej.imagen ? `<img src="${ej.imagen.startsWith('data:image') ? ej.imagen : `img/${ej.imagen}`}" style="width:45px; height:45px; object-fit:cover; border-radius:6px; border:1px solid var(--border);" />` : '<span style="color:var(--text-muted); font-size:11px;">—</span>'}
+                  ${ej.imagen ? `<img src="${getExerciseMediaPaths(ej).imgPath}" style="width:45px; height:45px; object-fit:cover; border-radius:6px; border:1px solid var(--border);" onerror="this.src='${getExerciseMediaPaths(ej).gifPath}'" />` : '<span style="color:var(--text-muted); font-size:11px;">—</span>'}
                 </td>
                 <td><strong>${ej.nombre}</strong></td>
                 <td><span class="tag-muscular">${ej.grupo}</span></td>
@@ -943,7 +1015,15 @@
     div.className = 'exercise-block';
     div.id = id;
     
-    const imgPath = data?.imagen ? (data.imagen.startsWith('data:image') ? data.imagen : `img/${data.imagen}`) : '';
+    let imgPath = '';
+    if (data?.imagen) {
+      const src = data.imagen;
+      if (src.startsWith('data:') || src.startsWith('http') || src.startsWith('assets/') || src.startsWith('img/')) {
+        imgPath = src;
+      } else {
+        imgPath = `assets/exercises-dataset/${src}`;
+      }
+    }
     const imgDisplay = imgPath ? 'block' : 'none';
 
     div.innerHTML = `
@@ -1009,7 +1089,7 @@
             const preview = block.querySelector('.row-img-preview');
             if (fileInput && preview && !fileInput.dataset.base64) {
               fileInput.dataset.base64 = ej.imagen;
-              preview.src = ej.imagen.startsWith('data:image') ? ej.imagen : `img/${ej.imagen}`;
+              preview.src = getExerciseMediaPaths(ej).imgPath;
               preview.style.display = 'block';
             }
           }
@@ -1500,15 +1580,35 @@
     });
   }
 
+  function imageToBlob(src) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = function() {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth || img.width || 300;
+          canvas.height = img.naturalHeight || img.height || 300;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.9);
+        } catch(e) {
+          resolve(null);
+        }
+      };
+      img.onerror = function() {
+        resolve(null);
+      };
+      img.src = src;
+    });
+  }
+
   async function getExerciseFile(ej, index) {
-    if (!ej.imagen) return null;
-    const fullSrc = (ej.imagen.startsWith('data:') || ej.imagen.startsWith('http') || ej.imagen.startsWith('img/')) ? ej.imagen : 'img/' + ej.imagen;
+    if (!ej.imagen && !ej.image) return null;
+    const fullSrc = getExerciseMediaPaths(ej).imgPath;
     try {
-      const res = await fetch(fullSrc);
-      const blob = await res.blob();
-      const mime = blob.type || 'image/jpeg';
-      const ext = mime.includes('png') ? 'png' : 'jpeg';
-      return new File([blob], `${index + 1}_${ej.nombre.replace(/[^a-zA-Z0-9]/g, '_')}.${ext}`, { type: mime });
+      const blob = await imageToBlob(fullSrc);
+      if (!blob) return null;
+      return new File([blob], `${index + 1}_${(ej.nombre||'ejercicio').replace(/[^a-zA-Z0-9]/g, '_')}.jpg`, { type: 'image/jpeg' });
     } catch(e) {
       return null;
     }
@@ -2232,35 +2332,39 @@
   let editingExerciseOriginalName = null;
   let editingExerciseOriginalGroup = null;
 
-  // Override renderBibliotecaGrid to add edit button
+  // Override renderBibliotecaGrid to add edit button & dataset support
   const _oldRenderBibliotecaGrid = renderBibliotecaGrid;
   renderBibliotecaGrid = function(exercises) {
     const grid = document.getElementById('lib-exercises-grid');
-    if (exercises.length === 0) {
+    if (!grid) return;
+    if (!exercises || exercises.length === 0) {
       grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--text-muted); padding:40px;">No hay ejercicios que coincidan.</div>`;
       return;
     }
     
     grid.innerHTML = exercises.map(ej => {
-      let grupo = document.getElementById('lib-current-category') ? document.getElementById('lib-current-category').textContent : '';
+      let grupo = currentLibraryCategory;
       for (const [g, list] of Object.entries(BIBLIOTECA)) {
-        if (list.some(x => x.nombre === ej.nombre)) {
+        if (list.some(x => x.nombre === ej.nombre || (ej.id && x.id === ej.id))) {
           grupo = g; break;
         }
       }
-      const imgPath = ej.imagen ? (ej.imagen.startsWith('data:image') ? ej.imagen : `img/${ej.imagen}`) : 'img/1.jpeg';
+      
+      const { imgPath, gifPath } = getExerciseMediaPaths(ej);
+      const safeId = ej.id || ej.nombre.replace(/'/g, "\\'");
+
       return `
-        <div class="lib-card" onclick="seleccionarEjercicioBiblioteca('${grupo}', '${ej.nombre}')">
-          <div class="lib-img-container">
-            <img class="lib-img" src="${imgPath}" alt="${ej.nombre}" />
+        <div class="lib-card" onclick="seleccionarEjercicioBiblioteca('${grupo.replace(/'/g, "\\'")}', '${safeId}')">
+          <div class="lib-img-container" style="position:relative; border-radius:8px; overflow:hidden; background:#080c14; height:140px; display:flex; align-items:center; justify-content:center;">
+            <img class="lib-img" src="${imgPath}" alt="${ej.nombre}" style="max-height:100%; max-width:100%; object-fit:contain;" onerror="if(this.src!=='${gifPath}') this.src='${gifPath}'" onmouseenter="if('${gifPath}') this.src='${gifPath}'" onmouseleave="this.src='${imgPath}'" />
           </div>
-          <div class="lib-card-body">
-            <div class="lib-card-name">${ej.nombre}</div>
-            <div class="lib-card-reps">👉 Series y reps: ${ej.reps}</div>
-            <div class="lib-card-notes">${ej.notas || ej.notes || 'Sin notas especiales.'}</div>
+          <div class="lib-card-body" style="display:flex; flex-direction:column; gap:4px; padding-top:8px;">
+            <div class="lib-card-name" style="font-weight:700; font-size:13px; color:#fff;">${ej.nombre}</div>
+            <div class="lib-card-reps" style="font-size:11px; color:var(--pink);">👉 ${ej.reps || '4 × 10'}</div>
+            <div class="lib-card-notes" style="font-size:11px; color:var(--text-secondary); line-height:1.3;">${ej.notas || 'Sin notas especiales.'}</div>
             <div style="display:flex; gap:8px; margin-top:10px;">
               <button type="button" class="lib-card-btn" style="flex:1;">＋ Agregar</button>
-              <button type="button" class="btn-ghost" style="padding:6px; background:rgba(255,255,255,0.05);" onclick="event.stopPropagation(); editarEjercicioBiblioteca('${grupo}', '${ej.nombre}')">✏️</button>
+              <button type="button" class="btn-ghost" style="padding:6px; background:rgba(255,255,255,0.05);" onclick="event.stopPropagation(); editarEjercicioBiblioteca('${grupo.replace(/'/g, "\\'")}', '${ej.nombre.replace(/'/g, "\\'")}')">✏️</button>
             </div>
           </div>
         </div>

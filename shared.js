@@ -709,7 +709,7 @@ function cargarBackup(event) {
 // ============================================================
 // PWA: Registro de Service Worker, Auto-Update & Modo Offline
 // ============================================================
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
       .then(reg => {

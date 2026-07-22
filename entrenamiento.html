@@ -6,7 +6,15 @@
   <title>EDI Personal Trainer — Entrenamiento en Vivo</title>
   <meta name="description" content="Modo entrenamiento activo: temporizador de descanso, registro de series y sonido de fin de descanso." />
   <link rel="stylesheet" href="styles.css" />
-  <link rel="manifest" href="manifest.json" />
+  <script>
+    if (window.location.protocol.startsWith('http')) {
+      const l = document.createElement('link'); l.rel = 'manifest'; l.href = 'manifest.json';
+      document.head.appendChild(l);
+    }
+  </script>
+  <!-- MediaPipe Pose & Camera Utils para IA Gym Trainer (Tracking corporal y contador) -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
   <meta name="theme-color" content="#00E5A0" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -231,6 +239,34 @@
     document.getElementById('preview-rutina').innerHTML = `<div class="empty-state"><span class="empty-icon">💪</span><h3>Selecciona un cliente y una rutina</h3><p>Una vez seleccionados, inicia la sesión para activar el modo de entrenamiento</p></div>`;
   }
 
+  function getExerciseMediaPaths(ej) {
+    let imgPath = '';
+    let gifPath = '';
+
+    const src = typeof ej === 'string' ? ej : (ej.imagen || ej.image || '');
+    if (src) {
+      if (src.startsWith('data:') || src.startsWith('http')) {
+        imgPath = src;
+        gifPath = ej.gif || src;
+      } else {
+        let clean = src.replace(/^img\//, '').replace(/^assets\/exercises-dataset\//, '');
+        if (!clean.startsWith('images/') && !clean.startsWith('gifs/') && !clean.startsWith('img/')) {
+          clean = 'images/' + clean;
+        }
+        imgPath = clean.startsWith('img/') ? clean : `assets/exercises-dataset/${clean}`;
+        gifPath = clean.startsWith('img/') ? clean : `assets/exercises-dataset/${clean.replace('images/', 'gifs/').replace('.jpg', '.gif')}`;
+      }
+    } else if (ej.id) {
+      imgPath = `assets/exercises-dataset/images/${ej.id}.jpg`;
+      gifPath = `assets/exercises-dataset/gifs/${ej.id}.gif`;
+    } else {
+      imgPath = 'img/1.jpeg';
+      gifPath = 'img/1.jpeg';
+    }
+
+    return { imgPath, gifPath };
+  }
+
   function previewRutina() {
     const rid = document.getElementById('sel-rutina').value;
     const btn = document.getElementById('btn-iniciar');
@@ -246,17 +282,20 @@
         </div>
         <table class="ejercicios-table">
           <thead><tr><th>#</th><th>Ilustración</th><th>Ejercicio</th><th>Grupo</th><th>Series × Reps</th><th>Peso</th><th>Descanso</th></tr></thead>
-          <tbody>${r.ejercicios.map((ej,i)=>`<tr>
+          <tbody>${r.ejercicios.map((ej,i)=>{
+            const { imgPath, gifPath } = getExerciseMediaPaths(ej);
+            return `<tr>
             <td style="color:var(--text-muted)">${i+1}</td>
             <td>
-              ${ej.imagen ? `<img src="${ej.imagen.startsWith('data:') ? ej.imagen : 'img/' + ej.imagen}" style="width:45px; height:45px; object-fit:cover; border-radius:6px; border:1px solid var(--border);" />` : '<span style="color:var(--text-muted); font-size:11px;">—</span>'}
+              ${ej.imagen ? `<img src="${imgPath}" style="width:45px; height:45px; object-fit:cover; border-radius:6px; border:1px solid var(--border);" onerror="this.src='${gifPath}'" />` : '<span style="color:var(--text-muted); font-size:11px;">—</span>'}
             </td>
             <td><strong>${ej.nombre}</strong></td>
             <td><span class="tag-muscular">${ej.grupo}</span></td>
             <td>${ej.series||'—'}</td>
             <td style="font-weight:800;color:var(--pink)">${ej.peso?ej.peso+' kg':'—'}</td>
             <td>${ej.descanso?ej.descanso+'s':'—'}</td>
-          </tr>`).join('')}</tbody>
+          </tr>`;
+          }).join('')}</tbody>
         </table>
         ${r.notes || r.notas?`<div class="rutina-notas" style="margin-top:12px">📝 ${r.notes || r.notas}</div>`:''}
       </div>`;
@@ -498,9 +537,12 @@
 
         items.push(`<div class="checklist-item ${doneClass}" id="${sid}">
           <div class="check-box" id="cb-${sid}" onclick="toggleSet('${sid}', ${descanso})">${checkChar}</div>
-          ${ej.imagen ? `<img src="${ej.imagen.startsWith('data:') ? ej.imagen : 'img/' + ej.imagen}" style="width:40px; height:40px; object-fit:cover; border-radius:6px; border:1px solid var(--border); margin: 0 10px; flex-shrink: 0;" />` : ''}
-          <div class="check-info" onclick="toggleSet('${sid}', ${descanso})">
-            <div class="check-name">${ej.nombre} — Serie ${ser}/${numSeries}</div>
+          <div style="position:relative; cursor:pointer; margin:0 8px; flex-shrink:0;" onclick="abrirGuiaIA('${sid}', ${ei}, ${ser}, ${numSeries})" title="Abrir Guía Visual en GIF e Instrucciones IA">
+            <img src="${getExerciseMediaPaths(ej).imgPath}" style="width:42px; height:42px; object-fit:cover; border-radius:6px; border:1px solid var(--border);" onerror="this.src='${getExerciseMediaPaths(ej).gifPath}'" />
+            <span style="position:absolute; bottom:-2px; right:-2px; background:var(--pink); color:#fff; border-radius:4px; padding:1px 3px; font-size:8px; font-weight:800; border:1px solid #000;">IA</span>
+          </div>
+          <div class="check-info" onclick="abrirGuiaIA('${sid}', ${ei}, ${ser}, ${numSeries})" style="cursor:pointer;">
+            <div class="check-name">${ej.nombre} — Serie ${ser}/${numSeries} <span style="font-size:10px; color:var(--pink); font-weight:700; margin-left:6px; background:rgba(255,64,129,0.12); padding:2px 6px; border-radius:4px; border:1px solid rgba(255,64,129,0.3);">👁️ Guía e IA</span></div>
             <div class="check-detail"><span class="tag-muscular" style="font-size:9px">${ej.grupo}</span> &nbsp;·&nbsp; Descanso: ${descanso}s${ultimoPesoTxt}</div>
           </div>
           <div class="check-inputs" style="display:flex; align-items:center; gap:4px;">
@@ -971,18 +1013,436 @@
     }
   }
 
+  // ============================================================
+  // IA GYM TRAINER — Modal Guiado Visual + Cámara de Postura IA
+  // ============================================================
+  let currentModalState = { sid: null, ei: null, ser: null, numSeries: null, stream: null, animFrame: null };
+
+  function abrirGuiaIA(sid, ei, ser, numSeries) {
+    const s = activeSessions[currentActiveUserId];
+    if (!s) return;
+    const r = DB.rutinas.find(x => x.id === s.rutinaId);
+    if (!r || !r.ejercicios[ei]) return;
+
+    const ej = r.ejercicios[ei];
+    const media = getExerciseMediaPaths(ej);
+
+    currentModalState.sid = sid;
+    currentModalState.ei = ei;
+    currentModalState.ser = ser;
+    currentModalState.numSeries = numSeries;
+
+    aiPoseState.exerciseName = ej.nombre || 'Ejercicio';
+    aiPoseState.repCount = 0;
+    aiPoseState.stage = 'up';
+
+    document.getElementById('ai-modal-title').textContent = ej.nombre;
+    document.getElementById('ai-modal-group').textContent = ej.grupo || 'General';
+    document.getElementById('ai-modal-target').textContent = `Serie ${ser} de ${numSeries} · Descanso: ${ej.descanso||60}s`;
+    document.getElementById('ai-modal-gif').src = media.gifPath || media.imgPath;
+    
+    // Configurar repeticiones y peso sugerido
+    const setVal = s.setsState[sid] || { reps: 10, peso: ej.peso || 0 };
+    document.getElementById('ai-modal-serie-text').textContent = `Serie ${ser} / ${numSeries}`;
+    document.getElementById('ai-modal-reps-text').textContent = `${setVal.reps || 10} reps`;
+    document.getElementById('ai-modal-peso-text').textContent = `${setVal.peso || ej.peso || 0} kg`;
+
+    // Pasos e instrucciones del ejercicio
+    const stepsDiv = document.getElementById('ai-modal-steps');
+    const rawMatch = (window.RAW_EXERCISES_DATASET || window.EXERCISES_DATASET || []).find(x => x.id === ej.id || x.name === ej.nombreOriginal || x.name === ej.nombre);
+    
+    let stepsHtml = '';
+    if (rawMatch && rawMatch.instruction_steps && rawMatch.instruction_steps.es) {
+      stepsHtml = rawMatch.instruction_steps.es.map((step, i) => `
+        <div style="display:flex; gap:8px; align-items:flex-start;">
+          <span style="background:var(--pink); color:#fff; border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; flex-shrink:0; margin-top:2px;">${i+1}</span>
+          <span>${step}</span>
+        </div>
+      `).join('');
+    } else {
+      stepsHtml = `
+        <div style="display:flex; gap:8px; align-items:flex-start;">
+          <span style="background:var(--pink); color:#fff; border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; flex-shrink:0; margin-top:2px;">1</span>
+          <span>Mantén una postura erguida, la espalda recta y el abdomen contraído durante todo el rango de movimiento.</span>
+        </div>
+        <div style="display:flex; gap:8px; align-items:flex-start;">
+          <span style="background:var(--pink); color:#fff; border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; flex-shrink:0; margin-top:2px;">2</span>
+          <span>Inhala al bajar o iniciar la fase excéntrica y exhala con potencia al realizar el esfuerzo principal.</span>
+        </div>
+      `;
+    }
+    stepsDiv.innerHTML = stepsHtml;
+
+    document.getElementById('modal-guia-ejercicio').style.display = 'flex';
+  }
+
+  function cerrarGuiaIA() {
+    document.getElementById('modal-guia-ejercicio').style.display = 'none';
+    detenerCamaraIA();
+  }
+
+  // ============================================================
+  // IA GYM TRAINER — MediaPipe Pose Engine & Rep Counter
+  // ============================================================
+  let aiPoseEngine = null;
+  let aiCameraInstance = null;
+  let aiPoseState = {
+    exerciseName: '',
+    repCount: 0,
+    stage: 'up',
+    angle: 0
+  };
+
+  function calcularAngulo3Puntos(A, B, C) {
+    if (!A || !B || !C) return 180;
+    const radians = Math.atan2(C.y - B.y, C.x - B.x) - Math.atan2(A.y - B.y, A.x - B.x);
+    let angle = Math.abs(radians * 180.0 / Math.PI);
+    if (angle > 180.0) angle = 360.0 - angle;
+    return angle;
+  }
+
+  function onPoseResults(results) {
+    const canvas = document.getElementById('ai-canvas');
+    const video = document.getElementById('ai-webcam');
+    const badge = document.getElementById('ai-feedback-badge');
+    if (!canvas || !video) return;
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (!results.poseLandmarks) {
+      if (badge) {
+        badge.style.display = 'block';
+        badge.innerHTML = '⚠️ Sitúate frente a la cámara';
+      }
+      return;
+    }
+
+    const lm = results.poseLandmarks;
+    const w = canvas.width, h = canvas.height;
+
+    // Puntos de articulaciones clave
+    const pRightShoulder = lm[12], pLeftShoulder = lm[11];
+    const pRightElbow = lm[14], pLeftElbow = lm[13];
+    const pRightWrist = lm[16], pLeftWrist = lm[15];
+    const pRightHip = lm[24], pLeftHip = lm[23];
+    const pRightKnee = lm[26], pLeftKnee = lm[25];
+    const pRightAnkle = lm[28], pLeftAnkle = lm[27];
+
+    let angleRightLeg = calcularAngulo3Puntos(pRightHip, pRightKnee, pRightAnkle);
+    let angleRightArm = calcularAngulo3Puntos(pRightShoulder, pRightElbow, pRightWrist);
+    
+    let currentAngle = angleRightLeg < 160 ? angleRightLeg : angleRightArm;
+    aiPoseState.angle = Math.round(currentAngle);
+
+    // Detección de repetición por flexión
+    if (currentAngle < 105) {
+      if (aiPoseState.stage === 'up') {
+        aiPoseState.stage = 'down';
+      }
+    }
+    if (currentAngle > 145 && aiPoseState.stage === 'down') {
+      aiPoseState.stage = 'up';
+      aiPoseState.repCount++;
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.frequency.value = 600; gain.gain.value = 0.1;
+        osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+      } catch(e) {}
+    }
+
+    if (badge) {
+      badge.style.display = 'block';
+      badge.innerHTML = `✅ Postura Correcta · Reps IA: <strong style="font-size:14px; color:#fff;">${aiPoseState.repCount}</strong> (Ángulo: ${aiPoseState.angle}°)`;
+    }
+
+    // Dibujar esqueleto articular exactamente como en AI Gym Trainer
+    const connections = [
+      [11, 12], [11, 13], [13, 15], [12, 14], [14, 16], // Brazos y Hombros
+      [11, 23], [12, 24], [23, 24],                    // Torso y Cadera
+      [23, 25], [25, 27], [24, 26], [26, 28]           // Piernas y Rodillas
+    ];
+
+    ctx.lineWidth = 4;
+    connections.forEach(([i, j]) => {
+      if (lm[i] && lm[j] && lm[i].visibility > 0.4 && lm[j].visibility > 0.4) {
+        ctx.strokeStyle = (i >= 23) ? '#ffea00' : '#00e5ff';
+        ctx.beginPath();
+        ctx.moveTo(lm[i].x * w, lm[i].y * h);
+        ctx.lineTo(lm[j].x * w, lm[j].y * h);
+        ctx.stroke();
+      }
+    });
+
+    [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28].forEach(i => {
+      if (lm[i] && lm[i].visibility > 0.4) {
+        ctx.fillStyle = '#ff4081';
+        ctx.beginPath();
+        ctx.arc(lm[i].x * w, lm[i].y * h, 6, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    });
+
+    // Actualizar Tarjeta Overlay HTML (100% al derecho sin distorsión de espejo)
+    const overlayCard = document.getElementById('ai-live-card-overlay');
+    if (overlayCard) {
+      overlayCard.style.display = 'flex';
+      const elName = document.getElementById('ai-card-ex-name');
+      const elReps = document.getElementById('ai-card-reps');
+      const elStatus = document.getElementById('ai-card-status');
+      
+      if (elName) elName.textContent = `Ejercicio: ${aiPoseState.exerciseName || 'Ejercicio'}`;
+      if (elReps) elReps.textContent = `Reps Detectadas: ${aiPoseState.repCount}`;
+      if (elStatus) elStatus.textContent = aiPoseState.stage === 'down' ? 'Baja más profundo... ⬇️' : 'Estado: Forma Correcta ✅';
+    }
+  }
+
+  async function toggleCamaraIA() {
+    const btn = document.getElementById('btn-toggle-cam');
+    const video = document.getElementById('ai-webcam');
+    const placeholder = document.getElementById('ai-cam-placeholder');
+    const badge = document.getElementById('ai-feedback-badge');
+
+    if (currentModalState.stream || aiCameraInstance) {
+      detenerCamaraIA();
+      btn.textContent = '📹 Activar Cámara';
+      btn.style.background = 'rgba(255,255,255,0.08)';
+      placeholder.style.display = 'block';
+      video.style.display = 'none';
+      if (badge) badge.style.display = 'none';
+      return;
+    }
+
+    try {
+      btn.textContent = '⏳ Conectando Cámara e IA...';
+
+      if (typeof Pose !== 'undefined' && typeof Camera !== 'undefined') {
+        if (!aiPoseEngine) {
+          aiPoseEngine = new Pose({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+          });
+          aiPoseEngine.setOptions({
+            modelComplexity: 1,
+            smoothLandmarks: true,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+          });
+          aiPoseEngine.onResults(onPoseResults);
+        }
+
+        aiCameraInstance = new Camera(video, {
+          onFrame: async () => {
+            if (aiPoseEngine && video.readyState >= 2) {
+              await aiPoseEngine.send({ image: video });
+            }
+          },
+          width: 640,
+          height: 480
+        });
+        await aiCameraInstance.start();
+        currentModalState.stream = true;
+      } else {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+        currentModalState.stream = stream;
+        video.srcObject = stream;
+        iniciarPoseCanvasOverlayFallback();
+      }
+
+      video.style.display = 'block';
+      placeholder.style.display = 'none';
+      btn.textContent = '🛑 Detener Cámara';
+      btn.style.background = 'rgba(255,23,68,0.2)';
+
+      if (badge) {
+        badge.style.display = 'block';
+        badge.innerHTML = '⚡ Asistente de IA Activo · Postura monitoreada';
+      }
+
+      showToast('📹 Cámara IA con Tracking Corporal activada');
+    } catch(err) {
+      btn.textContent = '📹 Activar Cámara';
+      showToast('No se pudo acceder a la cámara web. Asegúrate de otorgar permisos.', 'error');
+    }
+  }
+
+  function detenerCamaraIA() {
+    const overlayCard = document.getElementById('ai-live-card-overlay');
+    if (overlayCard) overlayCard.style.display = 'none';
+
+    if (aiCameraInstance) {
+      try { aiCameraInstance.stop(); } catch(e) {}
+      aiCameraInstance = null;
+    }
+    if (currentModalState.stream && typeof currentModalState.stream !== 'boolean') {
+      currentModalState.stream.getTracks().forEach(t => t.stop());
+    }
+    currentModalState.stream = null;
+    if (currentModalState.animFrame) {
+      cancelAnimationFrame(currentModalState.animFrame);
+      currentModalState.animFrame = null;
+    }
+  }
+
+  function iniciarPoseCanvasOverlayFallback() {
+    const video = document.getElementById('ai-webcam');
+    const canvas = document.getElementById('ai-canvas');
+    if (!canvas || !video) return;
+    const ctx = canvas.getContext('2d');
+
+    function drawLoop() {
+      if (!currentModalState.stream) return;
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const t = Date.now() / 800;
+      const scanY = (Math.sin(t) + 1) / 2 * canvas.height;
+
+      ctx.strokeStyle = 'rgba(0, 230, 118, 0.6)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, scanY);
+      ctx.lineTo(canvas.width, scanY);
+      ctx.stroke();
+
+      currentModalState.animFrame = requestAnimationFrame(drawLoop);
+    }
+    drawLoop();
+  }
+
+  function completarSerieModalIA() {
+    if (currentModalState.sid) {
+      if (aiPoseState.repCount > 0) {
+        const repsInput = document.getElementById(`reps-${currentModalState.sid}`);
+        if (repsInput) repsInput.value = aiPoseState.repCount;
+      }
+      toggleSet(currentModalState.sid, 60);
+      showToast('✅ Serie completada correctamente con seguimiento de IA');
+      cerrarGuiaIA();
+    }
+  }
+
   renderHistorial();
   loadActiveSessions();
   initMultiSessionTimer();
   renderActiveSessionsBar();
   showCurrentActiveSessionView();
 
-  // Escuchar cambios de base de datos desde otras pestañas para actualizar la UI
   window.addEventListener('edi_db_loaded', () => {
     renderHistorial();
     renderActiveSessionsBar();
     showCurrentActiveSessionView();
   });
 </script>
+
+<!-- =================== MODAL GUIADO POR IA Y CÁMARA DE POSTURA =================== -->
+<div class="modal-overlay" id="modal-guia-ejercicio" style="z-index: 3000; display:none;">
+  <div class="modal modal-lg" style="max-width: 1050px; width: 95vw; height: 88vh; display: flex; flex-direction: column; background: #0c0f17; border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.9);">
+    
+    <!-- Encabezado -->
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 24px; border-bottom:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.02);">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:24px;">🏋️‍♂️</span>
+        <div>
+          <h2 id="ai-modal-title" style="margin:0; font-size:18px; font-weight:800; color:#fff;">Ejercicio</h2>
+          <div style="display:flex; gap:8px; align-items:center; margin-top:2px;">
+            <span id="ai-modal-group" class="tag-muscular" style="font-size:10px;">Pecho</span>
+            <span id="ai-modal-target" style="font-size:11px; color:var(--text-secondary);">Serie 1</span>
+          </div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="cerrarGuiaIA()" style="background:rgba(255,255,255,0.08); border:none; color:#fff; width:32px; height:32px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+    </div>
+
+    <!-- Cuerpo principal Split -->
+    <div style="flex:1; display:flex; min-height:0; overflow:hidden;">
+      
+      <!-- Panel Izquierdo: Guía Visual GIF gigante + Instrucciones -->
+      <div style="flex:1; padding:20px; overflow-y:auto; border-right:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; gap:16px; background:rgba(0,0,0,0.2);">
+        <div style="position:relative; width:100%; height:260px; background:#04060a; border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center;">
+          <img id="ai-modal-gif" src="" style="max-height:100%; max-width:100%; object-fit:contain;" alt="Animación del ejercicio" />
+          <div style="position:absolute; bottom:8px; left:8px; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); padding:4px 10px; border-radius:6px; font-size:10px; color:#ff4081; font-weight:700; display:flex; align-items:center; gap:6px;">
+            <span style="width:6px; height:6px; border-radius:50%; background:#ff4081;"></span> Guía Visual en Animación
+          </div>
+        </div>
+
+        <div>
+          <h4 style="margin:0 0 8px 0; font-size:13px; color:var(--pink); text-transform:uppercase; letter-spacing:0.5px;">Técnica e Instrucciones Paso a Paso</h4>
+          <div id="ai-modal-steps" style="font-size:12px; color:var(--text-secondary); line-height:1.6; display:flex; flex-direction:column; gap:8px;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel Derecho: Cámara Web IA y Asistente -->
+      <div style="flex:1.1; padding:20px; display:flex; flex-direction:column; gap:16px; background:#080b12;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="width:8px; height:8px; border-radius:50%; background:#00e676; box-shadow:0 0 8px #00e676;" id="ai-camera-dot"></span>
+            <h4 style="margin:0; font-size:13px; font-weight:700; color:#fff;">Asistente de Cámara IA (Pose Detector)</h4>
+          </div>
+          <button type="button" id="btn-toggle-cam" onclick="toggleCamaraIA()" class="btn-secondary" style="padding:6px 12px; font-size:11px; border-radius:6px; border:1px solid rgba(255,255,255,0.15); cursor:pointer;">
+            📹 Activar Cámara
+          </button>
+        </div>
+
+        <!-- Video Web Cam & Canvas Overlay -->
+        <div style="position:relative; width:100%; height:260px; background:#04060a; border-radius:12px; overflow:hidden; border:1px solid rgba(0,230,118,0.2); display:flex; align-items:center; justify-content:center;">
+          <video id="ai-webcam" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover; display:none; transform: scaleX(-1);"></video>
+          <canvas id="ai-canvas" style="position:absolute; top:0; left:0; width:100%; height:100%; transform: scaleX(-1); pointer-events:none;"></canvas>
+          
+          <div id="ai-cam-placeholder" style="text-align:center; color:var(--text-muted); padding:20px;">
+            <div style="font-size:36px; margin-bottom:8px;">📷</div>
+            <p style="margin:0; font-size:12px; color:var(--text-secondary);">Haz clic en <strong>Activar Cámara</strong> para verificar tu ejecución y postura en tiempo real.</p>
+          </div>
+
+          <div id="ai-feedback-badge" style="position:absolute; top:12px; left:12px; background:rgba(0,230,118,0.15); border:1px solid #00e676; color:#00e676; backdrop-filter:blur(8px); padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; display:none;">
+            ⚡ Asistente de IA Activo · Postura Monitoreada
+          </div>
+
+          <!-- Tarjeta Overlay en vivo estilo AI-Gym-Trainer (Texto 100% al derecho sin espejo) -->
+          <div id="ai-live-card-overlay" style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.85); border:1px solid #00e676; border-radius:8px; padding:10px 14px; display:none; flex-direction:column; gap:4px; font-family:sans-serif; backdrop-filter:blur(8px); z-index:10; pointer-events:none;">
+            <div style="font-size:11px; font-weight:800; color:#00e5ff;" id="ai-card-ex-name">Ejercicio: Sentadillas</div>
+            <div style="font-size:11px; font-weight:800; color:#ffea00;" id="ai-card-reps">Reps Detectadas: 0</div>
+            <div style="font-size:11px; font-weight:800; color:#00e676;" id="ai-card-status">Estado: Forma Correcta ✅</div>
+          </div>
+        </div>
+
+        <!-- Metricas de la serie -->
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px; display:flex; justify-content:space-around; align-items:center;">
+          <div style="text-align:center;">
+            <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Serie Actual</div>
+            <div id="ai-modal-serie-text" style="font-size:15px; font-weight:800; color:#fff;">Serie 1/4</div>
+          </div>
+          <div style="width:1px; height:24px; background:rgba(255,255,255,0.1);"></div>
+          <div style="text-align:center;">
+            <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Objetivo Reps</div>
+            <div id="ai-modal-reps-text" style="font-size:15px; font-weight:800; color:var(--pink);">10 reps</div>
+          </div>
+          <div style="width:1px; height:24px; background:rgba(255,255,255,0.1);"></div>
+          <div style="text-align:center;">
+            <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Peso Sugerido</div>
+            <div id="ai-modal-peso-text" style="font-size:15px; font-weight:800; color:var(--yellow);">20 kg</div>
+          </div>
+        </div>
+
+        <button type="button" class="btn-primary" onclick="completarSerieModalIA()" style="padding:12px; font-size:14px; font-weight:800; background:var(--grad-main); border:none; border-radius:10px; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; margin-top:auto;">
+          ✓ Marcar Serie Completada
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
 </body>
 </html>
