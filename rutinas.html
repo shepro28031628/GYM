@@ -354,83 +354,191 @@
   const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const MESES_ICONS = { Enero:'❄️',Febrero:'💝',Marzo:'🌿',Abril:'🌸',Mayo:'🌻',Junio:'☀️',Julio:'🏖️',Agosto:'🔥',Septiembre:'🍂',Octubre:'🎃',Noviembre:'🍁',Diciembre:'🎄' };
 
-  const BIBLIOTECA = {
-    'Pecho': [
-      { nombre: 'Peck Deck', imagen: '1.jpeg', reps: '4 × 10', notas: 'Mantener codos a la altura de hombros' },
-      { nombre: 'Apertura Centro', imagen: '1.jpeg', reps: '4 × 10', notas: 'Enfocar contracción al centro' },
-      { nombre: 'Apertura Baja', imagen: '1.jpeg', reps: '4 × 10', notas: 'Enfocar parte inferior del pectoral' },
-      { nombre: 'Apertura Alta', imagen: '1.jpeg', reps: '4 × 10', notas: 'Enfocar haz clavicular' },
-      { nombre: 'Flexiones (Pushups)', imagen: '1.jpeg', reps: '4 × 10', notas: 'Espalda recta, rango completo' },
-      { nombre: 'Press de banca', imagen: '1.jpeg', reps: '4 × 10', notas: 'Controlar bajada' },
-      { nombre: 'Press inclinado', imagen: '1.jpeg', reps: '4 × 10', notas: 'Enfocar haz clavicular' },
-      { nombre: 'Fondos en paralelas', imagen: '1.jpeg', reps: '3 × 10', notas: 'Inclinación hacia adelante' }
-    ],
-    'Espalda': [
-      { nombre: 'Jalón Abierto', imagen: '3.jpeg', reps: '4 × 10', notas: 'Llevar barra al pecho alto' },
-      { nombre: 'Jalón Cerrado', imagen: '3.jpeg', reps: '4 × 10', notas: 'Tracción con codos pegados' },
-      { nombre: 'Remo con cable', imagen: '3.jpeg', reps: '4 × 10', notas: 'Mantener espalda recta' },
-      { nombre: 'Dominadas', imagen: '3.jpeg', reps: '4 × 10', notas: 'Subir superando la barbilla' },
-      { nombre: 'Hiper Extensión', imagen: '3.jpeg', reps: '4 × 10', notas: 'Extensión controlada de lumbar' },
-      { nombre: 'Remo con barra', imagen: '3.jpeg', reps: '4 × 10', notas: 'Espalda recta, inclinación 45 grados' }
-    ],
-    'Hombros': [
-      { nombre: 'Press Arnold', imagen: '1.jpeg', reps: '4 × 10', notas: 'Giro completo de muñecas' },
-      { nombre: 'Press Militar', imagen: '1.jpeg', reps: '4 × 10', notas: 'Core firme, empuje vertical' },
-      { nombre: 'Vuelos Frontales', imagen: '4.jpeg', reps: '4 × 10', notas: 'Elevación alterna al frente' },
-      { nombre: 'Vuelos Laterales', imagen: '4.jpeg', reps: '4 × 12', notas: 'Subir mancuernas hasta hombros' },
-      { nombre: 'Face pull', imagen: '3.jpeg', reps: '4 × 15', notas: 'Rotación externa de hombro' }
-    ],
-    'Bíceps': [
-      { nombre: 'Curl Bíceps', imagen: '4.jpeg', reps: '4 × 10', notas: 'Evitar balanceos del cuerpo' },
-      { nombre: 'Bíceps Polea', imagen: '4.jpeg', reps: '4 × 10', notas: 'Tensión constante' },
-      { nombre: 'Curl Martillo', imagen: '4.jpeg', reps: '4 × 10', notas: 'Agarre neutro vertical' },
-      { nombre: 'Martillo Polea', imagen: '4.jpeg', reps: '4 × 10', notas: 'Usar soga en polea baja' },
-      { nombre: 'Predicador', imagen: '4.jpeg', reps: '4 × 10', notas: 'Apoyo completo del brazo' }
-    ],
-    'Tríceps': [
-      { nombre: 'Extensión Tríceps', imagen: '4.jpeg', reps: '4 × 10', notas: 'Codos fijos a los lados' },
-      { nombre: 'Copa Tríceps', imagen: '4.jpeg', reps: '4 × 10', notas: 'Mancuerna a dos manos sobre la cabeza' },
-      { nombre: 'Fondos Banco', imagen: '1.jpeg', reps: '3 × 12', notas: 'Bajar codos a 90 grados' },
-      { nombre: 'Press Francés', imagen: '1.jpeg', reps: '3 × 10', notas: 'Barra Z a la frente' }
-    ],
-    'Pierna': [
-      { nombre: 'Desplantes Frontales', imagen: '2.jpeg', reps: '4 × 10', notas: 'Paso largo, mantener equilibrio' },
-      { nombre: 'Sentadilla Goblet', imagen: '2.jpeg', reps: '4 × 10', notas: 'Sostener peso en el pecho' },
-      { nombre: 'Desplantes Inversos', imagen: '2.jpeg', reps: '4 × 10', notas: 'Paso hacia atrás controlado' },
-      { nombre: 'Extensión Cuádriceps', imagen: '2.jpeg', reps: '4 × 10', notas: 'Contracción isométrica de 1s arriba' },
-      { nombre: 'Pantorrilla de Pie', imagen: '2.jpeg', reps: '4 × 12', notas: 'Rango de movimiento completo' },
-      { nombre: 'Leg Curl Sentado', imagen: '2.jpeg', reps: '4 × 12', notas: 'Ajustar rodillo bajo tobillo' },
-      { nombre: 'Curl Femoral Aislado', imagen: '2.jpeg', reps: '4 × 12', notas: 'Acostado o de pie unilateral' },
-      { nombre: 'Peso Muerto', imagen: '2.jpeg', reps: '4 × 12', notas: 'Espalda recta, empuje con femoral y glúteos' },
-      { nombre: 'Aductor', imagen: '2.jpeg', reps: '4 × 12', notas: 'Cierre controlado' },
-      { nombre: 'Prensa', imagen: '2.jpeg', reps: '3 × 12', notas: 'Pies al centro, no bloquear rodillas' }
-    ],
-    'Glúteos': [
-      { nombre: 'Hip Thrust', imagen: '2.jpeg', reps: '3 × 12', notas: 'Contracción fuerte arriba, empujar talones' },
-      { nombre: 'Patada Polea', imagen: '2.jpeg', reps: '3 × 12', notas: 'Patada recta hacia atrás' },
-      { nombre: 'Sentadilla Sumo', imagen: '2.jpeg', reps: '3 × 12', notas: 'Pies abiertos a 45 grados, bajar profundo' },
-      { nombre: 'Abductor en Máquina', imagen: '2.jpeg', reps: '3 × 12', notas: 'Apertura controlada' }
-    ],
-    'Core': [
-      { nombre: 'Crunches con Torsión', imagen: '5.jpeg', reps: '4 × 30s', notas: 'Llevar codo a rodilla contraria' },
-      { nombre: 'Giros Rusos Disco', imagen: '5.jpeg', reps: '4 × 30s', notas: 'Girar torso de lado a lado' },
-      { nombre: 'Windshield Wipers (Wipers)', imagen: '5.jpeg', reps: '4 × 30s', notas: 'Piernas rectas oscilando a los lados' },
-      { nombre: 'Elevación de Piernas', imagen: '5.jpeg', reps: '4 × 30s', notas: 'Lento al bajar sin tocar suelo' },
-      { nombre: 'Plancha Lateral', imagen: '5.jpeg', reps: '4 × 30s', notas: 'Mantener cadera elevada' },
-      { nombre: 'Crunch Superior', imagen: '5.jpeg', reps: '3 × 30s', notas: 'Elevar escápulas del suelo' },
-      { nombre: 'Heel Touch', imagen: '5.jpeg', reps: '3 × 30s', notas: 'Tocar talones alternadamente' },
-      { nombre: 'Plancha con Disco', imagen: '5.jpeg', reps: '3 × 30s', notas: 'Plancha con peso en lumbar' },
-      { nombre: 'Frog Crunch', imagen: '5.jpeg', reps: '3 × 30s', notas: 'Juntar plantas de pies, crujir rodillas' }
-    ],
-    'Cardio': [
-      { nombre: 'Jumping Jacks', imagen: '6.jpeg', reps: '3 × 1m', notas: 'Ritmo rápido continuo' },
-      { nombre: 'Burpees', imagen: '6.jpeg', reps: '3 × 1m', notas: 'Saltar alto, plancha estricta' },
-      { nombre: 'Escaladores (Mountain Climbers)', imagen: '6.jpeg', reps: '3 × 1m', notas: 'Llevar rodillas al pecho alternando rápido' },
-      { nombre: 'Sentadilla con Salto', imagen: '6.jpeg', reps: '3 × 1m', notas: 'Salto explosivo al subir' },
-      { nombre: 'Batidas de Cuerda (Battle Ropes)', imagen: '6.jpeg', reps: '3 × 1m', notas: 'Mantener flexión de piernas' },
-      { nombre: 'Trotadora', imagen: '6.jpeg', reps: '1 × 20m', notas: 'Trote continuo ritmo moderado' }
-    ]
+  let RAW_EXERCISES_DATASET = [];
+
+  const BODY_PART_MAP = {
+    'back': 'Espalda',
+    'cardio': 'Cardio',
+    'chest': 'Pecho',
+    'lower arms': 'Antebrazo',
+    'lower legs': 'Pantorrilla',
+    'neck': 'Cuello',
+    'shoulders': 'Hombros',
+    'upper arms': 'Brazos',
+    'upper legs': 'Pierna',
+    'waist': 'Core / Abdomen'
   };
+
+  const EQUIPMENT_MAP = {
+    'body weight': 'Peso Corporal',
+    'barbell': 'Barra',
+    'dumbbell': 'Mancuerna',
+    'cable': 'Polea',
+    'machine': 'Máquina',
+    'band': 'Banda Elástica',
+    'kettlebell': 'Pesa Rusa',
+    'medicine ball': 'Balón Medicinal',
+    'assisted': 'Asistido',
+    'ez barbell': 'Barra Z',
+    'stability ball': 'Balón Suizo',
+    'weighted': 'Con Peso'
+  };
+
+  const BIBLIOTECA = {};
+
+  // Cargar el dataset de ejercicios
+  async function cargarEjercicios() {
+    try {
+      const respuesta = await fetch('./assets/exercises-dataset/data/exercises.json');
+      if (!respuesta.ok) throw new Error('HTTP status ' + respuesta.status);
+      const ejercicios = await respuesta.json();
+      RAW_EXERCISES_DATASET = ejercicios;
+
+      procesarDatasetEnBiblioteca(ejercicios);
+      renderizarEjercicios(ejercicios);
+    } catch (error) {
+      console.error('Error al cargar los ejercicios:', error);
+    }
+  }
+
+  function getExerciseMediaPaths(ej) {
+    let imgPath = '';
+    let gifPath = '';
+
+    if (ej.image) {
+      imgPath = `./assets/exercises-dataset/${ej.image}`;
+      gifPath = `./assets/exercises-dataset/${ej.image.replace('images/', 'gifs/').replace('.jpg', '.gif')}`;
+    } else if (ej.id) {
+      imgPath = `./assets/exercises-dataset/images/${ej.id}.jpg`;
+      gifPath = `./assets/exercises-dataset/gifs/${ej.id}.gif`;
+    } else {
+      imgPath = 'img/1.jpeg';
+      gifPath = 'img/1.jpeg';
+    }
+
+    return { imgPath, gifPath };
+  }
+
+  function procesarDatasetEnBiblioteca(ejercicios) {
+    if (!Array.isArray(ejercicios)) return;
+
+    Object.keys(BIBLIOTECA).forEach(k => delete BIBLIOTECA[k]);
+
+    ejercicios.forEach(ej => {
+      const grupo = BODY_PART_MAP[ej.body_part] || (ej.body_part ? ej.body_part.toUpperCase() : 'Otros');
+      if (!BIBLIOTECA[grupo]) {
+        BIBLIOTECA[grupo] = [];
+      }
+
+      const nameEs = (ej.name_translations && ej.name_translations.es) || ej.name;
+      const nombreFormateado = nameEs ? (nameEs.charAt(0).toUpperCase() + nameEs.slice(1)) : 'Ejercicio';
+
+      const { imgPath, gifPath } = getExerciseMediaPaths(ej);
+      const equip = EQUIPMENT_MAP[ej.equipment] || ej.equipment || '';
+      const targetEs = ej.target ? `Músculo: ${ej.target}` : '';
+      const notasDefecto = [targetEs, equip ? `Equipo: ${equip}` : ''].filter(Boolean).join(' · ');
+
+      BIBLIOTECA[grupo].push({
+        id: ej.id,
+        nombre: nombreFormateado,
+        nombreOriginal: ej.name,
+        grupo: grupo,
+        target: ej.target || '',
+        equipment: equip,
+        imagen: imgPath,
+        gif: gifPath,
+        reps: '4 × 10',
+        notas: notasDefecto,
+        instrucciones: (ej.instructions && ej.instructions.es) || (ej.instructions && ej.instructions.en) || ''
+      });
+    });
+
+    cargarEjerciciosCustom();
+  }
+
+  function renderizarEjercicios(lista) {
+    const contenedor = document.getElementById('contenedor-rutinas');
+    if (!contenedor) return;
+
+    contenedor.innerHTML = '';
+
+    const itemsToRender = lista.slice(0, 100);
+
+    itemsToRender.forEach(ejercicio => {
+      const { imgPath, gifPath } = getExerciseMediaPaths(ejercicio);
+      const nameEs = (ejercicio.name_translations && ejercicio.name_translations.es) || ejercicio.name;
+      const nombreFormateado = nameEs ? (nameEs.charAt(0).toUpperCase() + nameEs.slice(1)) : 'Ejercicio';
+      const equip = EQUIPMENT_MAP[ejercicio.equipment] || ejercicio.equipment || 'General';
+
+      const tarjeta = document.createElement('div');
+      tarjeta.className = 'tarjeta-ejercicio';
+      tarjeta.style.cssText = 'background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:10px; transition:transform .2s, border-color .2s;';
+      tarjeta.innerHTML = `
+        <div class="imagen-box" style="position:relative; border-radius:8px; overflow:hidden; background:#080c14; height:150px; display:flex; align-items:center; justify-content:center;">
+          <img src="${imgPath}" alt="${nombreFormateado}" class="thumb-img" style="max-height:100%; max-width:100%; object-fit:contain;" onerror="this.src='${gifPath}'" onmouseenter="if('${gifPath}') this.src='${gifPath}'" onmouseleave="this.src='${imgPath}'">
+        </div>
+        <div class="info-box" style="display:flex; flex-direction:column; gap:4px; flex:1;">
+          <h3 style="margin:0; font-size:14px; color:#fff; font-weight:700;">${nombreFormateado}</h3>
+          <p style="margin:0; font-size:11px; color:var(--text-secondary);"><strong>Músculo:</strong> ${ejercicio.target || ejercicio.body_part || 'General'}</p>
+          <p style="margin:0; font-size:11px; color:var(--text-secondary);"><strong>Equipo:</strong> ${equip}</p>
+          <button class="btn-primary" style="margin-top:auto; padding:8px 12px; font-size:12px; border-radius:8px; font-weight:700;" onclick="agregarARutina('${ejercicio.id}')">Agregar a mi rutina</button>
+        </div>
+      `;
+
+      contenedor.appendChild(tarjeta);
+    });
+  }
+
+  function agregarARutina(ejId) {
+    let ejEncontrado = null;
+    let grupoEncontrado = 'Pecho';
+
+    for (const [g, list] of Object.entries(BIBLIOTECA)) {
+      const f = list.find(x => x.id === ejId || x.nombre === ejId || x.nombreOriginal === ejId);
+      if (f) {
+        ejEncontrado = f;
+        grupoEncontrado = g;
+        break;
+      }
+    }
+
+    if (!ejEncontrado && RAW_EXERCISES_DATASET.length > 0) {
+      const raw = RAW_EXERCISES_DATASET.find(x => x.id === ejId || x.name === ejId);
+      if (raw) {
+        const { imgPath } = getExerciseMediaPaths(raw);
+        const nameEs = (raw.name_translations && raw.name_translations.es) || raw.name;
+        ejEncontrado = {
+          nombre: nameEs ? (nameEs.charAt(0).toUpperCase() + nameEs.slice(1)) : raw.name,
+          imagen: imgPath,
+          reps: '4 × 10',
+          notas: `Músculo: ${raw.target || raw.body_part} · Equipo: ${EQUIPMENT_MAP[raw.equipment] || raw.equipment}`
+        };
+        grupoEncontrado = BODY_PART_MAP[raw.body_part] || 'General';
+      }
+    }
+
+    if (!ejEncontrado) {
+      showToast('Ejercicio no encontrado', 'error');
+      return;
+    }
+
+    const modalEditor = document.getElementById('modal-editor');
+    if (modalEditor && !modalEditor.classList.contains('active')) {
+      if (typeof abrirEditor === 'function') abrirEditor();
+    }
+
+    agregarBloque({
+      nombre: ejEncontrado.nombre,
+      grupo: grupoEncontrado,
+      imagen: ejEncontrado.imagen || null,
+      series: ejEncontrado.reps || '4 × 10',
+      peso: '',
+      descanso: '60',
+      notas: ejEncontrado.notas || ''
+    });
+
+    showToast(`✅ ${ejEncontrado.nombre} agregado a tu rutina`);
+  }
 
   // Load custom exercises from localStorage and merge into BIBLIOTECA
   function cargarEjerciciosCustom() {
@@ -513,30 +621,37 @@
 
   function renderBibliotecaGrid(exercises) {
     const grid = document.getElementById('lib-exercises-grid');
-    if (exercises.length === 0) {
+    if (!grid) return;
+    if (!exercises || exercises.length === 0) {
       grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--text-muted); padding:40px;">No hay ejercicios que coincidan.</div>`;
       return;
     }
-    
-    grid.innerHTML = exercises.map(ej => {
+
+    const itemsToRender = exercises.slice(0, 120);
+
+    grid.innerHTML = itemsToRender.map(ej => {
       let grupo = currentLibraryCategory;
       for (const [g, list] of Object.entries(BIBLIOTECA)) {
-        if (list.some(x => x.nombre === ej.nombre)) {
+        if (list.some(x => x.nombre === ej.nombre || (ej.id && x.id === ej.id))) {
           grupo = g;
           break;
         }
       }
-      const imgPath = ej.imagen ? (ej.imagen.startsWith('data:image') ? ej.imagen : `img/${ej.imagen}`) : 'img/1.jpeg';
+
+      const imgPath = ej.imagen ? (ej.imagen.startsWith('data:') || ej.imagen.startsWith('.') || ej.imagen.startsWith('assets/') ? ej.imagen : `img/${ej.imagen}`) : 'img/1.jpeg';
+      const gifPath = ej.gif || imgPath;
+      const safeId = ej.id || ej.nombre.replace(/'/g, "\\'");
+
       return `
-        <div class="lib-card" onclick="seleccionarEjercicioBiblioteca('${grupo}', '${ej.nombre}')">
-          <div class="lib-img-container">
-            <img class="lib-img" src="${imgPath}" alt="${ej.nombre}" />
+        <div class="lib-card" onclick="seleccionarEjercicioBiblioteca('${grupo}', '${safeId}')">
+          <div class="lib-img-container" style="position:relative; border-radius:8px; overflow:hidden; background:#080c14; height:140px; display:flex; align-items:center; justify-content:center;">
+            <img class="lib-img" src="${imgPath}" alt="${ej.nombre}" style="max-height:100%; max-width:100%; object-fit:contain;" onerror="this.src='${gifPath}'" onmouseenter="if('${gifPath}') this.src='${gifPath}'" onmouseleave="this.src='${imgPath}'" />
           </div>
-          <div class="lib-card-body">
-            <div class="lib-card-name">${ej.nombre}</div>
-            <div class="lib-card-reps">👉 Series y reps: ${ej.reps}</div>
-            <div class="lib-card-notes">${ej.notes || ej.notas || 'Sin notas especiales.'}</div>
-            <button type="button" class="lib-card-btn">＋ Agregar a Rutina</button>
+          <div class="lib-card-body" style="display:flex; flex-direction:column; gap:4px; padding-top:8px;">
+            <div class="lib-card-name" style="font-weight:700; font-size:13px; color:#fff;">${ej.nombre}</div>
+            <div class="lib-card-reps" style="font-size:11px; color:var(--pink);">👉 ${ej.reps || '4 × 10'}</div>
+            <div class="lib-card-notes" style="font-size:11px; color:var(--text-secondary); line-height:1.3;">${ej.notas || 'Sin notas especiales.'}</div>
+            <button type="button" class="lib-card-btn" style="margin-top:8px;">＋ Agregar a mi rutina</button>
           </div>
         </div>
       `;
@@ -549,35 +664,56 @@
       renderBibliotecaGrid(BIBLIOTECA[currentLibraryCategory] || []);
       return;
     }
-    
+
     let allMatches = [];
     Object.keys(BIBLIOTECA).forEach(cat => {
-      const filtered = BIBLIOTECA[cat].filter(ej => ej.nombre.toLowerCase().includes(text));
+      const filtered = BIBLIOTECA[cat].filter(ej => 
+        ej.nombre.toLowerCase().includes(text) || 
+        (ej.target && ej.target.toLowerCase().includes(text)) ||
+        (ej.equipment && ej.equipment.toLowerCase().includes(text))
+      );
       allMatches = allMatches.concat(filtered);
     });
-    
+
     renderBibliotecaGrid(allMatches);
   }
 
-  function seleccionarEjercicioBiblioteca(grupo, nombre) {
-    const list = BIBLIOTECA[grupo];
+  function seleccionarEjercicioBiblioteca(grupo, idONombre) {
+    let list = BIBLIOTECA[grupo];
+    if (!list) {
+      for (const [g, l] of Object.entries(BIBLIOTECA)) {
+        if (l.some(x => x.id === idONombre || x.nombre === idONombre)) {
+          list = l;
+          grupo = g;
+          break;
+        }
+      }
+    }
     if (!list) return;
-    const ej = list.find(x => x.nombre === nombre);
+
+    const ej = list.find(x => x.id === idONombre || x.nombre === idONombre);
     if (!ej) return;
-    
-    // Add exercise block
+
+    const modalEditor = document.getElementById('modal-editor');
+    if (modalEditor && !modalEditor.classList.contains('active')) {
+      if (typeof abrirEditor === 'function') abrirEditor();
+    }
+
     agregarBloque({
       nombre: ej.nombre,
       grupo: grupo,
       imagen: ej.imagen || null,
       series: ej.reps || '4 × 10',
       peso: '',
-      descanso: ej.nombre.toLowerCase().includes('plancha') || ej.nombre.toLowerCase().includes('trotadora') || ej.nombre.toLowerCase().includes('hiit') || ej.nombre.toLowerCase().includes('circuito') || ej.nombre.toLowerCase().includes('escalador') || ej.nombre.toLowerCase().includes('jump') ? '' : '60',
+      descanso: '60',
       notas: ej.notas || ''
     });
-    
+
     showToast(`✅ ${ej.nombre} agregado`);
   }
+
+  // Cargar dataset al inicio
+  cargarEjercicios();
 
   // Populate usuario select
   const selU = document.getElementById('select-usuario');
