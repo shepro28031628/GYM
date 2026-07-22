@@ -74,10 +74,22 @@ const PersistDB = (() => {
     if (!handle) return false;
     try {
       const perm = await handle.queryPermission({ mode: 'readwrite' });
-      if (perm === 'granted') return true;
-      const asked = await handle.requestPermission({ mode: 'readwrite' });
-      return asked === 'granted';
+      return perm === 'granted';
     } catch { return false; }
+  }
+
+  async function reconnectFolder() {
+    if (!_rootHandle) return false;
+    try {
+      const perm = await _rootHandle.requestPermission({ mode: 'readwrite' });
+      if (perm === 'granted') {
+        _dirHandle = await getDataDir(_rootHandle);
+        _ready = true;
+        if (_onReady) await _onReady(true);
+        return true;
+      }
+    } catch (e) { console.warn('[PersistDB] reconnectFolder error:', e); }
+    return false;
   }
 
   async function init(onReady, onNeedPerm) {
@@ -95,18 +107,22 @@ const PersistDB = (() => {
       const db     = await openIDB();
       const handle = await idbGet(db, HANDLE_KEY);
       if (handle) {
+        _rootHandle = handle;
         const ok = await verifyPermission(handle);
         if (ok) {
-          _rootHandle = handle;
           _dirHandle  = await getDataDir(handle);
           _ready = true;
           _onReady(true);
+          return;
+        } else {
+          // Tiene una carpeta guardada pero requiere permiso (gesto de usuario)
+          _onNeedPerm(true);
           return;
         }
       }
     } catch (e) { console.warn('[PersistDB] Error al restaurar handle:', e); }
 
-    _onNeedPerm();
+    _onNeedPerm(false);
   }
 
   async function pickFolder() {
@@ -130,17 +146,69 @@ const PersistDB = (() => {
       const val = await readFile(key);
       if (val !== null) return val;
     }
-    try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : null; }
+    
+    // 1. Try IndexedDB first (no 5MB limit)
+    try {
+      const db = await openIDB();
+      const val = await idbGet(db, key);
+      if (val !== undefined && val !== null) {
+        // Clear residual localStorage to free up the 5MB quota
+        try { localStorage.removeItem(key); } catch(e){}
+        return val;
+      }
+    } catch (e) { console.warn('[PersistDB] IDB get error:', e); }
+
+    // 2. Fallback to localStorage (for older data)
+    try { 
+      const s = localStorage.getItem(key); 
+      if (s) {
+        const parsed = JSON.parse(s);
+        // Migrate to IDB automatically
+        try { 
+          const db = await openIDB(); 
+          await idbSet(db, key, parsed); 
+          localStorage.removeItem(key); // Clear after migration
+        } catch(e){}
+        return parsed;
+      }
+      return null;
+    }
     catch { return null; }
   }
 
   async function set(key, value) {
     if (_useFSA && _dirHandle) {
-      const ok = await writeFile(key, value);
-      if (ok) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} return true; }
+      await writeFile(key, value);
     }
-    try { localStorage.setItem(key, JSON.stringify(value)); return true; }
-    catch { return false; }
+
+    let success = false;
+
+    // 1. Save to IndexedDB (Bypasses 5MB limit)
+    try {
+      const db = await openIDB();
+      await idbSet(db, key, value);
+      success = true;
+    } catch (e) {
+      console.warn('[PersistDB] IDB save failed:', e);
+    }
+
+    // 2. Try localStorage as secondary backup (will fail if > 5MB, we ignore it if IDB succeeded)
+    try { 
+      localStorage.setItem(key, JSON.stringify(value)); 
+      success = true; 
+    } catch (e) {
+      console.warn('[PersistDB] LocalStorage save failed (Quota Exceeded)');
+    }
+
+    if (!success) {
+      if (typeof showToast === 'function') {
+        showToast('⚠️ Memoria llena. Usa la opción de elegir carpeta en PC.', 'error');
+      } else {
+        alert('Memoria llena. No se pudo guardar.');
+      }
+      return false;
+    }
+    return true;
   }
 
   async function migrateFromLocalStorage(keys) {
@@ -154,8 +222,9 @@ const PersistDB = (() => {
   }
 
   return {
-    init, pickFolder, get, set, migrateFromLocalStorage,
+    init, pickFolder, reconnectFolder, get, set, migrateFromLocalStorage,
     isReady: () => _ready,
-    usesFSA: () => _useFSA && !!_dirHandle
+    usesFSA: () => _useFSA && !!_dirHandle,
+    hasRootHandle: () => !!_rootHandle
   };
 })();

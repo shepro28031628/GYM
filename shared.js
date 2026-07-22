@@ -19,36 +19,20 @@ const DB_KEYS = [
 ];
 
 function loadDB() {
-  try { 
-    const s = localStorage.getItem('romeo_db'); 
-    if (s) {
-      const parsed = JSON.parse(s);
-      if (parsed && typeof parsed === 'object') {
-        DB = Object.assign(DB, parsed);
-      }
-    } 
-  } catch(e) {}
-  
-  if (!DB.usuarios) DB.usuarios = [];
-  if (!DB.rutinas) DB.rutinas = [];
-  if (!DB.progresos) DB.progresos = [];
-  if (!DB.sesiones) DB.sesiones = [];
-  if (!DB.packs) DB.packs = [];
-
+  // Carga sincrónica desde localStorage (copia espejo)
+  // La carga definitiva desde archivo se hace en initPersist()
+  try { const s = localStorage.getItem('romeo_db'); if (s) DB = JSON.parse(s); }
+  catch(e) {}
   try {
-    if (DB.usuarios.length === 0) {
+    if (!DB.usuarios.length) {
       const old = localStorage.getItem('gymproDB');
-      if (old) { 
-        const o = JSON.parse(old); 
-        if (o) {
-          if (o.usuarios) DB.usuarios = o.usuarios;
-          if (o.rutinas) DB.rutinas = o.rutinas;
-          if (o.progresos) DB.progresos = o.progresos;
-        }
-      }
+      if (old) { const o = JSON.parse(old); DB.usuarios = o.usuarios||[]; DB.rutinas = o.rutinas||[]; DB.progresos = o.progresos||[]; }
     }
   } catch(e) {}
+  if (!DB.sesiones) DB.sesiones = [];
+  if (!DB.packs) DB.packs = [];
 }
+loadDB();
 
 async function saveDB() {
   await PersistDB.set('romeo_db', DB);
@@ -83,6 +67,52 @@ function showToast(msg, type = 'success') {
   t.textContent = msg;
   t.className = `toast ${type} show`;
   setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+function confirmModal(options) {
+  return new Promise((resolve) => {
+    const existing = document.getElementById('custom-confirm-modal');
+    if (existing) existing.remove();
+
+    const title = options.title || '¿Estás seguro?';
+    const message = options.message || '';
+    const confirmText = options.confirmText || 'Aceptar';
+    const cancelText = options.cancelText || 'Cancelar';
+    const isDanger = options.isDanger || false;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'custom-confirm-modal';
+    overlay.className = 'modal-overlay active';
+    overlay.style.cssText = 'display:flex; align-items:center; justify-content:center; z-index:10000; background:rgba(0,0,0,0.75); backdrop-filter:blur(6px);';
+
+    overlay.innerHTML = `
+      <div class="modal" style="max-width:420px; width:90vw; padding:24px; text-align:center; border-radius:18px; background:linear-gradient(135deg, #1c1c1c, #242424); border:1px solid rgba(255,255,255,0.12); box-shadow:0 16px 48px rgba(0,0,0,0.8);">
+        <div style="font-size:38px; margin-bottom:12px;">${isDanger ? '🗑️' : '⚡'}</div>
+        <h3 style="margin:0 0 8px; font-size:18px; color:#fff; font-weight:700;">${title}</h3>
+        <p style="margin:0 0 24px; font-size:13px; color:#aaa; line-height:1.5;">${message}</p>
+        <div style="display:flex; gap:12px; justify-content:center;">
+          <button id="confirm-modal-cancel" class="btn-secondary" style="flex:1; padding:10px 16px; font-size:13px; border-radius:10px; cursor:pointer;">${cancelText}</button>
+          <button id="confirm-modal-ok" class="btn-primary" style="flex:1; padding:10px 16px; font-size:13px; border-radius:10px; font-weight:700; cursor:pointer; ${isDanger ? 'background:linear-gradient(135deg,#FF3366,#CC0033);' : 'background:linear-gradient(135deg,#FF3CAC,#784BA0);'}">${confirmText}</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const cleanup = () => { overlay.remove(); };
+
+    document.getElementById('confirm-modal-cancel').onclick = () => {
+      cleanup();
+      if (options.onCancel) options.onCancel();
+      resolve(false);
+    };
+
+    document.getElementById('confirm-modal-ok').onclick = () => {
+      cleanup();
+      if (options.onConfirm) options.onConfirm();
+      resolve(true);
+    };
+  });
 }
 
 function formatDate(d) {
@@ -169,7 +199,7 @@ function toggleSidebar() {
 document.addEventListener('click', function(e) {
   const sb = document.getElementById('sidebar');
   const btn = document.querySelector('.menu-toggle');
-  if (sb && window.innerWidth <= 1200 && !sb.contains(e.target) && btn && !btn.contains(e.target)) {
+  if (sb && window.innerWidth <= 1024 && !sb.contains(e.target) && btn && !btn.contains(e.target)) {
     sb.classList.remove('open');
   }
 });
@@ -181,7 +211,11 @@ function openModal(id) {
 
 function closeModal(id) {
   const el = document.getElementById(id);
-  if (el) { el.classList.remove('active'); document.body.style.overflow = ''; }
+  if (el) { 
+    el.classList.remove('active'); 
+    el.style.display = ''; 
+    document.body.style.overflow = ''; 
+  }
 }
 
 document.addEventListener('click', function(e) {
@@ -538,29 +572,32 @@ async function initPersist() {
         await PersistDB.migrateFromLocalStorage(DB_KEYS);
         const dbFromFile = await PersistDB.get('romeo_db');
         if (dbFromFile && dbFromFile.usuarios && dbFromFile.usuarios.length >= DB.usuarios.length) {
-          DB = Object.assign({}, DB, dbFromFile);
-          if (!DB.usuarios) DB.usuarios = [];
-          if (!DB.rutinas) DB.rutinas = [];
-          if (!DB.progresos) DB.progresos = [];
+          DB = dbFromFile;
           if (!DB.sesiones) DB.sesiones = [];
-          if (!DB.packs) DB.packs = [];
           // Notificar a páginas que se recargó la DB
           window.dispatchEvent(new Event('romeo_db_loaded'));
         }
         showPersistStatus(true);
       }
     },
-    () => {
-      // No hay carpeta elegida aún
-      showPersistBanner();
+    (hasExistingHandle) => {
+      // Necesita permiso o no hay carpeta elegida aún
+      showPersistBanner(hasExistingHandle);
     }
   );
 }
 
-function showPersistBanner() {
+function showPersistBanner(hasExistingHandle = false) {
   if (document.getElementById('persist-banner')) return;
   const banner = document.createElement('div');
   banner.id = 'persist-banner';
+  
+  const title = hasExistingHandle ? 'Reconectar carpeta guardada' : 'Conectar carpeta de datos';
+  const desc = hasExistingHandle 
+    ? 'Ya vinculaste una carpeta previamente. Haz clic en Permitir para reconectarla.' 
+    : 'Elige la carpeta del proyecto para que los datos se guarden aunque se borre el caché.';
+  const btnText = hasExistingHandle ? '⚡ Permitir acceso' : '📂 Elegir carpeta';
+
   banner.innerHTML = `
     <div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;
       background:linear-gradient(135deg,#1c1c1c,#222);border:1px solid rgba(255,60,172,0.4);
@@ -568,22 +605,36 @@ function showPersistBanner() {
       box-shadow:0 8px 32px rgba(0,0,0,0.6);max-width:92vw;">
       <span style="font-size:28px;">💾</span>
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:3px;">Conectar carpeta de datos</div>
-        <div style="font-size:11px;color:#9A9A9A;line-height:1.4;">Elige la carpeta del proyecto para que los datos se guarden aunque se borre el caché.</div>
+        <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:3px;">${title}</div>
+        <div style="font-size:11px;color:#9A9A9A;line-height:1.4;">${desc}</div>
       </div>
-      <button id="persist-pick-btn" style="background:linear-gradient(135deg,#FF3CAC,#784BA0);
+      <button id="persist-action-btn" style="background:linear-gradient(135deg,#FF3CAC,#784BA0);
         border:none;border-radius:10px;color:#fff;font-size:12px;font-weight:700;
         padding:10px 16px;cursor:pointer;white-space:nowrap;font-family:inherit;">
-        📂 Elegir carpeta
+        ${btnText}
       </button>
       <button id="persist-skip-btn" style="background:none;border:1px solid rgba(255,255,255,0.1);
         border-radius:10px;color:#9A9A9A;font-size:11px;padding:10px 12px;
         cursor:pointer;white-space:nowrap;font-family:inherit;">Ahora no</button>
     </div>`;
   document.body.appendChild(banner);
-  document.getElementById('persist-pick-btn').onclick = async () => {
-    const ok = await PersistDB.pickFolder();
-    if (!ok) showToast('No se eligió ninguna carpeta', 'error');
+
+  document.getElementById('persist-action-btn').onclick = async () => {
+    if (hasExistingHandle) {
+      const ok = await PersistDB.reconnectFolder();
+      if (ok) {
+        hidePersistBanner();
+        showToast('✅ Carpeta reconectada exitosamente', 'success');
+      } else {
+        // Fallback a selector si falla la reconexión
+        const okPick = await PersistDB.pickFolder();
+        if (okPick) hidePersistBanner();
+      }
+    } else {
+      const ok = await PersistDB.pickFolder();
+      if (ok) hidePersistBanner();
+      else showToast('No se eligió ninguna carpeta', 'error');
+    }
   };
   document.getElementById('persist-skip-btn').onclick = () => hidePersistBanner();
 }
@@ -615,3 +666,108 @@ window.addEventListener('storage', (e) => {
     window.dispatchEvent(new Event('romeo_db_loaded'));
   }
 });
+
+function descargarBackup() {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(DB));
+  const downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href", dataStr);
+  downloadAnchorNode.setAttribute("download", "romeo_backup_" + new Date().toISOString().split('T')[0] + ".json");
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+}
+
+function cargarBackup(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  if (!confirm("⚠️ ADVERTENCIA: Restaurar un archivo de respaldo reemplazará TODOS tus datos actuales. ¿Estás seguro de que quieres continuar?")) {
+    event.target.value = '';
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data && data.usuarios && data.rutinas) {
+        DB = data;
+        await saveDB();
+        showToast('✅ Copia de seguridad restaurada. Recargando...', 'success');
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        showToast('❌ El archivo no parece ser un respaldo válido', 'error');
+      }
+    } catch(err) {
+      showToast('❌ Error leyendo el archivo JSON', 'error');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ============================================================
+// PWA: Registro de Service Worker, Auto-Update & Modo Offline
+// ============================================================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => {
+        console.log('[PWA] Service Worker activo y listo', reg);
+        // Forzar verificación de nueva versión en cada inicio de la PWA
+        reg.update();
+
+        reg.onupdatefound = () => {
+          const installingWorker = reg.installing;
+          if (installingWorker) {
+            installingWorker.onstatechange = () => {
+              if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                if (typeof showToast === 'function') {
+                  showToast('🔄 ¡Nueva versión disponible! Actualizando app...', 'info', 4000);
+                }
+                setTimeout(() => window.location.reload(), 1200);
+              }
+            };
+          }
+        };
+      })
+      .catch(err => console.warn('[PWA] Error al registrar Service Worker', err));
+
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
+  });
+}
+
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallPwaBtn();
+});
+
+function showInstallPwaBtn() {
+  const sidebar = document.querySelector('.sidebar-footer');
+  if (sidebar && !document.getElementById('pwa-install-btn')) {
+    const btn = document.createElement('button');
+    btn.id = 'pwa-install-btn';
+    btn.className = 'btn-primary';
+    btn.style.cssText = 'width:100%; margin-top:8px; font-size:12px; padding:8px 10px; display:flex; align-items:center; justify-content:center; gap:6px; background:linear-gradient(135deg,#00E5A0,#00A86B); color:#000; font-weight:700; border:none; border-radius:8px; cursor:pointer;';
+    btn.innerHTML = '📲 Instalar App';
+    btn.onclick = async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          btn.remove();
+        }
+        deferredPrompt = null;
+      }
+    };
+    sidebar.appendChild(btn);
+  }
+}

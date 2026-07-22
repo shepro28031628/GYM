@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Romeo Personal Trainer — Clientes</title>
   <meta name="description" content="Roster de clientes: métricas de ingresos, tasa de completitud, perfil completo y barra de progreso semanal." />  <link rel="stylesheet" href="styles.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#00E5A0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Romeo PT" />
+  <link rel="apple-touch-icon" href="1.jpeg" />
 </head>
 <body>
 
@@ -365,7 +371,7 @@
     openModal('modal-usuario');
   }
 
-  function guardarUsuario(e) {
+  async function guardarUsuario(e) {
     e.preventDefault();
     const id = document.getElementById('uid').value;
     const u = {
@@ -394,17 +400,30 @@
     };
     if (id) { const i = DB.usuarios.findIndex(x=>x.id===id); if(i>=0) DB.usuarios[i]=u; }
     else DB.usuarios.push(u);
-    saveDB(); closeModal('modal-usuario'); renderUsuarios();
+    await saveDB(); closeModal('modal-usuario'); renderUsuarios();
     showToast(id ? '✅ Cliente actualizado' : '✅ Cliente registrado');
   }
 
-  function eliminarUsuario(id) {
-    if (!confirm('¿Eliminar este cliente? Se borrarán sus rutinas, progresos y sesiones.')) return;
+  async function eliminarUsuario(id) {
+    const ok = await confirmModal({
+      title: 'Eliminar Cliente',
+      message: '¿Estás seguro de eliminar este cliente? Se borrarán sus rutinas, progresos y sesiones.',
+      confirmText: 'Sí, Eliminar',
+      cancelText: 'Cancelar',
+      isDanger: true
+    });
+    if (!ok) return;
     DB.usuarios = DB.usuarios.filter(u=>u.id!==id);
     DB.rutinas = DB.rutinas.filter(r=>r.usuarioId!==id);
     DB.progresos = DB.progresos.filter(p=>p.usuarioId!==id);
     DB.sesiones = DB.sesiones.filter(s=>s.usuarioId!==id);
-    saveDB(); renderUsuarios(); showToast('🗑️ Cliente eliminado', 'error');
+    const active = getActiveUser();
+    if (!active || active.id === id || DB.usuarios.length === 0) {
+      localStorage.removeItem('gym_active_user');
+      localStorage.removeItem('romeo_current_active_user_id');
+      window.dispatchEvent(new Event('gym_active_user_changed'));
+    }
+    await saveDB(); renderUsuarios(); showToast('🗑️ Cliente eliminado', 'error');
   }
 
   function verPerfil(id) {

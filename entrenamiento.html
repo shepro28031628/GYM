@@ -4,7 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Romeo Personal Trainer — Entrenamiento en Vivo</title>
-  <meta name="description" content="Vista del cliente: checklist de ejercicios, timer de sesión, volumen total y calorías estimadas." />  <link rel="stylesheet" href="styles.css" />
+  <meta name="description" content="Modo entrenamiento activo: temporizador de descanso, registro de series y sonido de fin de descanso." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#00E5A0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Romeo PT" />
+  <link rel="apple-touch-icon" href="1.jpeg" />
   <style>
     .timer-display { font-size: 52px; font-weight: 800; letter-spacing: -2px; line-height: 1; font-variant-numeric: tabular-nums; }
     .rest-banner { display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#1c1c1c; border:1px solid rgba(255,60,172,0.4); border-radius:var(--r); padding:14px 28px; z-index:500; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.7); animation:fadeUp .3s ease; }
@@ -242,7 +249,7 @@
           <tbody>${r.ejercicios.map((ej,i)=>`<tr>
             <td style="color:var(--text-muted)">${i+1}</td>
             <td>
-              ${ej.imagen ? `<img src="img/${ej.imagen}" style="width:45px; height:45px; object-fit:cover; border-radius:6px; border:1px solid var(--border);" />` : '<span style="color:var(--text-muted); font-size:11px;">—</span>'}
+              ${ej.imagen ? `<img src="${ej.imagen.startsWith('data:') ? ej.imagen : 'img/' + ej.imagen}" style="width:45px; height:45px; object-fit:cover; border-radius:6px; border:1px solid var(--border);" />` : '<span style="color:var(--text-muted); font-size:11px;">—</span>'}
             </td>
             <td><strong>${ej.nombre}</strong></td>
             <td><span class="tag-muscular">${ej.grupo}</span></td>
@@ -491,7 +498,7 @@
 
         items.push(`<div class="checklist-item ${doneClass}" id="${sid}">
           <div class="check-box" id="cb-${sid}" onclick="toggleSet('${sid}', ${descanso})">${checkChar}</div>
-          ${ej.imagen ? `<img src="img/${ej.imagen}" style="width:40px; height:40px; object-fit:cover; border-radius:6px; border:1px solid var(--border); margin: 0 10px; flex-shrink: 0;" />` : ''}
+          ${ej.imagen ? `<img src="${ej.imagen.startsWith('data:') ? ej.imagen : 'img/' + ej.imagen}" style="width:40px; height:40px; object-fit:cover; border-radius:6px; border:1px solid var(--border); margin: 0 10px; flex-shrink: 0;" />` : ''}
           <div class="check-info" onclick="toggleSet('${sid}', ${descanso})">
             <div class="check-name">${ej.nombre} — Serie ${ser}/${numSeries}</div>
             <div class="check-detail"><span class="tag-muscular" style="font-size:9px">${ej.grupo}</span> &nbsp;·&nbsp; Descanso: ${descanso}s${ultimoPesoTxt}</div>
@@ -652,9 +659,16 @@
     </div>`;
   }
 
-  function abandonarSesionActiva(uid, event) {
+  async function abandonarSesionActiva(uid, event) {
     if (event) event.stopPropagation();
-    if (!confirm('¿Abandonar y descartar esta sesión en vivo? Se perderá el progreso de este entrenamiento.')) return;
+    const ok = await confirmModal({
+      title: 'Descartar Entrenamiento',
+      message: '¿Estás seguro de abandonar y descartar esta sesión en vivo? Se perderá el progreso.',
+      confirmText: 'Sí, Descartar',
+      cancelText: 'Cancelar',
+      isDanger: true
+    });
+    if (!ok) return;
     
     delete activeSessions[uid];
     
@@ -673,8 +687,14 @@
     showToast('🗑️ Sesión descartada', 'error');
   }
 
-  function terminarSesion() {
-    if (!confirm('¿Finalizar la sesión?')) return;
+  async function terminarSesion() {
+    const ok = await confirmModal({
+      title: 'Finalizar Sesión',
+      message: '¿Estás seguro de finalizar y guardar este entrenamiento?',
+      confirmText: 'Sí, Finalizar',
+      cancelText: 'Continuar Entrenando'
+    });
+    if (!ok) return;
     
     const s = activeSessions[currentActiveUserId];
     if (!s) return;
@@ -747,7 +767,7 @@
         notas: ''
       };
       DB.sesiones.push(sesion);
-      saveDB();
+      await saveDB();
     }
     
     delete activeSessions[currentActiveUserId];
@@ -820,13 +840,13 @@
     }).join('');
   }
 
-  function eliminarSesionHistorial(id) {
+  async function eliminarSesionHistorial(id) {
     if (!confirm('¿Eliminar esta sesión del historial?')) return;
     DB.sesiones = DB.sesiones.filter(s=>s.id!==id);
-    saveDB(); renderHistorial(); showToast('🗑️ Sesión eliminada', 'error');
+    await saveDB(); renderHistorial(); showToast('🗑️ Sesión eliminada', 'error');
   }
 
-  function reanudarSesion(sesionId) {
+  async function reanudarSesion(sesionId) {
     const sesion = DB.sesiones.find(x => x.id === sesionId);
     if (!sesion) return;
     
@@ -868,7 +888,7 @@
     
     // Remover del historial para evitar duplicar el registro al finalizarla de nuevo
     DB.sesiones = DB.sesiones.filter(x => x.id !== sesionId);
-    saveDB();
+    await saveDB();
     
     currentActiveUserId = uid;
     saveActiveSessions();

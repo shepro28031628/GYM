@@ -4,7 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Romeo Personal Trainer — Progreso Corporal</title>
-  <meta name="description" content="Registra y monitorea la evolución física: peso, medidas corporales y gráficas de progreso." />  <link rel="stylesheet" href="styles.css" />
+  <meta name="description" content="Seguimiento de métricas corporales, registro de peso y galería de fotos de evolución." />  <link rel="stylesheet" href="styles.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#00E5A0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Romeo PT" />
+  <link rel="apple-touch-icon" href="1.jpeg" />
 </head>
 <body>
 
@@ -114,18 +120,37 @@
   document.getElementById('toast-container').innerHTML = buildToast();
 
   const sel = document.getElementById('sel-usuario');
-  DB.usuarios.forEach(u => { const o = document.createElement('option'); o.value = u.id; o.textContent = u.nombre; sel.appendChild(o); });
-  const param = new URLSearchParams(window.location.search).get('usuario');
-  if (param) {
-    sel.value = param;
-    onUsuarioChange();
-  } else {
-    const activeUser = getActiveUser();
-    if (activeUser) {
-      sel.value = activeUser.id;
-      onUsuarioChange();
+  
+  function populateUsuarioSelect() {
+    if (!sel) return;
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="">— Seleccionar Cliente —</option>';
+    
+    if (DB && DB.usuarios) {
+      DB.usuarios.forEach(u => { const o = document.createElement('option'); o.value = u.id; o.textContent = u.nombre; sel.appendChild(o); });
     }
+    
+    const param = new URLSearchParams(window.location.search).get('usuario');
+    const activeUser = typeof getActiveUser === 'function' ? getActiveUser() : null;
+    
+    if (currentVal && DB.usuarios && DB.usuarios.some(u => u.id === currentVal)) {
+      sel.value = currentVal;
+    } else if (param && DB.usuarios && DB.usuarios.some(u => u.id === param)) {
+      sel.value = param;
+    } else if (activeUser && DB.usuarios && DB.usuarios.some(u => u.id === activeUser.id)) {
+      sel.value = activeUser.id;
+    } else if (DB.usuarios && DB.usuarios.length > 0) {
+      sel.value = DB.usuarios[0].id;
+    }
+    
+    onUsuarioChange();
   }
+
+  populateUsuarioSelect();
+
+  window.addEventListener('romeo_db_loaded', () => {
+    populateUsuarioSelect();
+  });
 
   function onUsuarioChange() {
     const uid = sel.value;
@@ -633,7 +658,7 @@
     openModal('modal-medicion');
   }
 
-  function guardarMedicion(e) {
+  async function guardarMedicion(e) {
     e.preventDefault();
     const uid = sel.value;
     const m = {
@@ -655,7 +680,7 @@
       notas: document.getElementById('p-notas').value.trim()
     };
     DB.progresos.push(m);
-    saveDB(); closeModal('modal-medicion'); renderProgreso(uid);
+    await saveDB(); closeModal('modal-medicion'); renderProgreso(uid);
     showToast('✅ Medición guardada correctamente');
   }
   
@@ -673,10 +698,17 @@
     window.open(url, '_blank');
   }
 
-  function eliminarMedicion(id) {
-    if (!confirm('¿Eliminar esta medición?')) return;
+  async function eliminarMedicion(id) {
+    const ok = await confirmModal({
+      title: 'Eliminar Medición',
+      message: '¿Estás seguro de eliminar esta medición de progreso?',
+      confirmText: 'Sí, Eliminar',
+      cancelText: 'Cancelar',
+      isDanger: true
+    });
+    if (!ok) return;
     DB.progresos = DB.progresos.filter(p=>p.id!==id);
-    saveDB(); renderProgreso(sel.value); showToast('🗑️ Medición eliminada', 'error');
+    await saveDB(); renderProgreso(sel.value); showToast('🗑️ Medición eliminada', 'error');
   }
 
   // Métodos de ayuda para fotos
@@ -705,24 +737,31 @@
     }
   }
 
-  function saveFinalPhoto(uid, angle, dataUrl) {
+  async function saveFinalPhoto(uid, angle, dataUrl) {
     const idx = DB.usuarios.findIndex(x => x.id === uid);
     if (idx < 0) return;
     const field = `fotoFin${angle}`;
     DB.usuarios[idx][field] = dataUrl;
-    saveDB();
+    await saveDB();
     showToast(`✅ Foto de ${angle} ("Después") guardada`);
     renderProgreso(uid);
   }
 
-  function eliminarFotoFinal(uid, angle, event) {
+  async function eliminarFotoFinal(uid, angle, event) {
     if (event) event.stopPropagation();
-    if (!confirm(`¿Eliminar la foto "Después" de ${angle}?`)) return;
+    const ok = await confirmModal({
+      title: 'Eliminar Foto',
+      message: `¿Estás seguro de eliminar la foto "Después" (${angle})?`,
+      confirmText: 'Sí, Eliminar',
+      cancelText: 'Cancelar',
+      isDanger: true
+    });
+    if (!ok) return;
     const idx = DB.usuarios.findIndex(x => x.id === uid);
     if (idx < 0) return;
     const field = `fotoFin${angle}`;
     DB.usuarios[idx][field] = null;
-    saveDB();
+    await saveDB();
     showToast(`🗑️ Foto "Después" de ${angle} eliminada`, 'error');
     renderProgreso(uid);
   }
@@ -752,24 +791,24 @@
     }
   }
 
-  function saveInitialPhoto(uid, angle, dataUrl) {
+  async function saveInitialPhoto(uid, angle, dataUrl) {
     const idx = DB.usuarios.findIndex(x => x.id === uid);
     if (idx < 0) return;
     const field = `fotoIni${angle}`;
     DB.usuarios[idx][field] = dataUrl;
-    saveDB();
+    await saveDB();
     showToast(`✅ Foto de ${angle} ("Antes") guardada`);
     renderProgreso(uid);
   }
 
-  function eliminarFotoInicial(uid, angle, event) {
+  async function eliminarFotoInicial(uid, angle, event) {
     if (event) event.stopPropagation();
     if (!confirm(`¿Eliminar la foto "Antes" de ${angle}?`)) return;
     const idx = DB.usuarios.findIndex(x => x.id === uid);
     if (idx < 0) return;
     const field = `fotoIni${angle}`;
     DB.usuarios[idx][field] = null;
-    saveDB();
+    await saveDB();
     showToast(`🗑️ Foto "Antes" de ${angle} eliminada`, 'error');
     renderProgreso(uid);
   }

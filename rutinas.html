@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Romeo Personal Trainer — Creador de Rutinas</title>
   <meta name="description" content="Diseña rutinas de entrenamiento por bloques: series, repeticiones, peso y tiempo de descanso." />  <link rel="stylesheet" href="styles.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#00E5A0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Romeo PT" />
+  <link rel="apple-touch-icon" href="1.jpeg" />
 </head>
 <body>
 
@@ -117,6 +123,10 @@
 
       <!-- Config general -->
       <div class="routine-config" style="margin:16px 24px 0">
+        <div class="form-group" id="group-r-cliente">
+          <label>Cliente Asignado</label>
+          <select id="r-usuario-id"></select>
+        </div>
         <div class="form-group">
           <label>Nombre de la Rutina</label>
           <input type="text" id="r-nombre" placeholder="Ej. Programa de Fuerza — Mes 1" />
@@ -196,9 +206,9 @@
       <div class="modal-footer">
         <button type="button" class="btn-secondary" onclick="closeModal('modal-editor')">Cancelar</button>
         <button type="button" class="btn-secondary" onclick="limpiarBloques()">🗑️ Limpiar</button>
-        <button type="submit" class="btn-primary">
+        <button type="submit" class="btn-primary" id="btn-guardar-rutina">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          Guardar Rutina
+          <span id="btn-guardar-rutina-text">Guardar Rutina</span>
         </button>
       </div>
     </form>
@@ -281,6 +291,55 @@
     <div class="modal-footer" style="padding: 14px 24px; display: flex; gap: 10px; border-top: 1px solid var(--border); margin-top:0;">
       <button type="button" class="btn-secondary" onclick="closeModal('modal-nuevo-ejercicio')" style="flex: 1; height: 38px;">Cancelar</button>
       <button type="button" class="btn-primary" onclick="guardarNuevoEjercicio()" style="flex: 1; height: 38px;">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- =================== WHATSAPP SHARE MODAL =================== -->
+<div class="modal-overlay" id="modal-compartir-whatsapp" style="z-index: 2200;">
+  <div class="modal" style="max-width: 560px; width: 92%;">
+    <div class="modal-header" style="border-bottom: 1px solid var(--border); padding: 16px 20px;">
+      <h2 style="display: flex; align-items: center; gap: 8px; font-size: 18px; color: #25D366;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        Enviar Rutina a WhatsApp
+      </h2>
+      <button class="modal-close" onclick="closeModal('modal-compartir-whatsapp')">✕</button>
+    </div>
+    <div class="modal-body" style="padding: 16px 20px; display: flex; flex-direction: column; gap: 14px;">
+      <div id="whatsapp-instruction-banner" style="background: rgba(37, 211, 102, 0.08); border: 1px solid rgba(37, 211, 102, 0.25); border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #E2E8F0; display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 20px;">💡</span>
+        <div id="whatsapp-instruction-text">
+          <strong>Tarjeta de rutina lista.</strong> Selecciona cómo deseas enviarla:
+        </div>
+      </div>
+
+      <!-- Preview container -->
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Vista Previa de la Tarjeta</label>
+        <div id="whatsapp-preview-container" style="max-height: 260px; overflow-y: auto; background: #080c14; border: 1px solid var(--border); border-radius: 12px; padding: 8px; text-align: center; position: relative;">
+          <div id="whatsapp-preview-loading" style="padding: 20px; color: var(--text-muted); font-size: 13px;">📸 Generando tarjeta...</div>
+          <img id="whatsapp-preview-img" style="max-width: 100%; height: auto; border-radius: 8px; display: none; margin: 0 auto; box-shadow: 0 8px 20px rgba(0,0,0,0.5);" />
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer" style="padding: 14px 20px; display: flex; gap: 10px; border-top: 1px solid var(--border); flex-direction: column;">
+      <button type="button" class="btn-primary" id="btn-share-mobile" onclick="compartirNativoRutinaActual()" style="width: 100%; height: 42px; background: #25D366; border-color: #25D366; color: white; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px;">
+        📱 Compartir por WhatsApp (Imagen + Texto)
+      </button>
+
+      <button type="button" class="btn-primary" id="btn-share-desktop" onclick="copiarYAbrirWhatsappActual()" style="width: 100%; height: 42px; background: #25D366; border-color: #25D366; color: white; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px;">
+        📋 Copiar e ir a WhatsApp Web (Pega con Ctrl+V)
+      </button>
+
+      <div style="display: flex; gap: 10px; width: 100%;">
+        <button type="button" class="btn-secondary" onclick="descargarImagenRutinaActual()" style="flex: 1; height: 36px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          📥 Descargar Imagen (PNG)
+        </button>
+        <button type="button" class="btn-secondary" onclick="abrirSoloTextoWhatsapp()" style="flex: 1; height: 36px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          💬 Enviar Solo Texto
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -522,9 +581,41 @@
 
   // Populate usuario select
   const selU = document.getElementById('select-usuario');
-  DB.usuarios.forEach(u => { const o = document.createElement('option'); o.value = u.id; o.textContent = u.nombre; selU.appendChild(o); });
-  const urlParam = new URLSearchParams(window.location.search).get('usuario');
-  if (urlParam) { selU.value = urlParam; onUsuarioChange(); }
+  
+  function populateUsuarioSelect() {
+    if (!selU) return;
+    const currentVal = selU.value;
+    selU.innerHTML = '<option value="">— Seleccionar Cliente —</option>';
+    
+    if (DB && DB.usuarios) {
+      DB.usuarios.forEach(u => { 
+        const o = document.createElement('option'); 
+        o.value = u.id; 
+        o.textContent = u.nombre; 
+        selU.appendChild(o); 
+      });
+    }
+
+    const activeUser = typeof getActiveUser === 'function' ? getActiveUser() : null;
+    const urlParam = new URLSearchParams(window.location.search).get('usuario');
+    
+    if (currentVal && DB.usuarios && DB.usuarios.some(u => u.id === currentVal)) {
+      selU.value = currentVal;
+    } else if (urlParam && DB.usuarios && DB.usuarios.some(u => u.id === urlParam)) {
+      selU.value = urlParam;
+    } else if (activeUser && DB.usuarios && DB.usuarios.some(u => u.id === activeUser.id)) {
+      selU.value = activeUser.id;
+    } else if (DB.usuarios && DB.usuarios.length > 0) {
+      selU.value = DB.usuarios[0].id;
+    }
+    
+    onUsuarioChange();
+  }
+
+  populateUsuarioSelect();
+  window.addEventListener('romeo_db_loaded', () => {
+    populateUsuarioSelect();
+  });
 
   function onUsuarioChange() {
     const uid = selU.value;
@@ -861,7 +952,7 @@
     blockCount = 0;
   }
 
-  function guardarRutina(e) {
+  async function guardarRutina(e) {
     e.preventDefault();
     const uid = selU.value;
     const id = document.getElementById('r-id').value;
@@ -893,17 +984,367 @@
     };
     if (id) { const i = DB.rutinas.findIndex(x=>x.id===id); if(i>=0) DB.rutinas[i]=rutina; }
     else DB.rutinas.push(rutina);
-    saveDB(); closeModal('modal-editor'); renderRutinas(uid);
+    await saveDB(); closeModal('modal-editor'); renderRutinas(uid);
     showToast('✅ Rutina guardada correctamente');
   }
 
-  function eliminarRutina(id) {
-    if (!confirm('¿Eliminar esta rutina?')) return;
+  async function eliminarRutina(id) {
+    const ok = await confirmModal({
+      title: 'Eliminar Rutina',
+      message: '¿Estás seguro de que deseas eliminar esta rutina? Esta acción no se puede deshacer.',
+      confirmText: 'Sí, Eliminar',
+      cancelText: 'Cancelar',
+      isDanger: true
+    });
+    if (!ok) return;
     DB.rutinas = DB.rutinas.filter(r=>r.id!==id);
-    saveDB(); renderRutinas(selU.value); showToast('🗑️ Rutina eliminada', 'error');
+    await saveDB(); renderRutinas(selU.value); showToast('🗑️ Rutina eliminada', 'error');
   }
 
-  function compartirWhatsapp(id) {
+  function drawRoundRectCanvas(ctx, x, y, width, height, radius, fillStyle, strokeStyle) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+    if (fillStyle) {
+      ctx.fillStyle = fillStyle;
+      ctx.fill();
+    }
+    if (strokeStyle) {
+      ctx.strokeStyle = strokeStyle;
+      ctx.stroke();
+    }
+  }
+
+  function cargarImagenElemento(src) {
+    if (!src) return Promise.resolve(null);
+    const fullSrc = (src.startsWith('data:') || src.startsWith('http') || src.startsWith('img/')) ? src : 'img/' + src;
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = fullSrc;
+    });
+  }
+
+  async function generarImagenRutinaCanvas(r, nombreCliente) {
+    let loadedImages = [];
+    try {
+      loadedImages = await Promise.all(
+        r.ejercicios.map(ej => cargarImagenElemento(ej.imagen))
+      );
+    } catch(e) {
+      console.warn("Error cargando algunas imágenes:", e);
+    }
+
+    return new Promise((resolve) => {
+      try {
+        const pad = 24;
+        const width = 640;
+        const headerH = 70;
+        const infoH = 65;
+        
+        const validImgs = r.ejercicios.map((ej, idx) => ({ ej, img: loadedImages[idx], idx })).filter(x => !!x.img);
+        const hasPosters = validImgs.length > 0;
+        
+        const posterCols = 2;
+        const posterGap = 12;
+        const posterW = (width - (pad * 2) - posterGap) / posterCols; // 290px
+        const posterH = Math.round(posterW * 0.95); // 275px
+        const posterRows = Math.ceil(validImgs.length / posterCols);
+        const posterSectionH = hasPosters ? (30 + (posterRows * (posterH + posterGap))) : 0;
+
+        let ejTotalH = 0;
+        r.ejercicios.forEach((ej, idx) => {
+          const hasImg = !!loadedImages[idx];
+          const baseH = hasImg ? 68 : 58;
+          ejTotalH += (ej.notas ? baseH + 16 : baseH) + 10;
+        });
+
+        const recomendH = r.notas ? 58 : 0;
+        const footerH = 45;
+        const height = pad + headerH + 15 + infoH + 15 + (hasPosters ? posterSectionH + 15 : 0) + ejTotalH + recomendH + footerH + pad;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width * 2;
+        canvas.height = height * 2;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(2, 2);
+
+        // Linear gradient background
+        const grad = ctx.createLinearGradient(0, 0, width, height);
+        grad.addColorStop(0, '#0B0F19');
+        grad.addColorStop(1, '#151C2E');
+        drawRoundRectCanvas(ctx, 0, 0, width, height, 18, grad, 'rgba(0, 229, 160, 0.35)');
+
+        // Header - Badge R
+        drawRoundRectCanvas(ctx, pad, pad, 32, 32, 8, '#00E5A0');
+        ctx.fillStyle = '#0B0F19';
+        ctx.font = '900 16px sans-serif';
+        ctx.fillText('R', pad + 10, pad + 22);
+
+        // Header - Title
+        ctx.fillStyle = '#00E5A0';
+        ctx.font = '900 18px sans-serif';
+        ctx.fillText('ROMEO PERSONAL TRAINER', pad + 44, pad + 20);
+
+        ctx.fillStyle = '#94A3B8';
+        ctx.font = '600 11px sans-serif';
+        ctx.fillText('PLAN DE ENTRENAMIENTO PERSONALIZADO', pad + 44, pad + 34);
+
+        // Date pill
+        drawRoundRectCanvas(ctx, width - pad - 120, pad, 120, 40, 10, 'rgba(0, 229, 160, 0.1)', 'rgba(0, 229, 160, 0.3)');
+        ctx.fillStyle = '#00E5A0';
+        ctx.font = '800 13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${r.mes} ${r.anio}`, width - pad - 60, pad + 18);
+        ctx.fillStyle = '#CBD5E1';
+        ctx.font = '600 10px sans-serif';
+        ctx.fillText(`${r.dias} Días / Semana`, width - pad - 60, pad + 32);
+        ctx.textAlign = 'left';
+
+        // Divider
+        ctx.strokeStyle = 'rgba(0, 229, 160, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(pad, pad + 56);
+        ctx.lineTo(width - pad, pad + 56);
+        ctx.stroke();
+
+        let curY = pad + 70;
+
+        // Info Box
+        drawRoundRectCanvas(ctx, pad, curY, width - (pad * 2), infoH, 12, 'rgba(255, 255, 255, 0.04)', 'rgba(255, 255, 255, 0.08)');
+        
+        // Athlete
+        ctx.fillStyle = '#94A3B8';
+        ctx.font = '700 10px sans-serif';
+        ctx.fillText('ATLETA / CLIENTE', pad + 14, curY + 20);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '800 17px sans-serif';
+        ctx.fillText(nombreCliente, pad + 14, curY + 44);
+
+        // Plan
+        ctx.fillStyle = '#94A3B8';
+        ctx.font = '700 10px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText('PLAN / ENFOQUE', width - pad - 14, curY + 20);
+        ctx.fillStyle = '#FF2A6D';
+        ctx.font = '800 15px sans-serif';
+        ctx.fillText(r.nombre || `${r.tipo} - ${r.grupo}`, width - pad - 14, curY + 44);
+        ctx.textAlign = 'left';
+
+        curY += infoH + 15;
+
+        // Render Poster Collage Grid if exercise images are available
+        if (hasPosters) {
+          ctx.fillStyle = '#00E5A0';
+          ctx.font = '800 12px sans-serif';
+          ctx.fillText('📸 INFOGRAFÍAS Y GUÍA DE TÉCNICA DE EJERCICIOS', pad, curY + 16);
+
+          validImgs.forEach((v, i) => {
+            const col = i % posterCols;
+            const row = Math.floor(i / posterCols);
+            const px = pad + (col * (posterW + posterGap));
+            const py = curY + 28 + (row * (posterH + posterGap));
+
+            drawRoundRectCanvas(ctx, px, py, posterW, posterH, 12, 'rgba(0, 0, 0, 0.4)', 'rgba(0, 229, 160, 0.3)');
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(px + 10, py);
+            ctx.lineTo(px + posterW - 10, py);
+            ctx.quadraticCurveTo(px + posterW, py, px + posterW, py + 10);
+            ctx.lineTo(px + posterW, py + posterH - 10);
+            ctx.quadraticCurveTo(px + posterW, py + posterH, px + posterW - 10, py + posterH);
+            ctx.lineTo(px + 10, py + posterH);
+            ctx.quadraticCurveTo(px, py + posterH, px, py + posterH - 10);
+            ctx.lineTo(px, py + 10);
+            ctx.quadraticCurveTo(px, py, px + 10, py);
+            ctx.closePath();
+            ctx.clip();
+
+            ctx.drawImage(v.img, px, py, posterW, posterH);
+            ctx.restore();
+
+            // Overlay exercise number badge on poster top left
+            drawRoundRectCanvas(ctx, px + 8, py + 8, 24, 24, 12, '#00E5A0');
+            ctx.fillStyle = '#0B0F19';
+            ctx.font = '900 11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${v.idx + 1}`, px + 20, py + 24);
+            ctx.textAlign = 'left';
+          });
+
+          curY += posterSectionH + 15;
+        }
+
+        // Exercises Summary Table
+        r.ejercicios.forEach((ej, i) => {
+          const img = loadedImages[i];
+          const hasImg = !!img;
+          const baseH = hasImg ? 68 : 58;
+          const itemH = ej.notas ? baseH + 16 : baseH;
+
+          drawRoundRectCanvas(ctx, pad, curY, width - (pad * 2), itemH, 10, 'rgba(255, 255, 255, 0.03)', 'rgba(255, 255, 255, 0.07)');
+
+          // Circle index
+          const circleY = curY + (hasImg ? 21 : 16);
+          drawRoundRectCanvas(ctx, pad + 12, circleY, 26, 26, 13, 'rgba(0, 229, 160, 0.15)');
+          ctx.fillStyle = '#00E5A0';
+          ctx.font = '800 12px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(`${i + 1}`, pad + 25, circleY + 17);
+          ctx.textAlign = 'left';
+
+          let textX = pad + 48;
+
+          // Draw illustration / image if present
+          if (img) {
+            const imgSize = 50;
+            const imgX = pad + 46;
+            const imgY = curY + (itemH - imgSize) / 2;
+
+            drawRoundRectCanvas(ctx, imgX, imgY, imgSize, imgSize, 8, 'rgba(255, 255, 255, 0.06)', 'rgba(255, 255, 255, 0.2)');
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(imgX + 8, imgY);
+            ctx.lineTo(imgX + imgSize - 8, imgY);
+            ctx.quadraticCurveTo(imgX + imgSize, imgY, imgX + imgSize, imgY + 8);
+            ctx.lineTo(imgX + imgSize, imgY + imgSize - 8);
+            ctx.quadraticCurveTo(imgX + imgSize, imgY + imgSize, imgX + imgSize - 8, imgY + imgSize);
+            ctx.lineTo(imgX + 8, imgY + imgSize);
+            ctx.quadraticCurveTo(imgX, imgY + imgSize, imgX, imgY + imgSize - 8);
+            ctx.lineTo(imgX, imgY + 8);
+            ctx.quadraticCurveTo(imgX, imgY, imgX + 8, imgY);
+            ctx.closePath();
+            ctx.clip();
+
+            ctx.drawImage(img, imgX, imgY, imgSize, imgSize);
+            ctx.restore();
+
+            textX = imgX + imgSize + 12;
+          }
+
+          // Exercise Name
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '700 14px sans-serif';
+          ctx.fillText(ej.nombre, textX, curY + (hasImg ? 22 : 25));
+
+          // Pills
+          let pillX = textX;
+          const pillY = curY + (hasImg ? 30 : 32);
+          const seriesText = `📊 ${ej.series || '—'}`;
+          drawRoundRectCanvas(ctx, pillX, pillY, 75, 20, 5, 'rgba(0, 229, 160, 0.12)', 'rgba(0, 229, 160, 0.25)');
+          ctx.fillStyle = '#00E5A0';
+          ctx.font = '700 10px sans-serif';
+          ctx.fillText(seriesText, pillX + 6, pillY + 14);
+          pillX += 83;
+
+          if (ej.peso) {
+            const pesoText = `🏋️ ${ej.peso} kg`;
+            drawRoundRectCanvas(ctx, pillX, pillY, 75, 20, 5, 'rgba(255, 42, 109, 0.12)', 'rgba(255, 42, 109, 0.25)');
+            ctx.fillStyle = '#FF2A6D';
+            ctx.font = '700 10px sans-serif';
+            ctx.fillText(pesoText, pillX + 6, pillY + 14);
+            pillX += 83;
+          }
+
+          if (ej.descanso) {
+            const descText = `⏱️ ${ej.descanso}s`;
+            drawRoundRectCanvas(ctx, pillX, pillY, 70, 20, 5, 'rgba(255, 209, 102, 0.12)', 'rgba(255, 209, 102, 0.25)');
+            ctx.fillStyle = '#FFD166';
+            ctx.font = '700 10px sans-serif';
+            ctx.fillText(descText, pillX + 6, pillY + 14);
+          }
+
+          if (ej.notas) {
+            ctx.fillStyle = '#94A3B8';
+            ctx.font = 'italic 10px sans-serif';
+            ctx.fillText(`📝 ${ej.notas}`, textX, curY + itemH - 10);
+          }
+
+          curY += itemH + 10;
+        });
+
+        // Recommendations
+        if (r.notas) {
+          drawRoundRectCanvas(ctx, pad, curY, width - (pad * 2), 46, 10, 'rgba(255, 209, 102, 0.06)', 'rgba(255, 209, 102, 0.25)');
+          ctx.fillStyle = '#FFE082';
+          ctx.font = '700 11px sans-serif';
+          ctx.fillText(`📝 Recomendaciones: ${r.notas}`, pad + 14, curY + 27);
+          curY += 56;
+        }
+
+        // Footer
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.beginPath();
+        ctx.moveTo(pad, curY + 5);
+        ctx.lineTo(width - pad, curY + 5);
+        ctx.stroke();
+
+        ctx.fillStyle = '#64748B';
+        ctx.font = '600 10px sans-serif';
+        ctx.fillText('🔥 Romeo Personal Trainer System', pad, curY + 22);
+
+        ctx.fillStyle = '#00E5A0';
+        ctx.font = '700 10px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText('¡A darle con toda! 💪', width - pad, curY + 22);
+
+        canvas.toBlob((blob) => {
+          resolve(blob);
+        }, 'image/png');
+      } catch (e) {
+        console.error("Error en render Canvas:", e);
+        resolve(null);
+      }
+    });
+  }
+
+  async function getExerciseFile(ej, index) {
+    if (!ej.imagen) return null;
+    const fullSrc = (ej.imagen.startsWith('data:') || ej.imagen.startsWith('http') || ej.imagen.startsWith('img/')) ? ej.imagen : 'img/' + ej.imagen;
+    try {
+      const res = await fetch(fullSrc);
+      const blob = await res.blob();
+      const mime = blob.type || 'image/jpeg';
+      const ext = mime.includes('png') ? 'png' : 'jpeg';
+      return new File([blob], `${index + 1}_${ej.nombre.replace(/[^a-zA-Z0-9]/g, '_')}.${ext}`, { type: mime });
+    } catch(e) {
+      return null;
+    }
+  }
+
+  let currentShareState = {
+    blob: null,
+    filename: '',
+    msg: '',
+    cleanPhone: '',
+    exerciseFiles: []
+  };
+
+  function abrirWhatsappLink(cleanPhone, msg) {
+    const textEncoded = encodeURIComponent(msg);
+    const url = cleanPhone ? `https://wa.me/${cleanPhone}?text=${textEncoded}` : `https://api.whatsapp.com/send?text=${textEncoded}`;
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (window.innerWidth <= 1024);
+    if (isMobile) {
+      window.location.href = url;
+    } else {
+      window.open(url, '_blank');
+    }
+  }
+
+  async function compartirWhatsapp(id) {
     const r = DB.rutinas.find(x => x.id === id);
     if (!r) return;
     const u = DB.usuarios.find(x => x.id === r.usuarioId);
@@ -914,7 +1355,7 @@
     
     if (!cleanPhone) {
       const input = prompt("Este cliente no tiene un teléfono guardado. Ingresa el número de WhatsApp (con código de país, ej: 573001234567) o deja en blanco para seleccionar el contacto en WhatsApp:", "");
-      if (input === null) return; // User cancelled
+      if (input === null) return;
       cleanPhone = input.replace(/\D/g, '');
     }
     
@@ -939,9 +1380,138 @@
     }
     
     msg += `¡A darle con toda! 🔥`;
-    
-    const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}`;
-    window.open(url, '_blank');
+
+    // Cargar archivos individuales de ilustraciones para envío múltiple en WhatsApp
+    const exerciseFiles = [];
+    for (let i = 0; i < r.ejercicios.length; i++) {
+      const f = await getExerciseFile(r.ejercicios[i], i);
+      if (f) exerciseFiles.push(f);
+    }
+
+    currentShareState = {
+      blob: null,
+      filename: `Rutina_${nombreCliente.replace(/\s+/g, '_')}.png`,
+      msg: msg,
+      cleanPhone: cleanPhone,
+      exerciseFiles: exerciseFiles
+    };
+
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (window.innerWidth <= 1024);
+    const btnMobile = document.getElementById('btn-share-mobile');
+    const btnDesktop = document.getElementById('btn-share-desktop');
+    const instructionText = document.getElementById('whatsapp-instruction-text');
+    const imgEl = document.getElementById('whatsapp-preview-img');
+    const loadingEl = document.getElementById('whatsapp-preview-loading');
+
+    if (btnMobile) btnMobile.style.display = isMobile ? 'flex' : 'none';
+    if (btnDesktop) btnDesktop.style.display = isMobile ? 'none' : 'flex';
+
+    if (instructionText) {
+      if (isMobile) {
+        instructionText.innerHTML = '<strong>Tarjeta e Infografías Listas.</strong> Presiona <strong>Compartir por WhatsApp</strong> para enviar el álbum de imágenes y el texto.';
+      } else {
+        instructionText.innerHTML = '<strong>Tarjeta de rutina lista.</strong> Al hacer clic en <strong>Copiar e ir a WhatsApp Web</strong>, la imagen se copia a tu portapapeles. En WhatsApp presiona <kbd style="background:rgba(255,255,255,0.15);padding:2px 6px;border-radius:4px;font-family:monospace;">Ctrl + V</kbd> para pegarla.';
+      }
+    }
+
+    if (imgEl) imgEl.style.display = 'none';
+    if (loadingEl) {
+      loadingEl.style.display = 'block';
+      loadingEl.textContent = '📸 Generando tarjeta visual e infografías...';
+    }
+
+    openModal('modal-compartir-whatsapp');
+
+    const blob = await generarImagenRutinaCanvas(r, nombreCliente);
+    currentShareState.blob = blob;
+
+    if (blob && imgEl) {
+      imgEl.src = URL.createObjectURL(blob);
+      imgEl.style.display = 'block';
+      if (loadingEl) loadingEl.style.display = 'none';
+    } else if (loadingEl) {
+      loadingEl.textContent = '⚠️ Se enviará la rutina en texto a WhatsApp.';
+    }
+  }
+
+  async function copiarYAbrirWhatsappActual() {
+    const { blob, cleanPhone, msg } = currentShareState;
+    let copiado = false;
+
+    if (blob && navigator.clipboard && window.ClipboardItem) {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+        copiado = true;
+      } catch (e) {
+        console.warn('Clipboard write no disponible:', e);
+      }
+    }
+
+    if (copiado) {
+      showToast('📋 ¡Imagen copiada al portapapeles! Presiona Ctrl+V en WhatsApp para pegarla.', 'info', 6000);
+    } else if (blob) {
+      descargarImagenRutinaActual();
+      showToast('📥 Imagen descargada. Adjúntala en el chat de WhatsApp.', 'info', 5000);
+    }
+
+    abrirWhatsappLink(cleanPhone, msg);
+    closeModal('modal-compartir-whatsapp');
+  }
+
+  function descargarImagenRutinaActual() {
+    const { blob, filename } = currentShareState;
+    if (!blob) {
+      showToast('Generando imagen, aguarde un segundo...', 'error');
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename || 'Rutina_RomeoPT.png';
+    a.click();
+    showToast('📥 Imagen descargada', 'success');
+  }
+
+  async function compartirNativoRutinaActual() {
+    const { blob, filename, msg, cleanPhone, exerciseFiles } = currentShareState;
+    const filesToShare = [];
+
+    // Tarjeta principal de resumen
+    if (blob) {
+      filesToShare.push(new File([blob], filename || 'Rutina_RomeoPT.png', { type: 'image/png' }));
+    }
+
+    // Adjuntar todas las imágenes/infografías individuales de los ejercicios en un solo álbum multitrama de WhatsApp
+    if (exerciseFiles && exerciseFiles.length > 0) {
+      exerciseFiles.forEach(f => filesToShare.push(f));
+    }
+
+    if (filesToShare.length > 0 && navigator.canShare) {
+      try {
+        if (navigator.canShare({ files: filesToShare })) {
+          await navigator.share({
+            title: 'Rutina Romeo PT',
+            text: msg,
+            files: filesToShare
+          });
+          showToast('✅ Rutina e imágenes compartidas con éxito');
+          closeModal('modal-compartir-whatsapp');
+          return;
+        }
+      } catch (e) {
+        console.log('Share nativo multitrama cancelado o no disponible:', e);
+      }
+    }
+
+    abrirWhatsappLink(cleanPhone, msg);
+    closeModal('modal-compartir-whatsapp');
+  }
+
+  function abrirSoloTextoWhatsapp() {
+    const { cleanPhone, msg } = currentShareState;
+    abrirWhatsappLink(cleanPhone, msg);
+    closeModal('modal-compartir-whatsapp');
   }
 
   function populateNewExerciseGroups() {
@@ -1100,39 +1670,51 @@
     });
   }
 
-  function importarEjerciciosDeRutina(rid) {
+  async function importarEjerciciosDeRutina(rid) {
     if (!rid) return;
     const r = DB.rutinas.find(x => x.id === rid);
-    if (!r) return;
-    if (!confirm(`¿Quieres importar los ${r.ejercicios.length} ejercicios de esta rutina? Esto reemplazará los ejercicios actuales.`)) {
+    if (!r) {
       document.getElementById('r-importar-select').value = '';
       return;
     }
-    
-    document.getElementById('blocks-container').innerHTML = '';
-    blockCount = 0;
-    
-    r.ejercicios.forEach(ej => agregarBloque(ej));
-    
-    if (!document.getElementById('r-nombre').value) {
-      document.getElementById('r-nombre').value = r.nombre || '';
-    }
-    document.getElementById('r-tipo').value = r.tipo;
-    document.getElementById('r-grupo').value = r.grupo || 'Cuerpo Completo';
-    document.getElementById('r-dias').value = r.dias;
-    if (!document.getElementById('r-notas').value) {
-      document.getElementById('r-notas').value = r.notas || '';
+
+    const ejs = r.ejercicios || [];
+    if (ejs.length === 0) {
+      showToast('Esta rutina no contiene ejercicios para copiar', 'error');
+      document.getElementById('r-importar-select').value = '';
+      return;
     }
 
-    showToast(`✅ Se importaron ${r.ejercicios.length} ejercicios`);
+    const ok = await confirmModal({
+      title: 'Copiar Ejercicios',
+      message: `¿Quieres copiar los ${ejs.length} ejercicios de "${r.nombre || 'esta rutina'}" a la rutina actual? Esto reemplazará los ejercicios que tengas en pantalla.`,
+      confirmText: 'Sí, Copiar Ejercicios',
+      cancelText: 'Cancelar'
+    });
+
+    if (!ok) {
+      document.getElementById('r-importar-select').value = '';
+      return;
+    }
+
+    document.getElementById('blocks-container').innerHTML = '';
+    blockCount = 0;
+
+    ejs.forEach(ej => agregarBloque(ej));
+
+    document.getElementById('r-nombre').value = r.nombre ? `${r.nombre} (Copia)` : 'Rutina Copiada';
+    if (r.tipo) document.getElementById('r-tipo').value = r.tipo;
+    if (r.grupo) document.getElementById('r-grupo').value = r.grupo;
+    if (r.dias) document.getElementById('r-dias').value = r.dias;
+    if (r.notas || r.notes) document.getElementById('r-notas').value = r.notas || r.notes || '';
+
+    showToast(`✅ ${ejs.length} ejercicios copiados. Recuerda hacer clic en "Guardar Rutina"`, 'success');
     document.getElementById('r-importar-select').value = '';
   }
 
-  // Escuchar cambios de base de datos desde otras pestañas para actualizar la UI
+  // Escuchar cambios de base de datos desde otras pestañas o al cargar IndexedDB
   window.addEventListener('romeo_db_loaded', () => {
-    if (selU.value) {
-      renderRutinas(selU.value);
-    }
+    populateUsuarioSelect();
   });
   // --- PACKS LOGIC ---
   let currentEditingPackId = null;
@@ -1154,11 +1736,22 @@
   // Override abrirEditor
   const _oldAbrirEditor = abrirEditor;
   abrirEditor = function(rid = null, isClone = false, packId = null) {
-    currentEditingPackId = packId;
-    
-    if (!packId) {
-      const uid = document.getElementById('select-usuario').value; 
-      if (!uid) { showToast('Selecciona un cliente primero', 'error'); return; }
+    // Setup client selector inside modal
+    const groupCli = document.getElementById('group-r-cliente');
+    const selectCli = document.getElementById('r-usuario-id');
+    selectCli.innerHTML = '';
+    DB.usuarios.forEach(u => {
+      const o = document.createElement('option');
+      o.value = u.id; o.textContent = u.nombre;
+      selectCli.appendChild(o);
+    });
+
+    if (packId) {
+      if (groupCli) groupCli.style.display = 'none';
+    } else {
+      if (groupCli) groupCli.style.display = 'block';
+      const mainUid = document.getElementById('select-usuario').value;
+      if (mainUid) selectCli.value = mainUid;
     }
 
     document.getElementById('form-rutina').reset();
@@ -1193,19 +1786,19 @@
       document.getElementById('r-dias').value = r.dias;
       document.getElementById('r-notas').value = r.notes || r.notas || '';
       if (!packId) {
+        if (r.usuarioId) selectCli.value = r.usuarioId;
         document.getElementById('r-peso-ini').value = r.pesoIni || '';
         document.getElementById('r-peso-fin').value = r.pesoFin || '';
       }
       
       r.ejercicios.forEach(ej => agregarBloque(ej));
     } else if (!packId) {
-      const uid = document.getElementById('select-usuario').value; 
+      const uid = selectCli.value || document.getElementById('select-usuario').value; 
       const u = DB.usuarios.find(x=>x.id===uid);
       const lastR = DB.rutinas.filter(rt=>rt.usuarioId===uid).slice(-1)[0];
       document.getElementById('r-peso-ini').value = lastR?.pesoFin || u?.peso || '';
     }
-    
-    document.getElementById('modal-editor').style.display = 'flex';
+    openModal('modal-editor');
   };
 
   // Override guardarRutina
@@ -1213,66 +1806,91 @@
   guardarRutina = async function(e) {
     e.preventDefault();
     
-    const id = document.getElementById('r-id').value;
-    const ejercicios = [];
-    document.querySelectorAll('#blocks-container .exercise-block').forEach(row => {
-      const nombre = row.querySelector('.blk-nombre').value.trim(); if (!nombre) return;
-      ejercicios.push({ 
-        nombre, 
-        grupo: row.querySelector('.blk-grupo').value, 
-        imagen: row.querySelector('.blk-imagen').dataset.base64 || null,
-        series: row.querySelector('.blk-series').value.trim(), 
-        peso: row.querySelector('.blk-peso').value.trim(), 
-        descanso: row.querySelector('.blk-descanso').value.trim(), 
-        notas: row.querySelector('.blk-notas').value.trim() 
+    const submitBtn = document.getElementById('btn-guardar-rutina');
+    const submitText = document.getElementById('btn-guardar-rutina-text');
+    if (submitBtn) {
+      if (submitBtn.disabled) return;
+      submitBtn.disabled = true;
+      if (submitText) submitText.textContent = '⏳ Guardando...';
+    }
+
+    try {
+      const id = document.getElementById('r-id').value;
+      const ejercicios = [];
+      document.querySelectorAll('#blocks-container .exercise-block').forEach(row => {
+        const nombre = row.querySelector('.blk-nombre').value.trim(); if (!nombre) return;
+        ejercicios.push({ 
+          nombre, 
+          grupo: row.querySelector('.blk-grupo').value, 
+          imagen: row.querySelector('.blk-imagen').dataset.base64 || null,
+          series: row.querySelector('.blk-series').value.trim(), 
+          peso: row.querySelector('.blk-peso').value.trim(), 
+          descanso: row.querySelector('.blk-descanso').value.trim(), 
+          notas: row.querySelector('.blk-notas').value.trim() 
+        });
       });
-    });
 
-    const rutina = {
-      id: id || genId(),
-      nombre: document.getElementById('r-nombre').value.trim(),
-      mes: document.getElementById('r-mes').value,
-      anio: parseInt(document.getElementById('r-anio').value),
-      tipo: document.getElementById('r-tipo').value,
-      grupo: document.getElementById('r-grupo').value,
-      dias: parseInt(document.getElementById('r-dias').value),
-      ejercicios,
-      notas: document.getElementById('r-notas').value.trim()
-    };
+      const rutina = {
+        id: id || genId(),
+        nombre: document.getElementById('r-nombre').value.trim(),
+        mes: document.getElementById('r-mes').value,
+        anio: parseInt(document.getElementById('r-anio').value),
+        tipo: document.getElementById('r-tipo').value,
+        grupo: document.getElementById('r-grupo').value,
+        dias: parseInt(document.getElementById('r-dias').value),
+        ejercicios,
+        notas: document.getElementById('r-notas').value.trim()
+      };
 
-    if (currentEditingPackId) {
-      // Save to pack
-      const p = DB.packs.find(x => x.id === currentEditingPackId);
-      if (!p) return;
-      if (id) {
-        const idx = p.rutinas.findIndex(x => x.id === id);
-        if (idx >= 0) p.rutinas[idx] = rutina;
-        else p.rutinas.push(rutina);
+      if (currentEditingPackId) {
+        // Save to pack
+        const p = DB.packs.find(x => x.id === currentEditingPackId);
+        if (!p) return;
+        if (id) {
+          const idx = p.rutinas.findIndex(x => x.id === id);
+          if (idx >= 0) p.rutinas[idx] = rutina;
+          else p.rutinas.push(rutina);
+        } else {
+          p.rutinas.push(rutina);
+        }
+        await saveDB();
+        closeModal('modal-editor');
+        renderPacks();
+        showToast('Rutina guardada en el pack');
       } else {
-        p.rutinas.push(rutina);
-      }
-      await saveDB();
-      cerrarEditor();
-      renderPacks();
-      showToast('Rutina guardada en el pack');
-    } else {
-      const uid = document.getElementById('select-usuario').value; 
-      rutina.usuarioId = uid;
-      rutina.pesoIni = parseFloat(document.getElementById('r-peso-ini').value) || null;
-      rutina.pesoFin = parseFloat(document.getElementById('r-peso-fin').value) || null;
+        const uid = document.getElementById('r-usuario-id').value || document.getElementById('select-usuario').value; 
+        if (!uid) { showToast('Selecciona un cliente válido', 'error'); return; }
+        rutina.usuarioId = uid;
+        rutina.pesoIni = parseFloat(document.getElementById('r-peso-ini').value) || null;
+        rutina.pesoFin = parseFloat(document.getElementById('r-peso-fin').value) || null;
 
-      if (id) {
-        const idx = DB.rutinas.findIndex(x => x.id === id);
-        if (idx >= 0) DB.rutinas[idx] = rutina;
-        else DB.rutinas.push(rutina);
-      } else {
-        rutina.creado = new Date().toISOString();
-        DB.rutinas.push(rutina);
+        if (id) {
+          const idx = DB.rutinas.findIndex(x => x.id === id);
+          if (idx >= 0) DB.rutinas[idx] = rutina;
+          else DB.rutinas.push(rutina);
+        } else {
+          rutina.creado = new Date().toISOString();
+          DB.rutinas.push(rutina);
+        }
+        await saveDB();
+        closeModal('modal-editor');
+        
+        // Update main select and reset filters to guarantee new routine is visible
+        document.getElementById('select-usuario').value = uid;
+        if (document.getElementById('filter-r-mes')) document.getElementById('filter-r-mes').value = '';
+        if (document.getElementById('filter-r-anio')) document.getElementById('filter-r-anio').value = '';
+        if (document.getElementById('filter-r-tipo')) document.getElementById('filter-r-tipo').value = '';
+        
+        onUsuarioChange();
+        showToast('✅ Rutina guardada correctamente');
       }
-      await saveDB();
-      cerrarEditor();
-      renderRutinas(uid);
-      showToast('Rutina guardada');
+    } catch(err) {
+      showToast('❌ Error al guardar rutina', 'error');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        if (submitText) submitText.textContent = 'Guardar Rutina';
+      }
     }
   };
 
